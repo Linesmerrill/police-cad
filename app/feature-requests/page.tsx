@@ -44,6 +44,7 @@ interface FeatureRequest {
   hasVoted: boolean;
   createdAt: string;
   updatedAt: string;
+  releasedAt?: string;
 }
 
 interface ListResponse {
@@ -536,7 +537,7 @@ function ReleasedCard({ item, delayMs }: { item: FeatureRequest; delayMs: number
               color: 'rgba(255,255,255,0.4)',
               fontVariantNumeric: 'tabular-nums',
             }}>
-              {formatReleaseDate(item.updatedAt)}
+              {formatReleaseDate(item.releasedAt || item.updatedAt)}
             </span>
           </div>
 
@@ -1180,7 +1181,7 @@ function FeatureRequests() {
     try {
       const params = new URLSearchParams({
         status: 'released',
-        sort: 'newest',
+        sort: 'released',
         limit: '8',
         page: '1',
       });

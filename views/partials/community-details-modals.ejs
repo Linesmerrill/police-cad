@@ -13199,10 +13199,17 @@ async function saveEditEvent() {
       let communityCurrentSearchTerm = '';
       // Which group the members list is showing: approved, pending or declined.
       let communityMemberStatus = 'approved';
+      // Members ticked for a bulk kick. Kept across pages of the same list so an
+      // admin can gather people from several pages; cleared when the list itself
+      // changes (another status group or another search).
+      let selectedMemberIds = new Set();
+      // Matches the API's cap on one bulk request.
+      const MEMBER_BULK_MAX = 100;
 
       function setMemberStatusFilter(status) {
         if (communityMemberStatus === status) return;
         communityMemberStatus = status;
+        selectedMemberIds.clear();
         document.querySelectorAll('#memberStatusFilters .member-status-chip').forEach(function(chip) {
           chip.classList.toggle('is-active', chip.getAttribute('data-status') === status);
         });
@@ -13272,6 +13279,7 @@ async function saveEditEvent() {
           searchInput.value = '';
         }
         communityCurrentSearchTerm = '';
+        selectedMemberIds.clear();
         // Clear debounce timer
         if (searchDebounceTimer) {
           clearTimeout(searchDebounceTimer);
@@ -13295,7 +13303,10 @@ async function saveEditEvent() {
         selectedMemberUsername = null;
       }
 
-      async function loadMembers(page = 1) {
+      // opts.keepList refreshes in place: the rows already on screen stay until
+      // the new ones arrive, so the list keeps its height and the admin keeps
+      // their scroll position. Used after an action, never for navigation.
+      async function loadMembers(page = 1, opts = {}) {
         const loadingDiv = document.getElementById('membersLoading');
         const listContainer = document.getElementById('membersListContainer');
         const paginationDiv = document.getElementById('membersPagination');
@@ -13306,12 +13317,14 @@ async function saveEditEvent() {
         }
         
         try {
-          // Show loading if element exists
-          if (loadingDiv) {
-            loadingDiv.style.display = 'block';
+          if (!opts.keepList) {
+            // Show loading if element exists
+            if (loadingDiv) {
+              loadingDiv.style.display = 'block';
+            }
+            listContainer.innerHTML = '';
+            paginationDiv.style.display = 'none';
           }
-          listContainer.innerHTML = '';
-          paginationDiv.style.display = 'none';
           
           const communityId = '<%= community._id %>';
           const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
@@ -13372,8 +13385,10 @@ async function saveEditEvent() {
               <p>${communityCurrentSearchTerm ? 'No members found matching your search.' : 'No members found.'}</p>
             </div>
           `;
+          updateMembersBulkBar();
           return;
         }
+        const showMemberSelect = canBulkKickMembers();
         
         // A person in the list is either a member, or someone waiting on a
         // decision. Opening the member actions sheet for the second makes no
@@ -13381,10 +13396,15 @@ async function saveEditEvent() {
         const isDecisionList = communityMemberStatus !== 'approved';
 
         const membersHtml = communityMembersData.map(member => `
-          <div class="member-item" style="background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:1rem; margin-bottom:0.75rem; cursor:${isDecisionList ? 'default' : 'pointer'}; transition:all 0.2s;" ${isDecisionList ? '' : `onclick="openMemberActions('${member._id}')"`}>
+          <div class="member-item${selectedMemberIds.has(member._id) ? ' is-selected' : ''}" data-member-id="${member._id}" style="background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:1rem; margin-bottom:0.75rem; cursor:${isDecisionList ? 'default' : 'pointer'}; transition:all 0.2s;" ${isDecisionList ? '' : `onclick="openMemberActions('${member._id}')"`}>
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <div style="flex:1;">
                 <div style="display:flex; align-items:center; gap:0.75rem;">
+                  ${showMemberSelect ? (isKickableMember(member._id) ? `
+                    <label class="bulk-select-box" onclick="event.stopPropagation();">
+                      <input type="checkbox" class="member-select" data-member-id="${member._id}" ${selectedMemberIds.has(member._id) ? 'checked' : ''} onchange="toggleMemberSelection('${member._id}', this.checked)" aria-label="Select member">
+                    </label>
+                  ` : `<span class="bulk-select-box bulk-select-box--empty" aria-hidden="true"></span>`) : ''}
                   <div style="width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#4a5568;">
                     ${member.user?.profilePicture ? 
                       `<img src="${member.user.profilePicture}" alt="${member.user.username || 'User'}" style="width:100%; height:100%; object-fit:cover;">` : 
@@ -13436,6 +13456,170 @@ async function saveEditEvent() {
         `).join('');
         
         listContainer.innerHTML = membersHtml;
+        updateMembersBulkBar();
+      }
+
+      // ---- Bulk kick -------------------------------------------------------
+      // Only people who can see the Kick action today get the checkboxes, and
+      // only on the members list (the waiting/declined lists have no kick).
+      function canBulkKickMembers() {
+        return communityMemberStatus === 'approved' && (checkManageMembersPermission() || checkIsOwner());
+      }
+
+      // The owner and yourself cannot be kicked, so they get no checkbox. The
+      // API refuses both anyway.
+      function isKickableMember(memberId) {
+        return memberId !== '<%= community.community.ownerID %>'
+          && memberId !== '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
+      }
+
+      function toggleMemberSelection(memberId, checked) {
+        if (checked) {
+          if (selectedMemberIds.size >= MEMBER_BULK_MAX) {
+            showToast(`You can kick up to ${MEMBER_BULK_MAX} members at a time`, 3000, 'error');
+            const box = document.querySelector(`.member-select[data-member-id="${memberId}"]`);
+            if (box) box.checked = false;
+            return;
+          }
+          selectedMemberIds.add(memberId);
+        } else {
+          selectedMemberIds.delete(memberId);
+        }
+        const row = document.querySelector(`.member-item[data-member-id="${memberId}"]`);
+        if (row) row.classList.toggle('is-selected', checked);
+        updateMembersBulkBar();
+      }
+
+      function selectableMemberIdsOnPage() {
+        return communityMembersData.map(m => m._id).filter(isKickableMember);
+      }
+
+      function toggleSelectAllMembersOnPage(checked) {
+        const ids = selectableMemberIdsOnPage();
+        if (checked) {
+          let capped = false;
+          ids.forEach(function(id) {
+            if (selectedMemberIds.has(id)) return;
+            if (selectedMemberIds.size >= MEMBER_BULK_MAX) { capped = true; return; }
+            selectedMemberIds.add(id);
+          });
+          if (capped) showToast(`You can kick up to ${MEMBER_BULK_MAX} members at a time`, 3000, 'error');
+        } else {
+          ids.forEach(function(id) { selectedMemberIds.delete(id); });
+        }
+        renderMembersList();
+      }
+
+      function clearMemberSelection() {
+        selectedMemberIds.clear();
+        renderMembersList();
+      }
+
+      function updateMembersBulkBar() {
+        const bar = document.getElementById('membersBulkBar');
+        if (!bar) return;
+        const pageIds = selectableMemberIdsOnPage();
+        if (!canBulkKickMembers() || (pageIds.length === 0 && selectedMemberIds.size === 0)) {
+          bar.style.display = 'none';
+          return;
+        }
+        bar.style.display = 'flex';
+        const selectedOnPage = pageIds.filter(id => selectedMemberIds.has(id)).length;
+        const all = document.getElementById('membersSelectAll');
+        if (all) {
+          all.checked = pageIds.length > 0 && selectedOnPage === pageIds.length;
+          all.indeterminate = selectedOnPage > 0 && selectedOnPage < pageIds.length;
+          all.disabled = pageIds.length === 0;
+        }
+        const n = selectedMemberIds.size;
+        const count = document.getElementById('membersSelectedCount');
+        if (count) count.textContent = n > 0 ? `${n} selected` : 'Select all on page';
+        const actions = document.getElementById('membersBulkActions');
+        if (actions) actions.style.display = n > 0 ? 'flex' : 'none';
+        const kickBtn = document.getElementById('membersBulkKickBtn');
+        if (kickBtn) kickBtn.textContent = `Kick ${n}`;
+      }
+
+      // Same confirm as everywhere else on this page, with the count in bold.
+      function showCustomConfirmHtml(title, html, onConfirm, confirmText) {
+        showCustomConfirm(title, '', onConfirm, null, confirmText);
+        document.getElementById('confirmMessage').innerHTML = html;
+      }
+
+      function confirmBulkKickMembers() {
+        const ids = Array.from(selectedMemberIds);
+        if (ids.length === 0) return;
+        const noun = ids.length === 1 ? 'member' : 'members';
+        showCustomConfirmHtml(
+          'Kick members',
+          `Kick <strong>${ids.length} ${noun}</strong>? They can rejoin if invited.`,
+          function() { performBulkKickMembers(ids); },
+          `Kick ${ids.length}`
+        );
+      }
+
+      async function performBulkKickMembers(ids) {
+        const kickBtn = document.getElementById('membersBulkKickBtn');
+        if (kickBtn) { kickBtn.disabled = true; kickBtn.textContent = 'Kicking...'; }
+        try {
+          const communityId = '<%= community._id %>';
+          // Through the website server, which vouches for who is asking. See
+          // proxyCommunityBulkAction in app/routes.js.
+          const response = await fetch(`/api/v1/community/${communityId}/members/bulk-remove`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userIds: ids })
+          });
+          if (!response.ok) {
+            throw new Error(await apiErrorReason(response));
+          }
+          const data = await response.json();
+          const results = Array.isArray(data.results) ? data.results : [];
+          const kicked = new Set(results.filter(r => r.ok).map(r => r.id));
+          const failed = results.filter(r => !r.ok);
+
+          // Take the kicked rows off the screen now, then refresh in place.
+          kicked.forEach(function(id) { selectedMemberIds.delete(id); });
+          communityMembersData = communityMembersData.filter(m => !kicked.has(m._id));
+          communityMembersTotal = Math.max(0, communityMembersTotal - kicked.size);
+          renderMembersList();
+
+          if (failed.length === 0) {
+            showToast(`Kicked ${kicked.size} ${kicked.size === 1 ? 'member' : 'members'}`, 3000, 'success');
+          } else if (kicked.size === 0) {
+            showToast(`Could not kick ${failed.length === 1 ? 'that member' : 'those members'}: ${failed[0].error || 'unknown error'}`, 4000, 'error');
+          } else {
+            showToast(`Kicked ${kicked.size}. ${failed.length} could not be kicked: ${failed[0].error || 'unknown error'}`, 5000, 'error');
+          }
+          await reloadMembersView();
+        } catch (error) {
+          showToast(`Failed to kick members: ${error.message}`, 4000, 'error');
+        } finally {
+          if (kickBtn) kickBtn.disabled = false;
+          updateMembersBulkBar();
+        }
+      }
+
+      // Refetch the list the admin is looking at: same page, same status group,
+      // same search, same scroll. If the page emptied out (its last people were
+      // just removed), step back to the last page that still has anyone.
+      async function reloadMembersView() {
+        const modal = document.getElementById('membersModal');
+        const scroller = modal ? modal.firstElementChild : null;
+        const scrollTop = scroller ? scroller.scrollTop : 0;
+        const fetchPage = function(page) {
+          return communityCurrentSearchTerm
+            ? performMemberSearch(communityCurrentSearchTerm, page, { keepList: true })
+            : loadMembers(page, { keepList: true });
+        };
+        const page = communityMembersPage;
+        await fetchPage(page);
+        if (communityMembersData.length === 0 && page > 1) {
+          const lastPage = Math.max(1, Math.ceil(communityMembersTotal / communityMembersLimit));
+          await fetchPage(Math.min(page - 1, lastPage));
+        }
+        if (scroller) scroller.scrollTop = scrollTop;
       }
 
       // A username goes into an inline onclick, so quotes and backslashes in it
@@ -13470,7 +13654,7 @@ async function saveEditEvent() {
           }
 
           showToast(status === 'approved' ? `${username} is now a member` : `Request from ${username} declined`, 3000, 'success');
-          loadMembers(communityMembersPage);
+          reloadMembersView();
         } catch (error) {
           setMemberDecisionBusy(memberId, false);
           showToast(`Could not update ${username}: ${error.message}`, 4000, 'error');
@@ -13507,7 +13691,7 @@ async function saveEditEvent() {
           }
 
           showToast(`${username} was blocked`, 3000, 'success');
-          loadMembers(communityMembersPage);
+          reloadMembersView();
         } catch (error) {
           setMemberDecisionBusy(memberId, false);
           showToast(`Could not block ${username}: ${error.message}`, 4000, 'error');
@@ -13572,6 +13756,9 @@ async function saveEditEvent() {
         
         // Sanitize and trim the search term
         const sanitizedTerm = searchTerm ? searchTerm.trim() : '';
+        if (sanitizedTerm !== communityCurrentSearchTerm) {
+          selectedMemberIds.clear();
+        }
         communityCurrentSearchTerm = sanitizedTerm;
         
         // If search term is empty, load all members normally
@@ -13592,7 +13779,7 @@ async function saveEditEvent() {
         }, 300); // 300ms delay
       }
       
-      async function performMemberSearch(searchTerm, page = 1) {
+      async function performMemberSearch(searchTerm, page = 1, opts = {}) {
         const loadingDiv = document.getElementById('membersLoading');
         const listContainer = document.getElementById('membersListContainer');
         const paginationDiv = document.getElementById('membersPagination');
@@ -13602,12 +13789,14 @@ async function saveEditEvent() {
         }
         
         try {
-          // Show loading state
-          if (loadingDiv) {
-            loadingDiv.style.display = 'block';
+          if (!opts.keepList) {
+            // Show loading state
+            if (loadingDiv) {
+              loadingDiv.style.display = 'block';
+            }
+            listContainer.innerHTML = '';
+            paginationDiv.style.display = 'none';
           }
-          listContainer.innerHTML = '';
-          paginationDiv.style.display = 'none';
           
           const communityId = '<%= community._id %>';
           const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
@@ -13947,25 +14136,23 @@ async function saveEditEvent() {
             throw new Error(await apiErrorReason(response));
           }
 
-          const data = await response.json();
-          
           showToast('Member kicked successfully!', 3000, 'success');
           closeMemberActionsModal();
           
-          // Refresh the members list to reflect the change
-          // If we're on a page that might now be empty, go back to page 1
-          if (communityMembersPage > 1 && communityFilteredMembers.length === 1) {
-            loadMembers(1);
-          } else {
-            loadMembers(communityMembersPage);
-          }
+          // Take the row off now, then refresh the same page, group and search
+          // in place so the admin keeps their spot in the list.
+          selectedMemberIds.delete(memberId);
+          communityMembersData = communityMembersData.filter(m => m._id !== memberId);
+          communityMembersTotal = Math.max(0, communityMembersTotal - 1);
+          renderMembersList();
+          reloadMembersView();
           
         } catch (error) {
           showToast(`Failed to kick member: ${error.message}`, 3000, 'error');
           
           // Restore the action buttons on error
           if (actionsContainer) {
-            const member = communityFilteredMembers.find(m => m._id === memberId);
+            const member = communityMembersData.find(m => m._id === memberId);
             if (member) {
               openMemberActions(memberId); // This will restore the buttons
             }
@@ -14173,6 +14360,20 @@ async function saveEditEvent() {
                   <button type="button" class="member-status-chip" data-status="declined" onclick="setMemberStatusFilter('declined')">
                     Declined <span class="member-status-count" id="memberCountDeclined">0</span>
                   </button>
+                </div>
+
+                <!-- Bulk kick: select-all for the page, the running count, and the
+                     action once anything is ticked. Hidden for anyone who cannot
+                     kick (see canBulkKickMembers). -->
+                <div id="membersBulkBar" class="bulk-bar" style="display:none;">
+                  <label class="bulk-bar-select">
+                    <input type="checkbox" id="membersSelectAll" onchange="toggleSelectAllMembersOnPage(this.checked)" aria-label="Select all members on this page">
+                    <span id="membersSelectedCount">Select all on page</span>
+                  </label>
+                  <div id="membersBulkActions" class="bulk-bar-actions" style="display:none;">
+                    <button type="button" class="bulk-bar-clear" onclick="clearMemberSelection()">Clear</button>
+                    <button type="button" id="membersBulkKickBtn" class="bulk-bar-danger" onclick="confirmBulkKickMembers()">Kick 0</button>
+                  </div>
                 </div>
 
                 <!-- Members List -->
@@ -15428,6 +15629,19 @@ async function saveEditEvent() {
           </div>
         </div>
 
+        <!-- Bulk delete: select-all for the page, the running count, and the
+             action once anything is ticked. -->
+        <div id="civiliansBulkBar" class="bulk-bar" style="display:none;">
+          <label class="bulk-bar-select">
+            <input type="checkbox" id="civiliansSelectAll" onchange="toggleSelectAllCiviliansOnPage(this.checked)" aria-label="Select all civilians on this page">
+            <span id="civiliansSelectedCount">Select all on page</span>
+          </label>
+          <div id="civiliansBulkActions" class="bulk-bar-actions" style="display:none;">
+            <button type="button" class="bulk-bar-clear" onclick="clearCivilianSelection()">Clear</button>
+            <button type="button" id="civiliansBulkDeleteBtn" class="bulk-bar-danger" onclick="confirmBulkDeleteCivilians()">Delete 0</button>
+          </div>
+        </div>
+
         <!-- Civilians List -->
         <div id="civiliansList" data-approval-enabled="<%= community && community.community && community.community.civilianApprovalSystemEnabled ? 'true' : 'false' %>" style="background:#2d3748; border-radius:12px; border:1px solid #4a5568; min-height:300px; max-height:500px; overflow-y:auto;">
           <!-- Civilians will be loaded here -->
@@ -15643,14 +15857,14 @@ async function saveEditEvent() {
         <button onclick="closeDeleteCivilianConfirmModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
         <div style="padding:2rem; text-align:center;">
           <i class="fa fa-exclamation-triangle" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
-          <h3 style="color:#fff; margin:0 0 1rem 0; font-size:1.5rem; font-weight:600;">Delete Civilian</h3>
-          <p style="color:#a0aec0; margin:0 0 1rem 0; font-size:1rem;">Are you sure you want to delete civilian <strong style="color:#fff;">"<span id="deleteCivilianName"></span>"</strong>?</p>
+          <h3 id="deleteCivilianTitle" style="color:#fff; margin:0 0 1rem 0; font-size:1.5rem; font-weight:600;">Delete Civilian</h3>
+          <p id="deleteCivilianMessage" style="color:#a0aec0; margin:0 0 1rem 0; font-size:1rem;">Are you sure you want to delete civilian <strong style="color:#fff;">"<span id="deleteCivilianName"></span>"</strong>?</p>
           <p style="color:#e53e3e; margin:0 0 1.5rem 0; font-size:0.95rem; font-weight:500;">This action cannot be undone.</p>
           <div style="display:flex; gap:0.75rem; justify-content:center; margin-top:1.5rem;">
             <button onclick="closeDeleteCivilianConfirmModal()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='#7a8288'" onmouseout="this.style.background='#6b7280'">
               Cancel
             </button>
-            <button onclick="confirmDeleteCivilian()" style="background:#e53e3e; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+            <button id="deleteCivilianConfirmBtn" onclick="confirmDeleteCivilian()" style="background:#e53e3e; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
               Delete
             </button>
           </div>
@@ -15994,6 +16208,26 @@ async function saveEditEvent() {
       .member-pending-btn[data-action="decline"] { background: #4a5568; }
       .member-pending-btn[data-action="block"]   { background: #b91c1c; }
       .member-pending-btn:disabled { opacity: 0.5; cursor: default; }
+      /* Bulk selection bar shared by the members and civilians lists. Solid
+         background because it sticks to the top of a scrolling panel. */
+      .bulk-bar {
+        position: sticky; top: 0; z-index: 5;
+        display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
+        padding: 0.6rem 0.9rem; margin-bottom: 0.75rem;
+        background: #1e2028; border: 1px solid #4a5568; border-radius: 8px;
+      }
+      .bulk-bar-select { display: inline-flex; align-items: center; gap: 0.6rem; color: #e2e8f0; font-size: 0.875rem; font-weight: 500; cursor: pointer; margin: 0; }
+      .bulk-bar-select input, .bulk-select-box input { width: 1.05rem; height: 1.05rem; accent-color: #3b82f6; cursor: pointer; margin: 0; }
+      .bulk-bar-actions { display: flex; gap: 0.5rem; }
+      .bulk-bar-clear, .bulk-bar-danger {
+        border: none; border-radius: 6px; padding: 0.45rem 0.9rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: #fff;
+      }
+      .bulk-bar-clear { background: #4a5568; }
+      .bulk-bar-danger { background: #ef4444; }
+      .bulk-bar-danger:disabled { opacity: 0.6; cursor: default; }
+      .bulk-select-box { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; flex-shrink: 0; margin: 0; cursor: pointer; }
+      .bulk-select-box--empty { cursor: default; }
+      .member-item.is-selected, .civilian-item.is-selected { border-color: #3b82f6 !important; box-shadow: 0 0 0 1px #3b82f6 inset; }
       /* Someone waiting on a decision, in the Add Members list. */
       .edm-request-chip {
         margin-left: 0.5rem; padding: 1px 7px; border-radius: 999px;

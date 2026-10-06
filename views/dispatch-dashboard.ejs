@@ -1012,7 +1012,21 @@
                                       <button class="filter-btn" data-filter="online" onclick="filterUnits('online')">Online</button>
                                       <button class="filter-btn" data-filter="offline" onclick="filterUnits('offline')">Offline</button>
                                     </div>
+                                    <label class="unit-select-all" for="unitSelectAll">
+                                      <input type="checkbox" id="unitSelectAll" onchange="toggleSelectAllUnits(this.checked)">
+                                      <span>Select all</span>
+                                    </label>
                                   </div>
+                                </div>
+
+                                <!-- Bulk status bar: shown while any unit is selected -->
+                                <div id="unitBulkBar" class="unit-bulk-bar" role="region" aria-label="Bulk unit status" hidden>
+                                  <span class="unit-bulk-count"><span id="unitBulkCount">0</span> selected</span>
+                                  <select id="unitBulkStatus" class="unit-status-select" aria-label="Status for selected units">
+                                    <option value="">Choose status</option>
+                                  </select>
+                                  <button type="button" id="unitBulkApply" class="unit-bulk-apply" onclick="applyBulkUnitStatus()">Apply</button>
+                                  <button type="button" class="unit-bulk-clear" onclick="clearUnitSelection()">Clear</button>
                                 </div>
 
                                 <div id="unitGrid" class="unit-grid">
@@ -2043,6 +2057,108 @@
                                 }
 
                                 /* Unit card actions wrapper */
+                                /* Multi-select for bulk status */
+                                .unit-select-all {
+                                  display: inline-flex;
+                                  align-items: center;
+                                  gap: 6px;
+                                  margin: 0;
+                                  font-size: 13px;
+                                  font-weight: 500;
+                                  color: #cbd5e1;
+                                  cursor: pointer;
+                                  user-select: none;
+                                }
+
+                                .unit-select-all input,
+                                .unit-select input {
+                                  width: 16px;
+                                  height: 16px;
+                                  margin: 0;
+                                  accent-color: #3b82f6;
+                                  cursor: pointer;
+                                }
+
+                                .unit-select {
+                                  display: flex;
+                                  align-items: center;
+                                  margin: 0;
+                                  padding: 4px;
+                                  flex-shrink: 0;
+                                  cursor: pointer;
+                                }
+
+                                .unit-card.selected {
+                                  background: rgba(59, 130, 246, 0.14);
+                                  border-color: rgba(59, 130, 246, 0.7);
+                                }
+
+                                .unit-bulk-bar {
+                                  position: sticky;
+                                  top: 0;
+                                  z-index: 5;
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 10px;
+                                  flex-wrap: wrap;
+                                  padding: 10px 20px;
+                                  background: #1e293b;
+                                  border-top: 1px solid rgba(59, 130, 246, 0.35);
+                                  border-bottom: 1px solid rgba(59, 130, 246, 0.35);
+                                }
+
+                                .unit-bulk-bar[hidden] {
+                                  display: none;
+                                }
+
+                                .unit-bulk-count {
+                                  font-size: 13px;
+                                  font-weight: 600;
+                                  color: #f1f5f9;
+                                  margin-right: 4px;
+                                }
+
+                                .unit-bulk-bar .unit-status-select.field-error {
+                                  border-color: #ef4444;
+                                  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+                                }
+
+                                .unit-bulk-apply,
+                                .unit-bulk-clear {
+                                  padding: 5px 14px;
+                                  border-radius: 6px;
+                                  font-size: 13px;
+                                  font-weight: 600;
+                                  cursor: pointer;
+                                  transition: all 0.2s ease;
+                                }
+
+                                .unit-bulk-apply {
+                                  background: #3b82f6;
+                                  border: 1px solid #3b82f6;
+                                  color: #fff;
+                                }
+
+                                .unit-bulk-apply:hover:not(:disabled) {
+                                  background: #2563eb;
+                                }
+
+                                .unit-bulk-apply:disabled {
+                                  opacity: 0.6;
+                                  cursor: wait;
+                                }
+
+                                .unit-bulk-clear {
+                                  background: transparent;
+                                  border: 1px solid rgba(71, 85, 105, 0.6);
+                                  color: #cbd5e1;
+                                }
+
+                                .unit-bulk-clear:hover {
+                                  border-color: rgba(148, 163, 184, 0.8);
+                                  color: #f1f5f9;
+                                }
+
                                 .unit-card-actions {
                                   display: flex;
                                   align-items: center;
@@ -5470,9 +5586,12 @@
             $unitCard.removeClass('status-updated');
           }, 1500);
 
-          // Also refresh the full list to update status categories
+          // Also refresh the full list to update status categories. A bulk
+          // change arrives as one event per unit, so collapse a burst into
+          // a single reload.
           if (typeof loadUnitsOnDuty === 'function') {
-            setTimeout(() => loadUnitsOnDuty(), 100);
+            clearTimeout(window.__unitsReloadTimer);
+            window.__unitsReloadTimer = setTimeout(() => loadUnitsOnDuty(), 250);
           }
         } else {
           // Unit not found, refresh the full list (might be newly on duty)
@@ -6002,6 +6121,12 @@
     $('#offlineCount').text(offlineCount);
     $('#totalCount').text(unitsCache.length);
 
+    // Keep the bulk selection to units that are still listed, and remember
+    // which ones are on screen so "Select all" means what the dispatcher sees.
+    pruneUnitSelection();
+    visibleUnitIds = filteredUnits.map(u => u._id);
+    syncUnitBulkBar();
+
     if (filteredUnits.length === 0) {
       $grid.html('<div class="unit-empty"><i class="fa fa-users"></i> No units found</div>');
       return;
@@ -6068,9 +6193,13 @@
       const manageCsClass = adminUser ? '' : ' disabled';
       const lockIcon = adminUser ? '<i class="fa fa-id-badge"></i> ' : '<i class="fa fa-lock"></i> ';
       const manageCsLabel = adminUser ? 'Manage Call Sign' : 'Manage Call Sign (Admin)';
+      const isSelected = selectedUnitIds.has(unit._id);
 
       const cardHtml = `
-        <div class="unit-card ${statusCategory}" data-user-id="${safeUserId}">
+        <div class="unit-card ${statusCategory}${isSelected ? ' selected' : ''}" data-user-id="${safeUserId}">
+          <label class="unit-select" title="Select for bulk status" onclick="event.stopPropagation()">
+            <input type="checkbox" class="unit-select-checkbox" data-user-id="${safeUserId}" aria-label="Select ${username}" ${isSelected ? 'checked' : ''} onchange="toggleUnitSelection(this)">
+          </label>
           <div class="unit-status-indicator ${statusCategory}"></div>
           <div class="unit-info">
             <div class="unit-callsign">${callSign}</div>
@@ -6210,6 +6339,160 @@
       error: function(xhr) {
         console.error('Error updating unit status:', xhr.responseText);
         showRealTimeToast('status', 'Failed to update status', 'error');
+      }
+    });
+  }
+
+  // ---- Bulk unit status ----
+  // Selected unit ids survive re-renders; ids that leave the roster are dropped.
+  var selectedUnitIds = new Set();
+  var visibleUnitIds = [];
+  var BULK_UNIT_STATUS_MAX = 100;
+
+  function pruneUnitSelection() {
+    if (selectedUnitIds.size === 0) return;
+    var listed = new Set(unitsCache.map(function(u) { return u._id; }));
+    selectedUnitIds.forEach(function(id) {
+      if (!listed.has(id)) selectedUnitIds.delete(id);
+    });
+  }
+
+  // Refresh the action bar, its status options and the "Select all" state.
+  function syncUnitBulkBar() {
+    var count = selectedUnitIds.size;
+    $('#unitBulkCount').text(count);
+    $('#unitBulkBar').prop('hidden', count === 0);
+
+    var $status = $('#unitBulkStatus');
+    var current = $status.val();
+    var options = '<option value="">Choose status</option>';
+    tenCodesCache.forEach(function(tc) {
+      options += '<option value="' + escapeHtml(tc._id) + '">' + escapeHtml(tc.code) +
+        (tc.description ? ' - ' + escapeHtml(tc.description) : '') + '</option>';
+    });
+    $status.html(options);
+    if (current && tenCodesCache.some(function(tc) { return tc._id === current; })) {
+      $status.val(current);
+    }
+
+    var visibleSelected = visibleUnitIds.filter(function(id) { return selectedUnitIds.has(id); }).length;
+    var selectAll = document.getElementById('unitSelectAll');
+    if (selectAll) {
+      selectAll.checked = visibleUnitIds.length > 0 && visibleSelected === visibleUnitIds.length;
+      selectAll.indeterminate = visibleSelected > 0 && visibleSelected < visibleUnitIds.length;
+      selectAll.disabled = visibleUnitIds.length === 0;
+    }
+  }
+
+  function toggleUnitSelection(checkbox) {
+    var userId = $(checkbox).data('user-id');
+    if (!userId) return;
+    if (checkbox.checked) selectedUnitIds.add(userId);
+    else selectedUnitIds.delete(userId);
+    $(checkbox).closest('.unit-card').toggleClass('selected', checkbox.checked);
+    syncUnitBulkBar();
+  }
+
+  // "Select all" acts on the units currently shown by the search and filters.
+  function toggleSelectAllUnits(checked) {
+    visibleUnitIds.forEach(function(id) {
+      if (checked) selectedUnitIds.add(id);
+      else selectedUnitIds.delete(id);
+    });
+    renderUnitsGrid();
+  }
+
+  function clearUnitSelection() {
+    selectedUnitIds.clear();
+    $('#unitBulkStatus').val('').removeClass('field-error');
+    renderUnitsGrid();
+  }
+
+  function bulkStatusErrorReason(xhr) {
+    if (xhr && xhr.status === 403) return "You don't have permission to set unit statuses";
+    var data = xhr && xhr.responseJSON;
+    if (!data && xhr && xhr.responseText) {
+      try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; }
+    }
+    return (data && data.response && data.response.message) ||
+      (data && data.message) ||
+      (data && data.error) ||
+      ('HTTP ' + (xhr ? xhr.status : 0));
+  }
+
+  function applyBulkUnitStatus() {
+    var communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+    var $status = $('#unitBulkStatus');
+    var tenCodeId = $status.val();
+    var userIds = Array.from(selectedUnitIds);
+    if (!communityId || userIds.length === 0) return;
+
+    if (!tenCodeId) {
+      $status.addClass('field-error').trigger('focus');
+      showRealTimeToast('status', 'Choose a status to apply', 'warning');
+      return;
+    }
+    $status.removeClass('field-error');
+    if (userIds.length > BULK_UNIT_STATUS_MAX) {
+      showRealTimeToast('status', 'Select at most ' + BULK_UNIT_STATUS_MAX + ' units', 'warning',
+        userIds.length + ' are selected. Clear some and try again.');
+      return;
+    }
+
+    var tenCode = tenCodesCache.find(function(tc) { return tc._id === tenCodeId; });
+    var statusCode = tenCode ? tenCode.code : 'No Status';
+    var $apply = $('#unitBulkApply');
+    $apply.prop('disabled', true).text('Applying...');
+
+    // Goes through the website server, which vouches for who is asking.
+    $.ajax({
+      url: '/api/v1/community/' + encodeURIComponent(communityId) + '/members/tenCode/bulk',
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({ userIds: userIds, departmentId: departmentId, tenCodeId: tenCodeId }),
+      success: function(res) {
+        var results = (res && Array.isArray(res.results)) ? res.results : [];
+        var okIds = results.filter(function(r) { return r.ok; }).map(function(r) { return r.id; });
+        var failed = results.filter(function(r) { return !r.ok; });
+
+        okIds.forEach(function(userId) {
+          if (!/^[a-f0-9]{24}$/i.test(userId)) return;
+          if (!memberDataCache[userId]) memberDataCache[userId] = Object.create(null);
+          memberDataCache[userId].tenCodeID = tenCodeId;
+          selectedUnitIds.delete(userId);
+
+          // Same event a single change sends, so other viewers update as they do today.
+          if (dashboardSocket) {
+            dashboardSocket.emit('update_status', {
+              userID: userId,
+              status: statusCode,
+              statusCode: tenCodeId,
+              setBy: dbUser.user?.username || 'Dispatch',
+              communityId: communityId,
+              broadcastToAll: !!(tenCode && isBroadcastStatus(tenCode.code, tenCode.description)),
+              activeDepartmentId: memberDataCache[userId].activeDepartmentId || '',
+              activeDepartmentName: memberDataCache[userId].activeDepartmentName || ''
+            });
+          }
+        });
+
+        renderUnitsGrid();
+
+        if (failed.length === 0) {
+          showRealTimeToast('status', okIds.length + (okIds.length === 1 ? ' unit' : ' units') + ' set to ' + statusCode, 'success');
+        } else if (okIds.length > 0) {
+          showRealTimeToast('status', okIds.length + ' updated, ' + failed.length + ' failed', 'warning',
+            'Failed units stay selected. ' + (failed[0].error || ''));
+        } else {
+          showRealTimeToast('status', 'No units updated, ' + failed.length + ' failed', 'error', failed[0].error || '');
+        }
+      },
+      error: function(xhr) {
+        console.error('Error setting unit statuses:', xhr.responseText);
+        showRealTimeToast('status', 'Failed to update statuses', 'error', bulkStatusErrorReason(xhr));
+      },
+      complete: function() {
+        $apply.prop('disabled', false).text('Apply');
       }
     });
   }
@@ -6545,6 +6828,10 @@
   window.openSetStatusModal = openSetStatusModal;
   window.saveStatusFromModal = saveStatusFromModal;
   window.onStatusModalDeptChange = onStatusModalDeptChange;
+  window.toggleUnitSelection = toggleUnitSelection;
+  window.toggleSelectAllUnits = toggleSelectAllUnits;
+  window.clearUnitSelection = clearUnitSelection;
+  window.applyBulkUnitStatus = applyBulkUnitStatus;
 
   // Initialize socket on window load
   window.onload = function() {
