@@ -34,6 +34,7 @@ export interface FRSeed {
   commentCount?: number;
   createdAt?: Date;
   updatedAt?: Date;
+  releasedAt?: Date;
 }
 
 async function withDb<T>(fn: (db: Db) => Promise<T>): Promise<T> {
@@ -64,6 +65,7 @@ export async function seedFeatureRequest(opts: FRSeed): Promise<void> {
           comments: [],
           createdAt: opts.createdAt ?? now,
           updatedAt: opts.updatedAt ?? now,
+          ...(opts.releasedAt ? { releasedAt: opts.releasedAt } : {}),
         },
       },
       { upsert: true }
