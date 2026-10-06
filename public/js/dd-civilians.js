@@ -17,76 +17,25 @@
   var toast = function (m, t) { if (window.ddToast) window.ddToast(m, t); };
   var fmtDate = function (d) { return window.formatDate ? window.formatDate(d) : d || 'N/A'; };
 
-  // Detect the API's "record_deletion_restricted" 403 response so we can show
-  // the friendly explanation instead of a generic "Failed to delete" toast.
-  // Mirrors the helper in name-database.js, inlined here because that file
-  // isn't loaded on the department dashboard.
+  // Record deletion gate and its 403 handling live in record-deletion.js
+  // (window.RecordDeletion). The community setting "Allow civilians to delete
+  // their own records" only hides the button from the character's owner.
   function isRecordDeletionRestrictedError(xhr) {
-    if (!xhr || xhr.status !== 403) return false;
-    var body = xhr.responseJSON;
-    if (!body && typeof xhr.responseText === 'string') {
-      try { body = JSON.parse(xhr.responseText); } catch (e) { body = null; }
-    }
-    if (!body) return false;
-    return body.error === 'record_deletion_restricted'
-        || body.code === 'record_deletion_restricted'
-        || body.errorCode === 'record_deletion_restricted';
+    return !!(window.RecordDeletion && window.RecordDeletion.isRestrictedError(xhr));
   }
   function showRecordDeletionRestrictedModal() {
-    if (window.ddModal) {
-      window.ddModal({
-        type: 'warning',
-        icon: 'fa-lock',
-        title: 'Record deletion is restricted',
-        message: "This department doesn't allow civilians to delete their own citations, written warnings, or arrest reports.",
-        detail: "Contact a community admin or a user with the 'manage records' role permission to remove this record.",
-        buttons: [{ label: 'Got it', class: 'dd-modal-btn-primary' }],
-      });
-    } else {
-      toast('Record deletion is restricted for this department', 'warning');
-    }
+    if (window.RecordDeletion) window.RecordDeletion.showRestricted();
+    else toast('Record deletion is off in this community', 'warning');
   }
 
-  // Per-record civilian record-deletion gate. Mirrors window.canDeleteCivilianRecords
-  // in name-database.js — re-defined here because that script isn't loaded on
-  // the department dashboard. Reads window.communityDepartmentsCached and the
-  // user's roles populated by cacheRecordDeletionContext().
-  function canDeleteRecord(record) {
-    var deptId = record && (record.departmentId || record.departmentID);
-    var deptList = window.communityDepartmentsCached || [];
-    var restricted = false;
-    if (deptId) {
-      for (var i = 0; i < deptList.length; i++) {
-        var d = deptList[i];
-        if (!d) continue;
-        var dId = d._id || d.id;
-        if (dId === deptId) {
-          restricted = d.restrictCivilianRecordDeletion === true;
-          break;
-        }
-      }
-    }
-    if (!restricted) return true;
-
-    var user = window.dbUser || (cfg().dbUser);
-    var uid = user && user._id;
-    if (!uid) return false;
-
-    if (window.communityOwnerIDCached && window.communityOwnerIDCached === uid) return true;
-
-    var roles = window.communityRolesCached || [];
-    for (var r = 0; r < roles.length; r++) {
-      var role = roles[r];
-      if (!role || !role.members || role.members.indexOf(uid) === -1) continue;
-      var perms = role.permissions || [];
-      for (var p = 0; p < perms.length; p++) {
-        var perm = perms[p];
-        if (perm && perm.enabled === true && (perm.name === 'administrator' || perm.name === 'manage records')) {
-          return true;
-        }
-      }
-    }
-    return false;
+  // Whether the viewer may delete records on civ. Every character listed here
+  // is the viewer's own (the grid loads /civilians/user/{me}), so the owner
+  // falls back to the viewer when the civilian payload omits userID.
+  function canDeleteRecordsOn(civ) {
+    if (!window.RecordDeletion) return true;
+    var viewer = (window.dbUser && window.dbUser._id) || cfg().userId || '';
+    var owner = (civ && (civ.userID || civ.userId)) || viewer;
+    return window.RecordDeletion.canDelete(window.recordDeletionCommunityCached, owner, viewer);
   }
 
   // Convert any date value (string, timestamp, ISO) to YYYY-MM-DD for <input type="date">
@@ -495,14 +444,11 @@
     }
   };
 
-  // Cache the per-department restrictCivilianRecordDeletion list plus owner +
-  // roles so window.canDeleteCivilianRecords (name-database.js) can decide
-  // per-record whether to show the delete button.
+  // Cache the community the record-deletion gate reads
+  // (allowCivilianRecordDeletion, owner, roles); see canDeleteRecordsOn.
   function cacheRecordDeletionContext(comm) {
     if (!comm) return;
-    window.communityDepartmentsCached = comm.departments || [];
-    window.communityOwnerIDCached = comm.ownerID || '';
-    window.communityRolesCached = comm.roles || [];
+    window.recordDeletionCommunityCached = comm;
     // Economy: cache the master enable flag so the civilian grid can show
     // balance chips without an extra fetch.
     window.communityEconomyEnabled = !!(comm.economy && comm.economy.enabled);
@@ -1866,11 +1812,7 @@
     var icon = isArrest ? 'fa-handcuffs' : (type === 'Warning' ? 'fa-triangle-exclamation' : 'fa-file-lines');
 
     var recordId = r._id || '';
-    // The toggle that gates this UI is the *dashboard's* department, not the
-    // record's original issuer. From a civilian's perspective on Civvies23,
-    // Civvies23's policy decides whether they can delete records here, even
-    // if the citation was issued by Police Dept.
-    var canDelete = canDeleteRecord({ departmentId: cfg().departmentId || '' });
+    var canDelete = canDeleteRecordsOn(currentCiv);
     var deleteHtml = canDelete
       ? ('<button class="dd-civ-btn dd-civ-btn-danger dd-civ-btn-small dd-rec-delete" ' +
           'data-rec-id="' + esc(recordId) + '" data-rec-type="' + (isArrest ? 'arrest' : 'citation') + '" ' +
@@ -1931,6 +1873,9 @@
         } else {
           url = conf.API_URL + '/api/v1/civilian/' + encodeURIComponent(currentCiv._id) + '/criminal-history/' + encodeURIComponent(recId);
         }
+        // Identifies the viewer so the API can apply the community's record
+        // deletion setting (the browser has no API token).
+        url += '?userId=' + encodeURIComponent(conf.userId || '');
         $.ajax({
           url: url,
           method: 'DELETE',

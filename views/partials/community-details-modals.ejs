@@ -914,6 +914,21 @@
           </div>
         </div>
 
+        <!-- Civilian Records Section -->
+        <div id="civilianRecordDeletionSection" style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+            <i class="fa fa-file-lines" style="font-size:1.5rem; color:#ef4444;"></i>
+            <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">Civilian Records</h4>
+          </div>
+          <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.5rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="checkbox" id="allowCivilianRecordDeletion" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              Allow civilians to delete their own records
+            </label>
+          </div>
+          <p style="color:#a0aec0; margin:0; font-size:0.875rem;">When off, players can't remove citations, warnings or arrests from their own characters. Officers and admins with Manage Records still can.</p>
+        </div>
+
 
         <!-- Rank Promotions Section -->
         <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
@@ -8468,15 +8483,6 @@ function populateEditDeptModal(dept) {
   document.getElementById('editDeptName').value = dept.name || '';
   document.getElementById('editDeptDescription').value = dept.description || '';
   document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
-  // Per-department civilian-record deletion lock. Legacy departments come up
-  // unset → unchecked (allow); new departments default to true on the API.
-  // The lock only applies to civilian-template depts (where civilian
-  // dashboards live) — hide the section entirely on police/fire/ems/etc.
-  var isCivilianTemplate = dept && dept.template && dept.template.name === 'Civilian';
-  var recordsSection = document.getElementById('editDeptRecordsSection');
-  if (recordsSection) recordsSection.style.display = isCivilianTemplate ? '' : 'none';
-  var restrictCb = document.getElementById('editDeptRestrictRecordDeletion');
-  if (restrictCb) restrictCb.checked = dept.restrictCivilianRecordDeletion === true;
 
   // Update image preview
   var preview = document.getElementById('editDeptImagePreview');
@@ -9704,41 +9710,6 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
               </div>
             </div>
 
-            <!-- Records — civilian-template depts only; populateEditDeptModal toggles display. -->
-            <div class="edm-section is-open" id="editDeptRecordsSection">
-              <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
-                <div class="edm-section-title">
-                  <i class="fa fa-trash-can"></i>
-                  Records
-                </div>
-                <i class="fa fa-chevron-down edm-section-chevron"></i>
-              </div>
-              <div class="edm-section-body">
-                <div class="edm-section-inner">
-                  <div class="edm-vis-row">
-                    <div style="display:flex; align-items:center; gap:6px;">
-                      <span class="edm-vis-label" style="color:#94a3b8;">Restrict civilian record deletion</span>
-                      <div class="edm-vis-tooltip" onmouseenter="positionEdmTooltip(this)" onmouseleave="hideEdmTooltip(this)">
-                        <i class="fa fa-info-circle"></i>
-                        <div class="edm-vis-tooltip-text">
-                          When on, civilians can't delete citations, written warnings, or arrest reports issued by this department. Community admins and users with the 'manage records' role permission can still delete them.
-                        </div>
-                      </div>
-                    </div>
-                    <div class="edm-vis-labels">
-                      <span class="edm-vis-label" style="color:#64748b;">Off</span>
-                      <label class="edm-toggle">
-                        <input type="checkbox" id="editDeptRestrictRecordDeletion" onchange="triggerEditDeptAutoSaveImmediate()">
-                        <div class="edm-toggle-track"></div>
-                        <div class="edm-toggle-knob"></div>
-                      </label>
-                      <span class="edm-vis-label" style="color:#64748b;">On</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <!-- Components -->
             <div class="edm-section is-open">
               <div class="edm-section-header" onclick="this.parentElement.classList.toggle('is-open')">
@@ -9863,9 +9834,6 @@ async function saveEditDepartment() {
 
     // Create the department object with only the fields we want to update
     var toneSound = document.getElementById('editDeptToneSound') ? document.getElementById('editDeptToneSound').value : '';
-    var restrictCb = document.getElementById('editDeptRestrictRecordDeletion');
-    var recordsSectionEl = document.getElementById('editDeptRecordsSection');
-    var recordsSectionVisible = recordsSectionEl && recordsSectionEl.style.display !== 'none';
     var payload = {
       name: name,
       description: description,
@@ -9873,12 +9841,6 @@ async function saveEditDepartment() {
       image: finalImage,
       toneSound: toneSound
     };
-    // Only persist the records-lock flag on civilian-template depts (where the
-    // section is rendered). Non-civilian depts never consult this flag, so
-    // writing it would just be noise on the document.
-    if (recordsSectionVisible && restrictCb) {
-      payload.restrictCivilianRecordDeletion = restrictCb.checked;
-    }
 
     // Update the template components - include in the same PATCH request
     if (currentDept.template) {
@@ -11369,6 +11331,12 @@ async function saveEditEvent() {
 
         toggleCivilianApprovalInfo(enableApproval);
 
+        // Record deletion: unset means allowed, so only an explicit false unchecks.
+        const allowRecordDeletionElement = document.getElementById('allowCivilianRecordDeletion');
+        if (allowRecordDeletionElement) {
+          allowRecordDeletionElement.checked = communityData.community?.allowCivilianRecordDeletion !== false;
+        }
+
         // Set reset-stats-on-promotion (community-wide rank setting)
         const enableResetStats = communityData.community?.rankSettings?.resetStatsOnPromotion || false;
         const enableResetStatsElement = document.getElementById('enableResetStatsOnPromotion');
@@ -11489,6 +11457,12 @@ async function saveEditEvent() {
         }
 
         toggleCivilianApprovalInfo(enableApproval);
+
+        // Record deletion: unset means allowed, so only an explicit false unchecks.
+        const allowRecordDeletionElement = document.getElementById('allowCivilianRecordDeletion');
+        if (allowRecordDeletionElement) {
+          allowRecordDeletionElement.checked = communityData?.allowCivilianRecordDeletion !== false;
+        }
 
         // Set reset-stats-on-promotion (community-wide rank setting)
         const enableResetStats = communityData?.rankSettings?.resetStatsOnPromotion || false;
@@ -11634,6 +11608,7 @@ async function saveEditEvent() {
         const enableLimits = document.getElementById('enableCivilianLimits').checked;
         const maxCivilians = enableLimits ? parseInt(document.getElementById('maxCiviliansPerDept').value) : 5;
         const enableApproval = document.getElementById('enableCivilianApproval').checked;
+        const allowRecordDeletionEl = document.getElementById('allowCivilianRecordDeletion');
         const resetStatsEl = document.getElementById('enableResetStatsOnPromotion');
         const enableResetStats = resetStatsEl ? resetStatsEl.checked : false;
 
@@ -11693,6 +11668,9 @@ async function saveEditEvent() {
           warrantRandomApprovalRate: warrantRandomApprovalRate,
           'rankSettings.resetStatsOnPromotion': enableResetStats
         };
+        if (allowRecordDeletionEl) {
+          updateData.allowCivilianRecordDeletion = allowRecordDeletionEl.checked;
+        }
 
         // Save to server - use the same route as saveCommunityProfile
         const communityId = '<%= community._id %>';
