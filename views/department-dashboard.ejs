@@ -3848,11 +3848,9 @@ $('#dd-loading').hide();
           // Store community data for settings panel (roles, permissions)
           window.ddConfig.communityData = community;
 
-          // Cache fields used by the per-record civilian record-deletion gate
-          // (read by window.canDeleteCivilianRecords; see name-database.js).
-          window.communityDepartmentsCached = community.departments || [];
-          window.communityOwnerIDCached = community.ownerID || '';
-          window.communityRolesCached = community.roles || [];
+          // Community the record-deletion gate in dd-civilians.js reads
+          // (allowCivilianRecordDeletion, owner, roles).
+          window.recordDeletionCommunityCached = community;
 
           // Re-render settings component now that permissions are available
           if (window.ddSettingsInit) window.ddSettingsInit();
@@ -7467,6 +7465,7 @@ $('#dd-loading').hide();
   <script src="/static/js/dd-limits.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <!-- Civilian template component scripts -->
   <script src="/static/js/vehicle-flags.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/record-deletion.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
 <script src="/static/js/date-only.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/dd-civilians.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/dd-vehicles.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>

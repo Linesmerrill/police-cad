@@ -5501,8 +5501,25 @@ function updateContestButtonVisibility() {
   }
 }
 
+// Whether the viewer may delete records on civData. The community setting
+// "Allow civilians to delete their own records" hides the button from the
+// character's owner; every character on this dashboard is the viewer's own,
+// so the owner falls back to the viewer. Rule lives in record-deletion.js.
+function canDeleteRecordsOn(civData) {
+  if (!window.RecordDeletion) return true;
+  const viewer = (typeof dbUser !== 'undefined' && dbUser && dbUser._id) || '';
+  const owner = (civData && (civData.userID || civData.userId)) || viewer;
+  return window.RecordDeletion.canDelete(window.currentCommunityData, owner, viewer);
+}
+
+function recordTrashButton(type, id, canDelete) {
+  if (!canDelete) return '';
+  return `<button class="heroui-trash-btn" data-type="${type}" data-id="${id}" title="Delete"><i class="fa fa-trash"></i></button>`;
+}
+
 function renderCriminalHistoryEntries(type, civData) {
   let html = '';
+  const canDelete = canDeleteRecordsOn(civData);
   if (type === 'Citation' || type === 'Warning') {
     const entries = (civData.criminalHistory || []).filter(e => e.type === type);
     if (entries.length === 0) {
@@ -5527,7 +5544,7 @@ function renderCriminalHistoryEntries(type, civData) {
             ${isDismissed && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#6ee7b7;margin-top:0.25rem;">Dismissed by ${entry.dismissedBy}</div>` : ''}
             ${isUpheld && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#fca5a5;margin-top:0.25rem;">Upheld by Judge ${entry.dismissedBy}</div>` : ''}
           </div>
-          <button class="heroui-trash-btn" data-type="criminal" data-id="${entry._id}" title="Delete"><i class="fa fa-trash"></i></button>
+          ${recordTrashButton('criminal', entry._id, canDelete)}
         </div>`;
       }).join('');
     }
@@ -5554,7 +5571,7 @@ function renderCriminalHistoryEntries(type, civData) {
             ${isDismissed && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#6ee7b7;margin-top:0.25rem;">Dismissed by ${entry.dismissedBy}</div>` : ''}
             ${isUpheld && entry.dismissedBy ? `<div style="font-size:0.85rem;color:#fca5a5;margin-top:0.25rem;">Upheld by Judge ${entry.dismissedBy}</div>` : ''}
           </div>
-          <button class="heroui-trash-btn" data-type="arrest" data-id="${entry._id}" title="Delete"><i class="fa fa-trash"></i></button>
+          ${recordTrashButton('arrest', entry._id, canDelete)}
         </div>`;
       }).join('');
     }
@@ -6003,7 +6020,7 @@ $(document).on('click', '.heroui-trash-btn', function() {
       });
     } else if (type === 'criminal') {
       $.ajax({
-        url: `${API_URL}/api/v1/civilian/${civId}/criminal-history/${id}`,
+        url: `${API_URL}/api/v1/civilian/${civId}/criminal-history/${id}?userId=${encodeURIComponent(dbUser._id || '')}`,
         method: 'DELETE',
         success: function() {
           const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
@@ -6012,13 +6029,17 @@ $(document).on('click', '.heroui-trash-btn', function() {
           $btn.closest('.heroui-criminal-card').remove();
           updateCriminalHistoryMetrics(civData);
         },
-        error: function() {
+        error: function(xhr) {
+          if (window.RecordDeletion && window.RecordDeletion.isRestrictedError(xhr)) {
+            window.RecordDeletion.showRestricted();
+            return;
+          }
           showToast('Failed to delete record.');
         }
       });
     } else if (type === 'arrest') {
       $.ajax({
-        url: `${API_URL}/api/v1/arrest-report/${id}`,
+        url: `${API_URL}/api/v1/arrest-report/${id}?userId=${encodeURIComponent(dbUser._id || '')}`,
         method: 'DELETE',
         success: function() {
           cachedArrestReports = cachedArrestReports.filter(e => e._id !== id);
@@ -6028,7 +6049,11 @@ $(document).on('click', '.heroui-trash-btn', function() {
           $btn.closest('.heroui-criminal-card').remove();
           updateCriminalHistoryMetrics(civData);
         },
-        error: function() {
+        error: function(xhr) {
+          if (window.RecordDeletion && window.RecordDeletion.isRestrictedError(xhr)) {
+            window.RecordDeletion.showRestricted();
+            return;
+          }
           showToast('Failed to delete arrest report.');
         }
       });
