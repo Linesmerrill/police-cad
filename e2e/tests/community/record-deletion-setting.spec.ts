@@ -1,13 +1,11 @@
 import { test, expect, Page } from '@playwright/test';
-import { TEST_COMMUNITY_ID } from '../../helpers/seed';
+import { TEST_COMMUNITY_ID, TEST_USER_ID } from '../../helpers/seed';
 import {
-  addCommunitySettingsRole,
   addPoliceDepartment,
   addTestCitation,
   createTestCivilian,
   deleteCivilianById,
   encodeIdForUrl,
-  removeCommunityRole,
   removeDepartmentById,
   uniqueCivName,
   unsetAllowCivilianRecordDeletion,
@@ -25,15 +23,14 @@ import { communityDetailsUrl } from '../../helpers/test-urls';
 const COMMUNITY_HEX = TEST_COMMUNITY_ID.toHexString();
 const COMMUNITY_GET = new RegExp(`/api/v1/community/${COMMUNITY_HEX}(\\?.*)?$`);
 
-// Both tests in the settings block touch the shared community's roles, and the
-// first asserts their absence, so they must not interleave.
+const API_URL = process.env.POLICE_CAD_API_URL || 'http://localhost:8081';
+
+// The settings tests write the shared community's setting; keep this file's
+// tests from interleaving with each other.
 test.describe.configure({ mode: 'serial' });
 
 test.describe('General Settings: record deletion toggle', { tag: '@auth' }, () => {
-  const roleId = 'e2e0de1e7e0000000000a001';
-
   test.afterAll(async () => {
-    await removeCommunityRole(roleId);
     await unsetAllowCivilianRecordDeletion();
   });
 
@@ -47,14 +44,29 @@ test.describe('General Settings: record deletion toggle', { tag: '@auth' }, () =
     if (!overview) test.skip(true, 'Community API not reachable');
   }
 
-  test('is not reachable without the settings permission', async ({ page }) => {
+  test('only an admin can change it', async ({ page }) => {
     await openCommunityPage(page);
-    const card = page.locator('#generalSettingsCard');
-    await expect(card).toHaveAttribute('onclick', /showNoGeneralSettingsPermissionModal/);
+    // Sent from the page so it carries our Origin, like the real save does.
+    const statusFor = (userId: string) =>
+      page.evaluate(
+        async ({ api, id, uid }) => {
+          const res = await fetch(`${api}/api/v1/community/${id}?userId=${uid}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ allowCivilianRecordDeletion: true }),
+          });
+          return res.status;
+        },
+        { api: API_URL, id: COMMUNITY_HEX, uid: userId }
+      );
+    // Someone with no role in the community.
+    expect(await statusFor('0123456789abcdef01234567')).toBe(403);
+    // The seeded test user owns the community.
+    expect(await statusFor(TEST_USER_ID.toHexString())).toBe(200);
   });
 
   test('settings admin sees it on by default and turning it off PATCHes the community', async ({ page }) => {
-    await addCommunitySettingsRole(roleId);
+    await unsetAllowCivilianRecordDeletion();
     await openCommunityPage(page);
 
     const card = page.locator('#generalSettingsCard');

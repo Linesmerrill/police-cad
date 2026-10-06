@@ -777,38 +777,6 @@ export async function addTestCitation(civilianId: string): Promise<string> {
   return citationId.toHexString();
 }
 
-/**
- * Give the test user a role with "manage community settings" on the seeded
- * community, which is what renders the General Settings card as usable. The
- * test user already owns the community, so this grants nothing new on the API.
- */
-export async function addCommunitySettingsRole(roleId: string): Promise<void> {
-  await withDb(async (db) => {
-    await db.collection('communities').updateOne(
-      { _id: new ObjectId(TEST_COMMUNITY_ID) },
-      {
-        $push: {
-          'community.roles': {
-            _id: new ObjectId(roleId),
-            name: 'E2E Settings Admin',
-            members: [TEST_USER_ID],
-            permissions: [{ _id: new ObjectId(), name: 'manage community settings', description: '', enabled: true }],
-          },
-        },
-      }
-    );
-  });
-}
-
-export async function removeCommunityRole(roleId: string): Promise<void> {
-  await withDb(async (db) => {
-    await db.collection('communities').updateOne(
-      { _id: new ObjectId(TEST_COMMUNITY_ID) },
-      { $pull: { 'community.roles': { _id: new ObjectId(roleId) } } }
-    );
-  });
-}
-
 /** Return the seeded community to "never set" (allowed). */
 export async function unsetAllowCivilianRecordDeletion(): Promise<void> {
   await withDb(async (db) => {
