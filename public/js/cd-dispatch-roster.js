@@ -128,7 +128,15 @@
     deptFilter: new Set(),
     search: '',
     loading: false,
+    // Bulk status: select mode swaps chip clicks from "open console" to
+    // "toggle selection". selected survives re-renders and polls.
+    selectMode: false,
+    selected: new Set(),
+    visibleIds: [],
+    bulkTenCodeId: '',
+    bulkBusy: false,
   };
+  var BULK_MAX = 100;
   window.__cdDispatchRosterState = state; // debugging handle
 
   // ── Public API ────────────────────────────────────
@@ -152,7 +160,13 @@
   window.cdDispatchRosterIsReady = function () { return state.units.length > 0; };
 
   window.cdDispatchRosterPatchUnit = function (patch) {
-    if (!patch || !patch.id) return;
+    if (patchUnit(patch)) render();
+  };
+
+  // Merges a patch into the cached unit without re-rendering, so a bulk
+  // change can patch many units and render once. Returns true when found.
+  function patchUnit(patch) {
+    if (!patch || !patch.id) return false;
     for (var i = 0; i < state.units.length; i++) {
       if (state.units[i].id === patch.id) {
         var unit = state.units[i];
@@ -201,11 +215,11 @@
           unit.deptTemplate = newTmpl;
           unit.deptKey = deptKey(newTmpl);
         }
-        render();
-        return;
+        return true;
       }
     }
-  };
+    return false;
+  }
 
   // ── Data loading ──────────────────────────────────
 
@@ -229,6 +243,7 @@
       }
       state.units = next;
       state.loading = false;
+      pruneSelection();
       render();
       // Let consumers (call board, call detail) re-resolve assigned-unit IDs
       // that couldn't be looked up before this load completed.
@@ -348,6 +363,15 @@
     var GHOST_CAP = state.ghostExpanded ? ghosts.length : 5;
     var ghostsVisible = ghosts.slice(0, GHOST_CAP);
     var ghostsExtra = Math.max(0, ghosts.length - GHOST_CAP);
+    var shownGhosts = state.search ? ghostsVisible : [];
+    state.visibleIds = filtered.concat(shownGhosts).map(function (u) { return u.id; });
+    // Only rewrite the bulk bar when it changed, so a realtime re-render
+    // doesn't close the status dropdown under the dispatcher.
+    var $bulk = $host.find('.cd-roster-bulk');
+    var nextBulk = bulkHtml();
+    if ($bulk.data('html') !== nextBulk) {
+      $bulk.html(nextBulk).data('html', nextBulk);
+    }
 
     if (state.loading) {
       $body.html('<div class="cd-dispatch-placeholder"><i class="fa fa-circle-notch fa-spin"></i><div>Loading units…</div></div>');
@@ -410,6 +434,9 @@
     }
     $('#cd-dispatch-roster-count').text(filtered.length + (filtered.length !== totalOnDuty ? ' / ' + totalOnDuty : ''));
 
+    var selectAll = document.getElementById('cd-roster-select-all');
+    if (selectAll) selectAll.indeterminate = selectAll.getAttribute('data-indeterminate') === '1';
+
     // Re-apply active filter pills
     $host.find('.cd-roster-pill[data-group="status"]').removeClass('is-active');
     $host.find('.cd-roster-pill[data-group="status"][data-filter="' + state.statusFilter + '"]').addClass('is-active');
@@ -444,6 +471,7 @@
           '<button type="button" class="cd-roster-pill" data-group="status" data-filter="busy" role="tab">Busy</button>' +
           '<button type="button" class="cd-roster-pill" data-group="status" data-filter="other" role="tab">Other</button>' +
         '</div>' +
+        '<div class="cd-roster-bulk" role="region" aria-label="Bulk unit status"></div>' +
       '</div>' +
       '<div class="cd-roster-body" id="cd-dispatch-roster-list" aria-live="polite"></div>' +
       '<div class="cd-unit-unassign-drop" id="cd-dispatch-roster-unassign" aria-hidden="true">' +
@@ -516,16 +544,22 @@
       ? '<span class="cd-unit-chip-code cd-unit-chip-code-ghost">' + esc(code || 'OFF-DUTY') + '</span>'
       : (code ? '<span class="cd-unit-chip-code">' + esc(code) + '</span>' : '');
 
-    var rootClass = 'cd-unit-chip' + (ghost ? ' is-ghost' : '');
+    var selecting = state.selectMode;
+    var isSelected = selecting && state.selected.has(u.id);
+    var rootClass = 'cd-unit-chip' + (ghost ? ' is-ghost' : '') + (selecting ? ' is-selecting' : '') + (isSelected ? ' is-selected' : '');
     // draggable=false on the root + Sortable.js's filter selector (.is-ghost)
     // wired in cd-dispatch-dnd will keep ghosts out of drag operations.
     var dragAttr = ghost ? ' draggable="false"' : '';
     var ariaSuffix = ghost ? ' off-duty' : '';
     return (
-      '<div class="' + rootClass + '" data-user-id="' + esc(u.id) + '" data-tone="' + esc(u.tone) + '" data-dept="' + esc(u.deptKey) + '"' + (ghost ? ' data-ghost="1"' : '') + dragAttr + ' tabindex="0" role="listitem" aria-label="' + esc((u.callSign || u.username) + ' ' + dv.label + (code ? ' ' + code : '') + ariaSuffix) + '" style="--cd-dept-color:' + esc(dv.color) + ';">' +
-        '<div class="cd-unit-chip-avatar" aria-hidden="true">' +
-          '<i class="fa ' + esc(dv.icon) + '" title="' + esc(dv.label) + '"></i>' +
-        '</div>' +
+      '<div class="' + rootClass + '" data-user-id="' + esc(u.id) + '" data-tone="' + esc(u.tone) + '" data-dept="' + esc(u.deptKey) + '"' + (ghost ? ' data-ghost="1"' : '') + dragAttr + ' tabindex="0" role="listitem"' + (selecting ? ' aria-selected="' + (isSelected ? 'true' : 'false') + '"' : '') + ' aria-label="' + esc((u.callSign || u.username) + ' ' + dv.label + (code ? ' ' + code : '') + ariaSuffix) + '" style="--cd-dept-color:' + esc(dv.color) + ';">' +
+        (selecting
+          ? '<div class="cd-unit-chip-avatar cd-unit-chip-check" aria-hidden="true">' +
+              '<i class="fa ' + (isSelected ? 'fa-square-check' : 'fa-square') + '"></i>' +
+            '</div>'
+          : '<div class="cd-unit-chip-avatar" aria-hidden="true">' +
+              '<i class="fa ' + esc(dv.icon) + '" title="' + esc(dv.label) + '"></i>' +
+            '</div>') +
         '<div class="cd-unit-chip-main">' +
           '<div class="cd-unit-chip-top">' +
             '<span class="cd-unit-chip-dot" data-tone="' + (ghost ? 'ghost' : esc(u.tone)) + '" aria-hidden="true"></span>' +
@@ -640,17 +674,44 @@
       // Clicking the chip body opens the Unit Console on the Set Status
       // tab (the most common dispatcher action). Drag-and-drop still works —
       // Sortable.js delays the drag-start enough to distinguish click vs drag.
+      // In select mode the chip body toggles selection instead.
       .on('click.cdDispatchRoster', '.cd-unit-chip', function (e) {
         if ($(e.target).closest('.cd-unit-chip-menu').length) return;
         var userId = $(this).data('user-id');
+        if (state.selectMode) { toggleSelected(userId); return; }
         openUnitConsole(userId, 'status');
       })
       .on('keydown.cdDispatchRoster', '.cd-unit-chip', function (e) {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           var userId = $(this).data('user-id');
+          if (state.selectMode) { toggleSelected(userId); return; }
           openUnitConsole(userId, 'status');
         }
+      })
+      .on('click.cdDispatchRoster', '[data-action="bulk-toggle-mode"]', function () {
+        state.selectMode = !state.selectMode;
+        if (!state.selectMode) state.selected.clear();
+        render();
+      })
+      .on('change.cdDispatchRoster', '#cd-roster-select-all', function () {
+        var checked = this.checked;
+        state.visibleIds.forEach(function (id) {
+          if (checked) state.selected.add(id);
+          else state.selected.delete(id);
+        });
+        render();
+      })
+      .on('change.cdDispatchRoster', '#cd-roster-bulk-status', function () {
+        state.bulkTenCodeId = String(this.value || '');
+        $(this).removeClass('is-invalid');
+      })
+      .on('click.cdDispatchRoster', '[data-action="bulk-apply"]', function () {
+        applyBulkStatus();
+      })
+      .on('click.cdDispatchRoster', '[data-action="bulk-clear"]', function () {
+        state.selected.clear();
+        render();
       })
       // "+ N more off-duty" expands the ghost cap so dispatchers can see
       // every match without opening a separate view.
@@ -658,6 +719,137 @@
         state.ghostExpanded = true;
         render();
       });
+  }
+
+  // ── Bulk status ───────────────────────────────────
+
+  function pruneSelection() {
+    if (!state.selected.size) return;
+    var listed = {};
+    for (var i = 0; i < state.units.length; i++) listed[state.units[i].id] = true;
+    state.selected.forEach(function (id) { if (!listed[id]) state.selected.delete(id); });
+  }
+
+  function toggleSelected(userId) {
+    if (!userId) return;
+    if (state.selected.has(userId)) state.selected.delete(userId);
+    else state.selected.add(userId);
+    render();
+    // Keep keyboard focus on the chip the dispatcher just toggled.
+    var el = document.querySelector('.cd-unit-chip[data-user-id="' + String(userId).replace(/"/g, '') + '"]');
+    if (el) el.focus();
+  }
+
+  function communityTenCodes() {
+    return ((cfg().communityData || {}).tenCodes) || [];
+  }
+
+  function bulkHtml() {
+    if (!state.selectMode) {
+      return '<button type="button" class="cd-roster-bulk-mode" data-action="bulk-toggle-mode">' +
+        '<i class="fa fa-list-check" aria-hidden="true"></i><span>Select units</span></button>';
+    }
+    var n = state.selected.size;
+    var visibleSelected = 0;
+    for (var i = 0; i < state.visibleIds.length; i++) if (state.selected.has(state.visibleIds[i])) visibleSelected++;
+    var allOn = state.visibleIds.length > 0 && visibleSelected === state.visibleIds.length;
+    var html =
+      '<div class="cd-roster-bulk-row">' +
+        '<label class="cd-roster-bulk-all">' +
+          '<input type="checkbox" id="cd-roster-select-all"' + (allOn ? ' checked' : '') +
+            (state.visibleIds.length ? '' : ' disabled') +
+            ' data-indeterminate="' + (visibleSelected > 0 && !allOn ? '1' : '') + '">' +
+          '<span>Select all</span>' +
+        '</label>' +
+        '<span class="cd-roster-bulk-count">' + n + ' selected</span>' +
+        '<button type="button" class="cd-roster-bulk-mode is-on" data-action="bulk-toggle-mode">Done</button>' +
+      '</div>';
+    if (n > 0) {
+      var codes = communityTenCodes();
+      var opts = '<option value="">Choose status</option>';
+      for (var c = 0; c < codes.length; c++) {
+        var id = codes[c]._id || codes[c].id;
+        opts += '<option value="' + esc(id) + '"' + (id === state.bulkTenCodeId ? ' selected' : '') + '>' +
+          esc(codes[c].code) + (codes[c].description ? ' - ' + esc(codes[c].description) : '') + '</option>';
+      }
+      html +=
+        '<div class="cd-roster-bulk-row">' +
+          '<select id="cd-roster-bulk-status" class="cd-roster-bulk-select" aria-label="Status for selected units">' + opts + '</select>' +
+          '<button type="button" class="cd-roster-bulk-apply" data-action="bulk-apply"' + (state.bulkBusy ? ' disabled' : '') + '>' +
+            (state.bulkBusy ? 'Applying…' : 'Apply') + '</button>' +
+          '<button type="button" class="cd-roster-bulk-clear" data-action="bulk-clear">Clear</button>' +
+        '</div>';
+    }
+    return html;
+  }
+
+  function bulkErrorReason(xhr) {
+    if (xhr && xhr.status === 403) return 'You don\'t have permission to set unit statuses';
+    var data = xhr && xhr.responseJSON;
+    return (data && data.response && data.response.message) ||
+      (data && data.message) || (data && data.error) ||
+      ('HTTP ' + (xhr ? xhr.status : 0));
+  }
+
+  function applyBulkStatus() {
+    var communityId = cfg().communityId;
+    var userIds = Array.from(state.selected);
+    var tenCodeId = state.bulkTenCodeId;
+    if (!communityId || !userIds.length || state.bulkBusy) return;
+    if (!tenCodeId) {
+      $('#cd-roster-bulk-status').addClass('is-invalid').trigger('focus');
+      toast('Choose a status to apply', 'warning');
+      return;
+    }
+    if (userIds.length > BULK_MAX) {
+      toast('Select at most ' + BULK_MAX + ' units', 'warning');
+      return;
+    }
+    var matched = null;
+    var codes = communityTenCodes();
+    for (var i = 0; i < codes.length; i++) {
+      if ((codes[i]._id || codes[i].id) === tenCodeId) { matched = codes[i]; break; }
+    }
+
+    state.bulkBusy = true;
+    render();
+    // Goes through the website server, which vouches for who is asking.
+    // Other viewers update from the API's per-unit broadcast.
+    $.ajax({
+      url: '/api/v1/community/' + encodeURIComponent(communityId) + '/members/tenCode/bulk',
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({ userIds: userIds, tenCodeId: tenCodeId }),
+    }).done(function (res) {
+      var results = (res && Array.isArray(res.results)) ? res.results : [];
+      var ok = 0;
+      var firstError = '';
+      for (var r = 0; r < results.length; r++) {
+        var item = results[r];
+        if (!item.ok) { if (!firstError) firstError = item.error || ''; continue; }
+        ok++;
+        state.selected.delete(item.id);
+        if (matched) {
+          patchUnit({ id: item.id, tenCode: { id: tenCodeId, code: matched.code, description: matched.description } });
+        }
+      }
+      var failed = results.length - ok;
+      var label = matched ? matched.code : 'the new status';
+      if (!failed) {
+        toast(esc(ok + (ok === 1 ? ' unit' : ' units') + ' set to ' + label), 'success');
+      } else if (ok) {
+        toast(esc(ok + ' updated, ' + failed + ' failed. ' + firstError), 'warning');
+      } else {
+        toast(esc('No units updated. ' + firstError), 'error');
+      }
+      $(document).trigger('cdDispatch:rosterBulkStatus', [{ tenCodeId: tenCodeId, succeeded: ok, failed: failed }]);
+    }).fail(function (xhr) {
+      toast(esc('Failed to update statuses: ' + bulkErrorReason(xhr)), 'error');
+      console.error('[cd-dispatch-roster] bulk status failed', xhr && xhr.responseText);
+    }).always(function () {
+      state.bulkBusy = false;
+      render();
+    });
   }
 
   function openUnitConsole(userId, tab) {
@@ -732,6 +924,27 @@
       '.cd-roster-ghost-more{margin-top:0.25rem;padding:0.4375rem 0.625rem;border-radius:8px;border:1px dashed var(--cd-glass-border);color:var(--cd-text-dim);font-size:0.6875rem;text-align:center;cursor:pointer;transition:all .15s;}',
       '.cd-roster-ghost-more:hover{color:var(--cd-text);background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.14);}',
       '.cd-roster-ghost-foot{margin-top:0.375rem;font-size:0.625rem;color:var(--cd-text-dim);text-align:center;line-height:1.3;}',
+      // Bulk status controls live in the sticky header, which is already opaque.
+      '.cd-roster-bulk{display:flex;flex-direction:column;gap:0.375rem;}',
+      '.cd-roster-bulk-row{display:flex;align-items:center;gap:0.375rem;flex-wrap:wrap;min-width:0;}',
+      '.cd-roster-bulk-mode{display:inline-flex;align-items:center;gap:0.375rem;padding:0.3125rem 0.5rem;border-radius:6px;border:1px solid var(--cd-glass-border);background:rgba(255,255,255,0.02);color:var(--cd-text-muted);font:600 0.6875rem/1 inherit;cursor:pointer;transition:all .15s;}',
+      '.cd-roster-bulk-mode:hover{color:var(--cd-text);background:rgba(255,255,255,0.05);}',
+      '.cd-roster-bulk-mode.is-on{margin-left:auto;color:var(--cd-accent);border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.08);}',
+      '.cd-roster-bulk-all{display:inline-flex;align-items:center;gap:0.375rem;margin:0;font-size:0.75rem;color:var(--cd-text-muted);cursor:pointer;}',
+      '.cd-roster-bulk-all input{margin:0;accent-color:var(--cd-accent);cursor:pointer;}',
+      '.cd-roster-bulk-count{font:600 0.75rem/1 inherit;color:var(--cd-text);}',
+      '.cd-roster-bulk-select{flex:1 1 8rem;min-width:0;padding:0.3125rem 0.5rem;border-radius:6px;border:1px solid var(--cd-glass-border);background:var(--cd-bg);color:var(--cd-text);font:inherit;font-size:0.75rem;}',
+      '.cd-roster-bulk-select.is-invalid{border-color:var(--cd-red);box-shadow:0 0 0 2px rgba(239,68,68,0.2);}',
+      '.cd-roster-bulk-apply,.cd-roster-bulk-clear{padding:0.3125rem 0.625rem;border-radius:6px;font:600 0.6875rem/1 inherit;cursor:pointer;transition:all .15s;}',
+      '.cd-roster-bulk-apply{border:1px solid rgba(56,189,248,0.5);background:rgba(56,189,248,0.16);color:var(--cd-accent);}',
+      '.cd-roster-bulk-apply:hover:not(:disabled){background:rgba(56,189,248,0.26);}',
+      '.cd-roster-bulk-apply:disabled{opacity:0.6;cursor:wait;}',
+      '.cd-roster-bulk-clear{border:1px solid var(--cd-glass-border);background:transparent;color:var(--cd-text-muted);}',
+      '.cd-roster-bulk-clear:hover{color:var(--cd-text);}',
+      '.cd-unit-chip.is-selecting{cursor:pointer;}',
+      '.cd-unit-chip-check{color:var(--cd-text-dim);background:rgba(255,255,255,0.03);border-color:var(--cd-glass-border);}',
+      '.cd-unit-chip.is-selected{border-color:rgba(56,189,248,0.55);background:rgba(56,189,248,0.08);}',
+      '.cd-unit-chip.is-selected .cd-unit-chip-check{color:var(--cd-accent);border-color:rgba(56,189,248,0.45);}',
       '@keyframes cd-dispatch-pulse{0%,100%{box-shadow:0 0 0 3px rgba(239,68,68,0.2);}50%{box-shadow:0 0 0 6px rgba(239,68,68,0.08);}}',
     ].join('');
     var el = document.createElement('style');
