@@ -233,8 +233,9 @@ export class CommunityAdminListsPage {
   get membersPageInfo(): Locator {
     return this.page.locator('#pageInfo');
   }
+  // Scoped to the modal: the role editor's "Add Members" step reuses the id.
   get memberSearchInput(): Locator {
-    return this.page.locator('#memberSearchInput');
+    return this.page.locator('#membersModal #memberSearchInput');
   }
 
   // The page's shared confirm dialog.
@@ -255,6 +256,9 @@ export class CommunityAdminListsPage {
   }
   get civilianRows(): Locator {
     return this.page.locator('#civiliansList .civilian-item');
+  }
+  civilianRow(id: string): Locator {
+    return this.page.locator(`#civiliansList .civilian-item[data-civilian-id="${id}"]`);
   }
   civilianCheckbox(id: string): Locator {
     return this.page.locator(`#civiliansList .civilian-select[data-civilian-id="${id}"]`);

@@ -130,10 +130,7 @@ test.describe('Community admin: bulk delete civilians', { tag: '@auth' }, () => 
     await expect(lists.civilianCheckbox(CIVILIANS[11].id)).toBeVisible();
 
     const listCallsBefore = lists.civilianListRequests.length;
-    await lists.civilianRows
-      .filter({ has: lists.civilianCheckbox(CIVILIANS[11].id) })
-      .getByRole('button', { name: /Delete/ })
-      .click();
+    await lists.civilianRow(CIVILIANS[11].id).getByRole('button', { name: /Delete/ }).click();
     await expect(lists.deleteCivilianModal).toBeVisible();
     await lists.deleteCivilianConfirmBtn.click();
 
