@@ -37,11 +37,7 @@ test.describe('General Settings: record deletion toggle', { tag: '@auth' }, () =
   async function openCommunityPage(page: Page) {
     await page.goto(communityDetailsUrl());
     await expect(page).not.toHaveURL(/\/login/);
-    const overview = await page
-      .locator('#community-overview')
-      .isVisible()
-      .catch(() => false);
-    if (!overview) test.skip(true, 'Community API not reachable');
+    await expect(page.locator('#community-overview')).toBeVisible({ timeout: 15_000 });
   }
 
   test('only an admin can change it', async ({ page }) => {
@@ -141,14 +137,7 @@ test.describe('Department dashboard: own-record delete button', { tag: '@auth' }
     await expect(page).not.toHaveURL(/\/login/);
 
     const civNav = page.locator('#dd-nav-components .dd-nav-item[data-panel="createCivilians"]');
-    const navReady = await civNav
-      .waitFor({ state: 'visible', timeout: 15_000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!navReady) {
-      test.skip(true, 'Civilians panel nav not reachable, API may be offline');
-      return;
-    }
+    await expect(civNav).toBeVisible({ timeout: 15_000 });
     await community;
     await civNav.click();
 
