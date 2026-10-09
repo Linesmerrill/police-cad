@@ -3753,8 +3753,22 @@ async function deleteRole(roleId) {
 }
 
 // Role Permissions Functions
+
+// Toggles edit currentRole.permissions in place, so keep what the server last
+// accepted and put it back if the change is refused or abandoned. Otherwise
+// the role list keeps showing a permission state the API never saved (the API
+// refuses, for example, a change that would take Head Admin from the owner).
+let rolePermissionsSnapshot = null;
+
+function restoreRolePermissionsSnapshot() {
+  if (currentRole && rolePermissionsSnapshot) {
+    currentRole.permissions = JSON.parse(JSON.stringify(rolePermissionsSnapshot));
+  }
+}
+
 function openRolePermissionsModal() {
   if (!currentRole) return;
+  rolePermissionsSnapshot = JSON.parse(JSON.stringify(currentRole.permissions || []));
   
   // Check if this is a head admin role
   const isHeadAdmin = (currentRole.permissions || []).some(p => 
@@ -3780,6 +3794,8 @@ function openRolePermissionsModal() {
 }
 
 function closeRolePermissionsModal() {
+  restoreRolePermissionsSnapshot();
+  rolePermissionsSnapshot = null;
   document.getElementById('rolePermissionsModal').style.display = 'none';
 }
 
@@ -5397,10 +5413,15 @@ async function saveRolePermissions() {
       throw new Error(await apiErrorReason(response));
     }
     
+    // Saved: the edited permissions are now the server's, so closing must
+    // not roll them back.
+    rolePermissionsSnapshot = null;
     showToast('Permissions updated successfully!', 3000, 'success');
     closeRolePermissionsModal();
     
   } catch (error) {
+    restoreRolePermissionsSnapshot();
+    renderPermissionsList();
     showToast(`Failed to update permissions: ${error.message}`, 3000, 'error');
   }
 }
