@@ -60,169 +60,42 @@ function showDepartmentAccessModal(departmentName, communityId, isPending) {
   $('#departmentAccessModal').modal('show');
 }
 
+// Owner and admin bypass for private departments, read from the community
+// itself. lastAccessedCommunity only stores {communityID, createdAt}; the
+// ownerID and role fields this used to read never existed, so owners and
+// admins were shown every private department as locked.
+function departmentAccessFor(communityRes, userId) {
+  const community = communityRes && (communityRes.community || communityRes);
+  if (!community || !userId) return { isOwner: false, isAdmin: false };
+  const isOwner = community.ownerID === userId;
+  const isAdmin = (community.roles || []).some(function (role) {
+    return (role.members || []).indexOf(userId) !== -1 &&
+      (role.permissions || []).some(function (p) {
+        return p && p.enabled && String(p.name).toLowerCase() === 'administrator';
+      });
+  });
+  return { isOwner: isOwner, isAdmin: isAdmin };
+}
+
 function fetchAndRenderDepartments() {
   const communityId = dbUser.user.lastAccessedCommunity.communityID;
   const currentUserId = dbUser._id;
+  const apiBase = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 
-  // Check if user is the community owner
-  const isOwner = dbUser.user.lastAccessedCommunity.ownerID === currentUserId;
-
-  // Check if user has admin role in the community
-  const userRole = dbUser.user.lastAccessedCommunity.role;
-  const isAdmin = userRole && userRole.admin === true;
+  // Both requests run in parallel. If the community can't be read, fall back
+  // to membership rules only (no bypass) rather than failing the sidebar.
+  const accessReq = $.ajax({ url: `${apiBase}/api/v1/community/${communityId}`, method: 'GET' })
+    .then(
+      function (res) { return departmentAccessFor(res, currentUserId); },
+      function () { return $.Deferred().resolve({ isOwner: false, isAdmin: false }).promise(); }
+    );
 
   $.ajax({
-    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/departments`,
+    url: `${apiBase}/api/v1/community/${communityId}/departments`,
     method: "GET",
     headers: {},
     success: function (data) {
-      const departments = data.departments || [];
-      let html = "";
-
-      departments.forEach((dept) => {
-        const template = dept?.template?.name;
-        const name = dept?.name;
-        const departmentId = dept?._id;
-
-        // Skip if departmentId or template is invalid
-        if (!departmentId || departmentId === "undefined" || !template) {
-          console.warn(
-            `Skipping department due to missing or invalid data - ID: ${departmentId}, Template: ${template}`
-          );
-          return;
-        }
-
-        // Check if current user is an approved member of this department
-        const members = Array.isArray(dept.members) ? dept.members : [];
-        const userMembership = members.find(
-          (member) => (member.userID || member._id) === currentUserId
-        );
-        const isApprovedMember = userMembership && userMembership.status === 'approved';
-        const isPendingMember = userMembership && userMembership.status === 'pending';
-
-        // User can access if: owner, admin role, department is public, OR user is approved member
-        const isPublicDepartment = dept.approvalRequired === false;
-        const canAccess = isOwner || isAdmin || isPublicDepartment || isApprovedMember;
-
-        let icon = "fa-building";
-        let action = "#";
-        let redirect = "";
-        const useForm = ["police", "fire", "ems", "dispatch"].includes(
-          template.toLowerCase()
-        );
-        const isDisabled = !canAccess;
-
-        // Build query params for department (include community ID for proper context)
-        const encodedDeptId = encodeDepartmentId(departmentId);
-        const encodedCommunityId = encodeCommunityIdForUrl(communityId);
-        const deptQueryParams = `?dept=${encodeURIComponent(name)}&d=${encodedDeptId}&c=${encodedCommunityId}`;
-
-        // Map icons and routes
-        switch (template.toLowerCase()) {
-          case "civilian":
-            icon = "fa-user";
-            action = `/civ-dashboard${deptQueryParams}`;
-            break;
-          case "police":
-            icon = "fa-shield";
-            action = "/select-department";
-            redirect = `/police-dashboard${deptQueryParams}`;
-            break;
-          case "dispatch":
-            icon = "fa-headset";
-            action = "/select-department";
-            redirect = `/dispatch-dashboard${deptQueryParams}`;
-            break;
-          case "fire":
-            icon = "fa-fire-extinguisher";
-            action = "/select-department";
-            redirect = `/ems-dashboard${deptQueryParams}`;
-            break;
-          case "ems":
-            icon = "fa-medkit";
-            action = "/select-department";
-            redirect = `/ems-dashboard${deptQueryParams}`;
-            break;
-          case "judicial":
-            icon = "fa-gavel";
-            action = `/department-dashboard${deptQueryParams}`;
-            break;
-        }
-
-        // Badge color based on template type
-        let badgeColor = '#6b7280'; // default gray
-        switch (template.toLowerCase()) {
-          case 'police': badgeColor = '#3b82f6'; break; // blue
-          case 'dispatch': badgeColor = '#8b5cf6'; break; // purple
-          case 'fire': badgeColor = '#f97316'; break; // orange
-          case 'ems': badgeColor = '#22c55e'; break; // green
-          case 'civilian': badgeColor = '#6b7280'; break; // gray
-          case 'judicial': badgeColor = '#f59e0b'; break; // amber
-        }
-
-        // Icon and color for lock/pending status
-        const statusIcon = isPendingMember ? 'fa-clock' : 'fa-lock';
-        const statusColor = isPendingMember ? '#3b82f6' : '#fbbf24'; // blue for pending, yellow for locked
-        const statusTitle = isPendingMember ? 'Request pending' : 'Click for more info';
-
-        html += `
-          <li>
-            ${
-              isDisabled
-                ? `
-              <div style="display: flex; align-items: center; padding: 8px 0;">
-                <span class="fa ${icon} ml-3 mr-3" style="flex-shrink: 0; opacity: 0.5; font-size: 1.2em;"></span>
-                <div style="flex: 1; min-width: 0; opacity: 0.5; cursor: not-allowed;">
-                  <div style="display: flex; align-items: center;">
-                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${name}</span>
-                  </div>
-                  <span style="display: inline-block; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; background: ${badgeColor}; color: white; margin-top: 2px;">${template}</span>
-                </div>
-                <span class="fa ${statusIcon} mr-3" style="cursor: pointer; color: ${statusColor}; flex-shrink: 0; padding: 4px 8px; opacity: 1;"
-                  onclick="showDepartmentAccessModal('${name.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}', '${communityId}', ${isPendingMember})"
-                  title="${statusTitle}"></span>
-              </div>
-            `
-                : useForm
-                ? `
-              <form action="${action}" method="POST" style="display: inline; width: 100%;">
-                <input type="hidden" name="departmentId" value="${departmentId}">
-                <input type="hidden" name="redirect" value="${redirect}">
-                <a href="#" onclick="this.parentNode.submit()" style="display: flex; align-items: center; padding: 8px 0;">
-                  <span class="fa ${icon} ml-3 mr-3" style="flex-shrink: 0; font-size: 1.2em;"></span>
-                  <div style="flex: 1; min-width: 0;">
-                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</div>
-                    <span style="display: inline-block; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; background: ${badgeColor}; color: white; margin-top: 2px;">${template}</span>
-                  </div>
-                </a>
-              </form>
-            `
-                : `
-              <a href="${action}" style="display: flex; align-items: center; padding: 8px 0;">
-                <span class="fa ${icon} ml-3 mr-3" style="flex-shrink: 0; font-size: 1.2em;"></span>
-                <div style="flex: 1; min-width: 0;">
-                  <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</div>
-                  <span style="display: inline-block; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; background: ${badgeColor}; color: white; margin-top: 2px;">${template}</span>
-                </div>
-              </a>
-            `
-            }
-          </li>
-        `;
-      });
-
-      // Append Communities link
-      // html += `
-      //   <li>
-      //     <a href="/community-dashboard">
-      //       <span class="fa fa-users ml-3 mr-3"></span> Communities
-      //     </a>
-      //   </li>
-      // `;
-
-      $("#toggleDepartment").html(html);
-      // Enable tooltips for disabled departments
-      $("[title]").tooltip();
+      accessReq.done(function (access) { renderDepartmentList(data, access.isOwner, access.isAdmin); });
     },
     error: function (xhr) {
       console.error("Error fetching departments:", xhr.responseText);
@@ -242,6 +115,158 @@ function fetchAndRenderDepartments() {
   });
 }
 
+function renderDepartmentList(data, isOwner, isAdmin) {
+  const communityId = dbUser.user.lastAccessedCommunity.communityID;
+  const currentUserId = dbUser._id;
+  const departments = data.departments || [];
+  let html = "";
+
+  departments.forEach((dept) => {
+    const template = dept?.template?.name;
+    const name = dept?.name;
+    const departmentId = dept?._id;
+
+    // Skip if departmentId or template is invalid
+    if (!departmentId || departmentId === "undefined" || !template) {
+      console.warn(
+        `Skipping department due to missing or invalid data - ID: ${departmentId}, Template: ${template}`
+      );
+      return;
+    }
+
+    // Check if current user is an approved member of this department
+    const members = Array.isArray(dept.members) ? dept.members : [];
+    const userMembership = members.find(
+      (member) => (member.userID || member._id) === currentUserId
+    );
+    const isApprovedMember = userMembership && userMembership.status === 'approved';
+    const isPendingMember = userMembership && userMembership.status === 'pending';
+
+    // User can access if: owner, admin role, department is public, OR user is approved member
+    const isPublicDepartment = dept.approvalRequired === false;
+    const canAccess = isOwner || isAdmin || isPublicDepartment || isApprovedMember;
+
+    let icon = "fa-building";
+    let action = "#";
+    let redirect = "";
+    const useForm = ["police", "fire", "ems", "dispatch"].includes(
+      template.toLowerCase()
+    );
+    const isDisabled = !canAccess;
+
+    // Build query params for department (include community ID for proper context)
+    const encodedDeptId = encodeDepartmentId(departmentId);
+    const encodedCommunityId = encodeCommunityIdForUrl(communityId);
+    const deptQueryParams = `?dept=${encodeURIComponent(name)}&d=${encodedDeptId}&c=${encodedCommunityId}`;
+
+    // Map icons and routes
+    switch (template.toLowerCase()) {
+      case "civilian":
+        icon = "fa-user";
+        action = `/civ-dashboard${deptQueryParams}`;
+        break;
+      case "police":
+        icon = "fa-shield";
+        action = "/select-department";
+        redirect = `/police-dashboard${deptQueryParams}`;
+        break;
+      case "dispatch":
+        icon = "fa-headset";
+        action = "/select-department";
+        redirect = `/dispatch-dashboard${deptQueryParams}`;
+        break;
+      case "fire":
+        icon = "fa-fire-extinguisher";
+        action = "/select-department";
+        redirect = `/ems-dashboard${deptQueryParams}`;
+        break;
+      case "ems":
+        icon = "fa-medkit";
+        action = "/select-department";
+        redirect = `/ems-dashboard${deptQueryParams}`;
+        break;
+      case "judicial":
+        icon = "fa-gavel";
+        action = `/department-dashboard${deptQueryParams}`;
+        break;
+    }
+
+    // Badge color based on template type
+    let badgeColor = '#6b7280'; // default gray
+    switch (template.toLowerCase()) {
+      case 'police': badgeColor = '#3b82f6'; break; // blue
+      case 'dispatch': badgeColor = '#8b5cf6'; break; // purple
+      case 'fire': badgeColor = '#f97316'; break; // orange
+      case 'ems': badgeColor = '#22c55e'; break; // green
+      case 'civilian': badgeColor = '#6b7280'; break; // gray
+      case 'judicial': badgeColor = '#f59e0b'; break; // amber
+    }
+
+    // Icon and color for lock/pending status
+    const statusIcon = isPendingMember ? 'fa-clock' : 'fa-lock';
+    const statusColor = isPendingMember ? '#3b82f6' : '#fbbf24'; // blue for pending, yellow for locked
+    const statusTitle = isPendingMember ? 'Request pending' : 'Click for more info';
+
+    html += `
+      <li>
+        ${
+          isDisabled
+            ? `
+          <div style="display: flex; align-items: center; padding: 8px 0;">
+            <span class="fa ${icon} ml-3 mr-3" style="flex-shrink: 0; opacity: 0.5; font-size: 1.2em;"></span>
+            <div style="flex: 1; min-width: 0; opacity: 0.5; cursor: not-allowed;">
+              <div style="display: flex; align-items: center;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${name}</span>
+              </div>
+              <span style="display: inline-block; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; background: ${badgeColor}; color: white; margin-top: 2px;">${template}</span>
+            </div>
+            <span class="fa ${statusIcon} mr-3" style="cursor: pointer; color: ${statusColor}; flex-shrink: 0; padding: 4px 8px; opacity: 1;"
+              onclick="showDepartmentAccessModal('${name.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}', '${communityId}', ${isPendingMember})"
+              title="${statusTitle}"></span>
+          </div>
+        `
+            : useForm
+            ? `
+          <form action="${action}" method="POST" style="display: inline; width: 100%;">
+            <input type="hidden" name="departmentId" value="${departmentId}">
+            <input type="hidden" name="redirect" value="${redirect}">
+            <a href="#" onclick="this.parentNode.submit()" style="display: flex; align-items: center; padding: 8px 0;">
+              <span class="fa ${icon} ml-3 mr-3" style="flex-shrink: 0; font-size: 1.2em;"></span>
+              <div style="flex: 1; min-width: 0;">
+                <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</div>
+                <span style="display: inline-block; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; background: ${badgeColor}; color: white; margin-top: 2px;">${template}</span>
+              </div>
+            </a>
+          </form>
+        `
+            : `
+          <a href="${action}" style="display: flex; align-items: center; padding: 8px 0;">
+            <span class="fa ${icon} ml-3 mr-3" style="flex-shrink: 0; font-size: 1.2em;"></span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</div>
+              <span style="display: inline-block; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; background: ${badgeColor}; color: white; margin-top: 2px;">${template}</span>
+            </div>
+          </a>
+        `
+        }
+      </li>
+    `;
+  });
+
+  // Append Communities link
+  // html += `
+  //   <li>
+  //     <a href="/community-dashboard">
+  //       <span class="fa fa-users ml-3 mr-3"></span> Communities
+  //     </a>
+  //   </li>
+  // `;
+
+  $("#toggleDepartment").html(html);
+  // Enable tooltips for disabled departments
+  $("[title]").tooltip();
+}
+
 // Encode department ID for URL parameters
 function encodeDepartmentId(departmentId) {
   // Simple reversible encoding: convert to base64 and replace some characters
@@ -250,4 +275,8 @@ function encodeDepartmentId(departmentId) {
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=/g, '');
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { departmentAccessFor: departmentAccessFor };
 }
