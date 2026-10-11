@@ -77,7 +77,8 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "build:local": "npm run lint && next build",
-    "postinstall": "next build"
+    "postinstall": "next build",
+    "heroku-postbuild": "node scripts/update-version.js"
   },
   "engines": {
     "node": "20.x"
