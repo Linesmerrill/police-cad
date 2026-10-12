@@ -12155,6 +12155,22 @@
       // has to sit behind an admin session on this origin, and the shared API
       // key must stay server-side.
       // ---------------------------------------------------------------
+      // Reads the reason out of a failed $.ajax.
+      //
+      // jQuery 1.9.1 is what this page loads, and it has no `responseJSON` at
+      // all, so the body has to be parsed off `responseText`. The Go API
+      // answers with `{response: {message}}` and our own Express routes with a
+      // top-level `{message}` / `{error}`, so both shapes are tried. Never
+      // throws: an HTML gateway page degrades to the status.
+      function ccAjaxReason(xhr, fallback) {
+        var body = xhr && xhr.responseJSON;
+        if (!body && xhr && xhr.responseText) {
+          try { body = JSON.parse(xhr.responseText); } catch (e) { body = null; }
+        }
+        if (!body) return fallback;
+        return (body.response && body.response.message) || body.message || body.error || fallback;
+      }
+
       function ccTransfersUpdatePreview() {
         const limit = parseInt($('#ccTransfersCurrentLimit').val(), 10);
         const amount = parseInt($('#ccTransfersAmount').val(), 10);
@@ -12238,11 +12254,7 @@
             showInfoModal('Success', `<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Granted ${amount} extra transfer${amount === 1 ? '' : 's'}.`);
           },
           error: function(xhr) {
-            const reasonText = (xhr.responseJSON && (
-              (xhr.responseJSON.response && xhr.responseJSON.response.message) ||
-              xhr.responseJSON.message ||
-              xhr.responseJSON.error
-            )) || `HTTP ${xhr.status}`;
+            const reasonText = ccAjaxReason(xhr, `HTTP ${xhr.status}`);
             $error.text(`Failed to grant transfers: ${reasonText}`).show();
           },
           complete: function() {
