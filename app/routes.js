@@ -6109,6 +6109,69 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
   });
 
+  // Platform maintenance for an APPROVED creator, driven from their own
+  // dashboard. These write the creator record rather than the application --
+  // platforms are copied onto the creator at approval and the copy is
+  // authoritative afterwards -- so they are separate routes from the
+  // application verification pair above.
+  //
+  //   resync         re-reads the public channel and stores the real count
+  //   reverify-start issues a code for a handle the creator has changed
+  //   reverify-check looks for that code on the proposed handle
+  //
+  // Same limiter as the application pair, and for the same reason: resync and
+  // reverify-check each make an outbound call to YouTube, Twitch or TikTok.
+  ["resync", "reverify-start", "reverify-check"].forEach(function (action) {
+    app.post(
+      `/api/v1/content-creators/me/platforms/:index/${action}`,
+      verificationLimiter,
+      apiAuthCheck,
+      async function (req, res) {
+        const index = String(req.params.index || "");
+        if (!/^\d+$/.test(index)) {
+          return res.status(400).json({ error: "invalid platform index" });
+        }
+        try {
+          const userId = req.user._id || req.user.id;
+          // Only reverify-start carries a body, and only the proposed handle
+          // out of it. Forwarding req.body wholesale would hand the API fields
+          // it is not meant to take from a client.
+          const body =
+            action === "reverify-start"
+              ? { handle: String((req.body && req.body.handle) || "") }
+              : {};
+          const response = await axios.post(
+            `${policeCadApiUrl}/api/v1/content-creators/me/platforms/${index}/${action}`,
+            body,
+            {
+              headers: {
+                ...config.headers,
+                "X-User-ID": userId.toString(),
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          res.json(response.data);
+        } catch (error) {
+          console.error(`[ContentCreator ${action}] error:`, error.message);
+          if (error.response) {
+            // An exhausted per-platform budget answers 429 and puts the wait in
+            // Retry-After. Passing the status through on its own would drop the
+            // only part of that answer a creator can act on.
+            const retryAfter =
+              error.response.headers && error.response.headers["retry-after"];
+            if (retryAfter) {
+              res.set("Retry-After", String(retryAfter));
+            }
+            res.status(error.response.status).json(error.response.data);
+          } else {
+            res.status(500).json({ error: "That is unavailable right now. Try again in a moment." });
+          }
+        }
+      }
+    );
+  });
+
   // Submit content creator application
   app.post("/api/v1/content-creator-applications", apiAuthCheck, async function (req, res) {
     try {

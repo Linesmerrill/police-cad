@@ -37,6 +37,13 @@ export interface VerifiablePlatform {
 
 interface Props {
   platforms: VerifiablePlatform[];
+  /**
+   * Collection these platform indexes belong to, without a trailing slash.
+   * `${endpointBase}/${index}/verify-start` is what gets posted. The panel used
+   * to hardcode the application route, which is the only reason the identical
+   * code flow on the creator dashboard could not use it.
+   */
+  endpointBase: string;
   checks?: ApplicationCheck[];
   minFollowers?: number;
   onRefresh: () => void;
@@ -60,8 +67,8 @@ export const DEFAULT_MIN_FOLLOWERS = 500;
 
 // Platforms with no public API. Their Check button would always come back
 // "waiting for a human", so we say that instead of offering a button that does
-// nothing useful.
-const MANUAL_PLATFORMS = ['tiktok', 'other'];
+// nothing useful. TikTok used to be one of these and is read automatically now.
+const MANUAL_PLATFORMS = ['other'];
 
 // Mirrors channelInstruction() in the API. Duplicated so a code that is already
 // issued still comes with instructions after a page reload, when there is no
@@ -72,10 +79,10 @@ const INSTRUCTIONS: Record<string, string> = {
   twitch:
     'Add this code anywhere in your Twitch About panel / bio (Settings → Channel → About), save, then press Check.',
   tiktok:
-    'Add this code anywhere in your TikTok bio and leave it there. TikTok has no public API, so our team confirms it by eye.',
+    'Add this code anywhere in your TikTok bio and leave it there while we check.',
 };
 
-function instructionFor(type: string) {
+export function instructionFor(type: string) {
   return (
     INSTRUCTIONS[(type || '').toLowerCase()] ||
     'Add this code to your channel or profile bio and leave it there. Our team confirms it during review.'
@@ -107,11 +114,11 @@ const STEPS: Record<string, { text: string; bold?: boolean }[][]> = {
     [{ text: 'Go to ' }, { text: 'Profile', bold: true }, { text: ', then ' }, { text: 'Edit profile', bold: true }, { text: '.' }],
     [{ text: 'Paste the code into your ' }, { text: 'Bio', bold: true }, { text: '.' }],
     [{ text: 'Save.' }],
-    [{ text: 'Leave the code in place. TikTok has no public API, so our team confirms it by eye — there is no Check button for TikTok.' }],
+    [{ text: 'Come back here and press ' }, { text: 'Check', bold: true }, { text: '.' }],
   ],
 };
 
-function stepsFor(type: string) {
+export function stepsFor(type: string) {
   return (
     STEPS[(type || '').toLowerCase()] || [
       [{ text: 'Open your channel or profile settings on that platform.' }],
@@ -124,7 +131,7 @@ function stepsFor(type: string) {
 
 // Mirrors NormalizeHandle in the API's platforms package, so the link resolves
 // the same way the lookup does.
-function normalizeHandle(raw: string): string {
+export function normalizeHandle(raw: string): string {
   let h = (raw || '').trim();
   if (!h) return '';
   const scheme = h.indexOf('://');
@@ -147,11 +154,12 @@ function normalizeHandle(raw: string): string {
 
 // The URL we actually scan. Built from the handle rather than the url field,
 // because the handle is what the API looks up — so if this opens the wrong
-// channel, that IS the bug.
-function scannedUrlFor(p: VerifiablePlatform): string {
-  const h = normalizeHandle(p.handle || p.url || '');
-  if (!h) return p.url || '';
-  switch ((p.type || '').toLowerCase()) {
+// channel, that IS the bug. Returns '' for a platform we do not know how to
+// address, leaving the caller to fall back to its stored url.
+export function channelUrlFor(type: string, handle: string): string {
+  const h = normalizeHandle(handle);
+  if (!h) return '';
+  switch ((type || '').toLowerCase()) {
     case 'youtube':
       return /^UC[\w-]{22}$/.test(h)
         ? `https://www.youtube.com/channel/${h}`
@@ -161,8 +169,12 @@ function scannedUrlFor(p: VerifiablePlatform): string {
     case 'tiktok':
       return `https://tiktok.com/@${h}`;
     default:
-      return p.url || '';
+      return '';
   }
+}
+
+function scannedUrlFor(p: VerifiablePlatform): string {
+  return channelUrlFor(p.type, p.handle || p.url || '') || p.url || '';
 }
 
 function ownershipProven(p: VerifiablePlatform) {
@@ -171,7 +183,7 @@ function ownershipProven(p: VerifiablePlatform) {
 
 // "1 followers" is small, but it is read at the moment someone is told their
 // channel is too small, which is the worst moment to look unfinished.
-function followersLabel(n: number) {
+export function followersLabel(n: number) {
   return n === 1 ? '1 follower' : `${n.toLocaleString()} followers`;
 }
 
@@ -187,10 +199,8 @@ function applicationQualifies(platforms: VerifiablePlatform[], min: number) {
 }
 
 // Platforms we read through an API. Once we have found the code in the
-// description it has done its job and can come straight back out. TikTok is
-// excluded on purpose: a human confirms that one by eye during review, so the
-// code has to stay put until a decision is made.
-const REMOVABLE_CODE_PLATFORMS = ['youtube', 'twitch'];
+// description it has done its job and can come straight back out.
+const REMOVABLE_CODE_PLATFORMS = ['youtube', 'twitch', 'tiktok'];
 
 function codeRemovable(p: VerifiablePlatform) {
   return (
@@ -206,7 +216,7 @@ const PLATFORM_LABELS: Record<string, string> = {
   tiktok: 'TikTok',
 };
 
-function platformLabel(type: string) {
+export function platformLabel(type: string) {
   const t = (type || '').toLowerCase();
   return PLATFORM_LABELS[t] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : type);
 }
@@ -298,6 +308,7 @@ const TONE: Record<string, { color: string; bg: string; border: string }> = {
 
 export default function VerificationPanel({
   platforms,
+  endpointBase,
   checks = [],
   minFollowers = DEFAULT_MIN_FOLLOWERS,
   onRefresh,
@@ -332,10 +343,10 @@ export default function VerificationPanel({
     setErrors((e) => ({ ...e, [index]: '' }));
     if (action === 'verify-check') setResults((r) => ({ ...r, [index]: {} }));
     try {
-      const res = await fetch(
-        `/api/v1/content-creator-applications/me/platforms/${index}/${action}`,
-        { method: 'POST', credentials: 'include' }
-      );
+      const res = await fetch(`${endpointBase}/${index}/${action}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {

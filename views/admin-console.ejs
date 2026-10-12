@@ -5558,6 +5558,43 @@
       </div>
     </div>
 
+    <!-- Vouch for a handle change a platform will not let us read. Same shape
+         as the two dialogs above: one dialog carries the context and the
+         confirmation, so no second backdrop stacks on this one. -->
+    <div class="modal fade" id="ccVerifyHandleModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
+              <span>&times;</span>
+            </button>
+            <h4 class="modal-title">Verify handle change</h4>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="ccVerifyCreatorId" />
+            <input type="hidden" id="ccVerifyPlatformIndex" />
+            <p style="color:#9aa0b4; font-size:13px; margin:0 0 1rem;">
+              Confirms by hand that
+              <span id="ccVerifyCreatorName" style="font-weight:600; color:#e5e7eb;"></span>
+              owns the new handle, for a platform we could not read ourselves.
+              Check the channel yourself first.
+            </p>
+            <div class="alert" style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 0;">
+              <span id="ccVerifyPlatformLabel" style="font-weight:600;"></span>
+              <span id="ccVerifyHandleLine" style="display:block; margin-top:6px;"></span>
+            </div>
+            <div id="ccVerifyError" style="color:#ef4444; font-size:13px; margin-top:0.75rem; display:none;"></div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-gradient" id="ccConfirmVerifyHandleBtn">
+              <i class="fas fa-shield-halved" style="margin-right: 8px;"></i>Verify handle
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Add Admin Modal -->
     <div class="modal fade" id="addAdminModal" tabindex="-1" role="dialog">
       <div class="modal-dialog">
@@ -11998,6 +12035,27 @@
                 <p class="cc-app-answer-a">${escapeHtml(answer)}</p>
               </div>` : '';
 
+          // Creator-side facts (when we last read their channels, whether a
+          // count came in under the minimum, which handle each platform is on)
+          // live on the creator record, not the application: the application's
+          // platforms stop being authoritative the moment the creator is
+          // written at approval. They are joined in by ccApplyCreatorFacts once
+          // the creator index has loaded, so the queue renders immediately
+          // either way.
+          const creatorKey = status === 'approved' && app.creatorId
+            ? escapeHtml(String(app.creatorId))
+            : '';
+          // One wrapper for both, with no margin of its own: an approved row
+          // with nothing to report must not grow a blank gap, so the spacing is
+          // added by ccApplyCreatorFacts only once there is something in it.
+          const factsHolder = creatorKey
+            ? `<div data-cc-facts="${creatorKey}" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:12px; color:#9aa0b4;">` +
+              `<span data-cc-flag="${creatorKey}"></span><span data-cc-sync="${creatorKey}"></span></div>`
+            : '';
+          const platformsHolder = creatorKey
+            ? `<div data-cc-platforms="${creatorKey}"></div>`
+            : '';
+
           let removeBtn = '';
           let transfersBtn = '';
           if (status === 'approved' && app.creatorId) {
@@ -12019,6 +12077,7 @@
                   </div>
                   ${pills.length ? `<div class="cc-app-signals">${pills.join('')}</div>` : ''}
                   <div class="cc-app-meta">${meta.join('<span class="sep">&middot;</span>')}</div>
+                  ${factsHolder}
                 </div>
                 <div class="cc-app-actions">
                   <!-- Review is the only way in. Approving from a list row meant
@@ -12031,12 +12090,16 @@
                   ${transfersBtn}
                   ${removeBtn}
                 </div>
-              </div>${answerHtml}
+              </div>${answerHtml}${platformsHolder}
             </div>
           `;
         });
 
         $('#ccApplicationResults').html(html);
+        // Fills the placeholders above. Safe to call before the index exists:
+        // it does nothing until there is something true to print.
+        ccLoadCreatorIndex();
+        ccApplyCreatorFacts();
 
         // Update pagination
         if (pagination && pagination.totalPages > 1) {
@@ -12087,6 +12150,205 @@
         currentCCPage = page;
         loadCCApplications();
       }
+
+      // ---------------------------------------------------------------
+      // Creator-side facts joined onto approved application rows.
+      //
+      // Read from the admin creators list rather than the application, because
+      // platforms are copied onto the creator at approval and the copy is the
+      // authoritative one from then on -- the application's platforms are a
+      // snapshot of what was claimed.
+      //
+      // Loaded once per console session and paged properly: the list grows with
+      // the program, and asking for one enormous page would break the moment it
+      // outgrew the number someone picked today.
+      // ---------------------------------------------------------------
+      let ccCreatorIndex = null;
+      let ccCreatorIndexLoading = false;
+      let ccCreatorIndexError = '';
+
+      function ccLoadCreatorIndex() {
+        if (ccCreatorIndex || ccCreatorIndexLoading) return;
+        ccCreatorIndexLoading = true;
+        ccCreatorIndexError = '';
+        const index = {};
+
+        function fetchPage(n) {
+          $.ajax({
+            url: `${API_BASE}/api/v1/admin/content-creators?page=${n}&limit=100`,
+            method: 'GET',
+            success: function(data) {
+              const creators = (data && data.creators) || [];
+              creators.forEach(function(c) {
+                if (c && c._id) index[String(c._id)] = c;
+              });
+              const pg = (data && data.pagination) || {};
+              if (pg.hasNextPage && pg.totalPages && n < pg.totalPages) {
+                fetchPage(n + 1);
+                return;
+              }
+              ccCreatorIndex = index;
+              ccCreatorIndexLoading = false;
+              ccApplyCreatorFacts();
+            },
+            error: function(xhr) {
+              // jQuery 1.9 on this page has no responseJSON, so the reason has
+              // to come out of responseText. Printed rather than swallowed:
+              // an empty line would read as "never synced", which is a
+              // different and wrong answer.
+              ccCreatorIndexLoading = false;
+              ccCreatorIndexError = ccAjaxReason(xhr, `HTTP ${xhr.status}`);
+              ccApplyCreatorFacts();
+            }
+          });
+        }
+
+        fetchPage(1);
+      }
+
+      // Recent reads are relative because that is how an admin thinks about
+      // them ("did this just run?"); older ones get a date.
+      function ccSyncedLabel(iso) {
+        if (!iso) return '';
+        const t = new Date(iso).getTime();
+        if (!isFinite(t)) return '';
+        const mins = Math.round((Date.now() - t) / 60000);
+        if (mins < 1) return 'just now';
+        if (mins < 60) return `${mins} minute${mins === 1 ? '' : 's'} ago`;
+        const hrs = Math.round(mins / 60);
+        if (hrs < 24) return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
+        return new Date(t).toLocaleDateString();
+      }
+
+      function ccCountLabel(n) {
+        const count = Number(n) || 0;
+        return `<b>${escapeHtml(count.toLocaleString())}</b> follower${count === 1 ? '' : 's'}`;
+      }
+
+      function ccApplyCreatorFacts() {
+        if (!ccCreatorIndex && !ccCreatorIndexError) return;
+
+        $('[data-cc-sync]').each(function() {
+          const $el = $(this);
+          if (!ccCreatorIndex) {
+            $el.html(`<span style="color:#ef4444;">Sync details unavailable: ${escapeHtml(ccCreatorIndexError)}</span>`);
+            return;
+          }
+          const creator = ccCreatorIndex[$el.attr('data-cc-sync')];
+          if (!creator) { $el.empty(); return; }
+          const label = ccSyncedLabel(creator.lastSyncedAt);
+          $el.html(`Last synced <b>${escapeHtml(label || 'never')}</b>`);
+        });
+
+        $('[data-cc-flag]').each(function() {
+          const $el = $(this);
+          const creator = ccCreatorIndex && ccCreatorIndex[$el.attr('data-cc-flag')];
+          if (!creator || !creator.followerReviewFlaggedAt) { $el.empty(); return; }
+          // A flag is a note for a human, not a penalty: nothing is revoked and
+          // no grace period starts from it, so the tooltip says so outright.
+          const reason = creator.followerReviewReason
+            || 'A follower count we read came in below the minimum.';
+          $el.html(
+            `<span class="cc-pill cc-pill-wait" title="${escapeHtml(`${reason} Nothing was revoked.`)}">` +
+            `<i class="fas fa-magnifying-glass"></i> Needs follower review</span>`
+          );
+        });
+
+        $('[data-cc-platforms]').each(function() {
+          const $el = $(this);
+          const creatorId = $el.attr('data-cc-platforms');
+          const creator = ccCreatorIndex && ccCreatorIndex[creatorId];
+          const platforms = (creator && creator.platforms) || [];
+          if (!platforms.length) { $el.empty(); return; }
+
+          const rows = platforms.map(function(p, i) {
+            const type = String((p && p.type) || '').toLowerCase();
+            const label = CC_PLATFORM_LABELS[type] || p.type || 'Platform';
+            const synced = ccSyncedLabel(p.lastSyncedAt);
+            const bits = [
+              `<b>${escapeHtml(label)}</b> @${escapeHtml(String(p.handle || ''))}`,
+              ccCountLabel(p.followerCount),
+              synced ? `read ${escapeHtml(synced)}` : 'never read',
+            ];
+            if (p.verificationMethod) {
+              bits.push(p.verificationMethod === 'admin'
+                ? 'verified by an admin'
+                : `verified via ${escapeHtml(String(p.verificationMethod))}`);
+            }
+            let line = bits.join('<span class="sep">&middot;</span>');
+            if (p.pendingHandle) {
+              const onclick = `showVerifyHandleModal('${escapeHtml(ccJsStr(creatorId))}', ${i}, '${escapeHtml(ccJsStr(creator.displayName || ''))}', '${escapeHtml(ccJsStr(label))}', '${escapeHtml(ccJsStr(String(p.pendingHandle)))}')`;
+              const verifyBtn = creator.status === 'removed'
+                ? ''
+                : `<button class="ac-btn" style="margin-left:10px; padding:2px 8px; font-size:11px;" title="Vouch for this handle change by hand" onclick="${onclick}"><i class="fas fa-shield-halved"></i> Verify</button>`;
+              line += `<div style="color:#fbbf24; margin-top:3px;">Handle change pending: @${escapeHtml(String(p.pendingHandle))}${verifyBtn}</div>`;
+            }
+            return `<div style="padding:3px 0;">${line}</div>`;
+          });
+
+          $el.html(
+            `<div style="margin-top:10px; padding-top:10px; border-top:1px solid #2a2d45; font-size:12px; color:#9aa0b4;">` +
+            `<div style="font-weight:700; color:#c7ccdd; margin-bottom:4px;">Platforms</div>${rows.join('')}</div>`
+          );
+        });
+
+        // Spacing last, and only where something actually landed.
+        $('[data-cc-facts]').each(function() {
+          const $el = $(this);
+          $el.css('margin-top', $.trim($el.text()) ? '6px' : '0');
+        });
+      }
+
+      // Manual fallback for a platform that will not let us read it. The
+      // creator-facing copy promises an admin can do this, so this is where
+      // that promise is kept.
+      function showVerifyHandleModal(creatorId, index, displayName, platformLabel, pendingHandle) {
+        $('#ccVerifyCreatorId').val(creatorId);
+        $('#ccVerifyPlatformIndex').val(String(index));
+        $('#ccVerifyCreatorName').text(displayName || 'this creator');
+        $('#ccVerifyPlatformLabel').text(platformLabel);
+        $('#ccVerifyHandleLine').text(`New handle: @${pendingHandle}`);
+        $('#ccVerifyError').hide().text('');
+        $('#ccVerifyHandleModal').modal('show');
+      }
+
+      $('#ccConfirmVerifyHandleBtn').click(function() {
+        const creatorId = $('#ccVerifyCreatorId').val();
+        const index = $('#ccVerifyPlatformIndex').val();
+        const $error = $('#ccVerifyError');
+        const button = $(this);
+
+        $error.hide().text('');
+        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Verifying...');
+
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creators/${creatorId}/platforms/${index}/verify`,
+          method: 'POST',
+          contentType: 'application/json',
+          headers: { 'X-User-ID': getCurrentAdminId() },
+          data: JSON.stringify({}),
+          success: function() {
+            $('#ccVerifyHandleModal').modal('hide');
+            trackAdminAction('cc_verify_handle', `Verified a pending handle change for creator ${creatorId}, platform ${index}`);
+            showInfoModal('Success', '<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Handle change verified.');
+            // The creator record changed, so the cached index is stale.
+            ccCreatorIndex = null;
+            loadCCApplications();
+          },
+          error: function(xhr) {
+            $error.text(`Failed to verify: ${ccAjaxReason(xhr, `HTTP ${xhr.status}`)}`).show();
+          },
+          complete: function() {
+            button.prop('disabled', false).html('<i class="fas fa-shield-halved" style="margin-right: 8px;"></i>Verify handle');
+            setTimeout(function() {
+              if (!$('.modal.show').length) {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('padding-right', '');
+              }
+            }, 300);
+          }
+        });
+      });
 
       // Content Creator Removal Functions
       function showRemoveModal(creatorId, displayName) {
