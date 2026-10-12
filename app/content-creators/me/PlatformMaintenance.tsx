@@ -187,15 +187,19 @@ export default function PlatformMaintenance({
         text: reason || 'That code has expired. Get a new one and add it to your bio.',
       };
     }
+    // A handle change survives every one of these: nothing is promoted and
+    // nothing is dropped, so the one thing the creator most needs to hear is
+    // that the change they started is still there.
+    const stillPending = pendingSafe ? ' Your handle change is still pending.' : '';
     if (r.status === 404) {
       return {
         tone: 'bad',
-        text: reason || `We could not find that ${label} channel. Nothing was changed.`,
+        text: (reason || `We could not find that ${label} channel. Nothing was changed.`) + stillPending,
       };
     }
     return {
       tone: 'bad',
-      text: reason || 'That did not work just now. Nothing was changed.',
+      text: (reason || 'That did not work just now. Nothing was changed.') + stillPending,
     };
   };
 
