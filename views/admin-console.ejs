@@ -12045,9 +12045,12 @@
           const creatorKey = status === 'approved' && app.creatorId
             ? escapeHtml(String(app.creatorId))
             : '';
-          const flagHolder = creatorKey ? `<span data-cc-flag="${creatorKey}"></span>` : '';
-          const syncHolder = creatorKey
-            ? `<div data-cc-sync="${creatorKey}" style="font-size:12px; color:#9aa0b4; margin-top:6px;"></div>`
+          // One wrapper for both, with no margin of its own: an approved row
+          // with nothing to report must not grow a blank gap, so the spacing is
+          // added by ccApplyCreatorFacts only once there is something in it.
+          const factsHolder = creatorKey
+            ? `<div data-cc-facts="${creatorKey}" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:12px; color:#9aa0b4;">` +
+              `<span data-cc-flag="${creatorKey}"></span><span data-cc-sync="${creatorKey}"></span></div>`
             : '';
           const platformsHolder = creatorKey
             ? `<div data-cc-platforms="${creatorKey}"></div>`
@@ -12072,9 +12075,9 @@
                     ${escapeHtml(displayName)}
                     <span class="cc-pill ${pillClass}">${escapeHtml(statusLabel)}</span>
                   </div>
-                  ${pills.length || flagHolder ? `<div class="cc-app-signals">${pills.join('')}${flagHolder}</div>` : ''}
+                  ${pills.length ? `<div class="cc-app-signals">${pills.join('')}</div>` : ''}
                   <div class="cc-app-meta">${meta.join('<span class="sep">&middot;</span>')}</div>
-                  ${syncHolder}
+                  ${factsHolder}
                 </div>
                 <div class="cc-app-actions">
                   <!-- Review is the only way in. Approving from a list row meant
@@ -12287,6 +12290,12 @@
             `<div style="margin-top:10px; padding-top:10px; border-top:1px solid #2a2d45; font-size:12px; color:#9aa0b4;">` +
             `<div style="font-weight:700; color:#c7ccdd; margin-bottom:4px;">Platforms</div>${rows.join('')}</div>`
           );
+        });
+
+        // Spacing last, and only where something actually landed.
+        $('[data-cc-facts]').each(function() {
+          const $el = $(this);
+          $el.css('margin-top', $.trim($el.text()) ? '6px' : '0');
         });
       }
 
