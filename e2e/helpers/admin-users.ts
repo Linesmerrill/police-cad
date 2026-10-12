@@ -330,3 +330,37 @@ export async function removeConsoleCreatorStaff(): Promise<void> {
     await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_CC_STAFF_ID });
   });
 }
+
+// A third non-owner `admin` row, for the platform resync / handle change spec
+// on the same panel. Its own id for the same reason as the one above: two spec
+// files on parallel workers must not share a session row, or the first file's
+// afterAll logs the second one out mid-test.
+export const TEST_CONSOLE_CC_SYNC_STAFF_ID = new ObjectId('a9a9a9a9a9a9a9a9a9a9a9a9');
+export const TEST_CONSOLE_CC_SYNC_STAFF_EMAIL = 'console-cc-sync-staff@test.com';
+export const TEST_CONSOLE_CC_SYNC_STAFF_PASSWORD = 'console-cc-sync-staff-pw-1';
+
+export async function seedConsoleCreatorSyncStaff(): Promise<void> {
+  const hash = bcrypt.hashSync(TEST_CONSOLE_CC_SYNC_STAFF_PASSWORD);
+  await withDb(async (db) => {
+    await db.collection('admin_users').replaceOne(
+      { _id: TEST_CONSOLE_CC_SYNC_STAFF_ID },
+      {
+        _id: TEST_CONSOLE_CC_SYNC_STAFF_ID,
+        email: TEST_CONSOLE_CC_SYNC_STAFF_EMAIL,
+        password: hash,
+        firstName: 'Console',
+        lastName: 'CreatorSyncStaff',
+        role: 'admin',
+        roles: ['admin'],
+        createdAt: new Date(),
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function removeConsoleCreatorSyncStaff(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_CC_SYNC_STAFF_ID });
+  });
+}

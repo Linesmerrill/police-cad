@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import VerificationPanel, { DEFAULT_MIN_FOLLOWERS } from './VerificationPanel';
+import VerificationPanel, { DEFAULT_MIN_FOLLOWERS, platformLabel } from './VerificationPanel';
+import PlatformMaintenance, { MaintainablePlatform } from './PlatformMaintenance';
 import ProfileSetupChecklist from './ProfileSetupChecklist';
 import ApplicationProgress, { Stage } from './ApplicationProgress';
+import { errorReason } from './apiError';
 import {
   ArrowLeftIcon,
   ClockIcon,
@@ -93,6 +95,12 @@ interface ContentCreatorPlatform {
   verificationCode?: string;
   verificationMethod?: string;
   reportedFollowerCount?: number;
+  // Approved-creator platform maintenance. lastSyncedAt is per platform here
+  // (the creator record carries its own, for the whole-profile sync), and the
+  // pending pair holds a handle change that has been started but not proved.
+  lastSyncedAt?: string;
+  pendingHandle?: string;
+  pendingURL?: string;
 }
 
 interface Application {
@@ -153,6 +161,11 @@ interface CreatorProfile {
   gracePeriodStartedAt?: string;
   gracePeriodEndsAt?: string;
   lastSyncedAt?: string;
+  // Set when a count we read ourselves came in under the minimum. It is a note
+  // for an admin, not a penalty: nothing is revoked and no grace period starts
+  // from it, so the copy on this page must not suggest either.
+  followerReviewFlaggedAt?: string;
+  followerReviewReason?: string;
 }
 
 const statusConfig: Record<ApplicationStatus, { color: string; bgColor: string; icon: React.ReactNode; label: string }> = {
@@ -223,23 +236,21 @@ const platformColors: Record<string, string> = {
   other: '#6366f1'
 };
 
+// Platforms the API reads itself. A number typed in for one of these is
+// ignored, so the sync modal shows it as read-only rather than offering a box
+// whose contents go nowhere. Mirrors platforms.For() in the API.
+const READABLE_PLATFORMS = ['youtube', 'twitch', 'tiktok'];
+
+function platformIsReadable(type: string): boolean {
+  return READABLE_PLATFORMS.includes((type || '').toLowerCase());
+}
+
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric'
   });
-}
-
-function formatFollowerCount(count: number): string {
-  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-  return count.toString();
-}
-
-// Count and noun together, so the two cannot be rendered out of agreement.
-function followersLabel(count: number): string {
-  return count === 1 ? '1 follower' : `${formatFollowerCount(count)} followers`;
 }
 
 // Lifetime Partner Premium transfers.
@@ -264,15 +275,6 @@ function transferCounts(entitlements: CreatorProfile['entitlements']) {
 function transfersLabel(count: number): string {
   if (count <= 0) return 'no transfers';
   return count === 1 ? '1 transfer' : `${count} transfers`;
-}
-
-// Reads the reason out of an API error body. The Go API answers with
-// `{response: {message}}`, this site's own Express proxy with a top-level
-// `{message}` / `{error}`, so both shapes have to be tried. Returns a bare
-// reason, so the caller supplies context exactly once.
-function errorReason(data: unknown, fallback: string): string {
-  const body = (data || {}) as { response?: { message?: string }; message?: string; error?: string };
-  return body.response?.message || body.message || body.error || fallback;
 }
 
 // The quiet entry point to the transfer flow, rendered only under an active
@@ -1001,15 +1003,28 @@ export default function CreatorStatusPage() {
   const handleSyncFollowers = async () => {
     if (!creatorProfile) return;
 
-    // Validate all platforms have valid numbers
-    const platforms = syncPlatforms.map(p => ({
-      type: p.type,
-      followerCount: parseInt(p.followerCount) || 0
-    }));
-
-    if (platforms.some(p => p.followerCount < 0)) {
-      setSyncError('Follower counts cannot be negative');
-      return;
+    // Only platforms we cannot read ourselves still travel as numbers. The API
+    // fetches YouTube, Twitch and TikTok from the public channel and ignores
+    // anything the body claims for them, so sending those counts would be
+    // posting a number that is thrown away.
+    const platforms: Array<{ type: string; followerCount: number }> = [];
+    for (const p of syncPlatforms) {
+      if (platformIsReadable(p.type)) continue;
+      const raw = (p.followerCount ?? '').toString().trim();
+      // parseInt(x) || 0 turns a typed 0 into 0 by luck and a typo into 0
+      // silently. Both deserve to be told apart from an empty box.
+      if (raw === '') {
+        setSyncError(`Enter a follower count for ${platformLabel(p.type)}`);
+        return;
+      }
+      const count = Number(raw);
+      if (!Number.isInteger(count) || count < 0 || count > 1000000000) {
+        setSyncError(
+          `${platformLabel(p.type)} follower count must be a whole number between 0 and 1,000,000,000`
+        );
+        return;
+      }
+      platforms.push({ type: p.type, followerCount: count });
     }
 
     setSyncSaving(true);
@@ -1035,7 +1050,7 @@ export default function CreatorStatusPage() {
           platforms: data.platforms,
           lastSyncedAt: data.lastSyncedAt,
           // If status changed, it will be reflected in the next fetch
-          status: data.statusChanged ? (data.maxFollowers >= 500 ? 'active' : 'warned') : creatorProfile.status
+          status: data.statusChanged ? (data.maxFollowers >= DEFAULT_MIN_FOLLOWERS ? 'active' : 'warned') : creatorProfile.status
         });
         setSyncSuccess(data.message);
         // Close modal after a delay to show success message
@@ -1054,6 +1069,23 @@ export default function CreatorStatusPage() {
       setSyncSaving(false);
     }
   };
+
+  // Applies what the resync / re-verify endpoints just confirmed to the
+  // platform row on screen. Patched rather than refetched: the creator pressed
+  // a button whose whole purpose is to change this number, so waiting on a
+  // round trip to see it move is the one thing that cannot happen.
+  const handlePlatformPatch = useCallback(
+    (index: number, patch: Partial<MaintainablePlatform>) => {
+      setCreatorProfile((prev) => {
+        if (!prev) return prev;
+        const platforms = prev.platforms.map((p, i) =>
+          i === index ? { ...p, ...patch } : p
+        );
+        return { ...prev, platforms };
+      });
+    },
+    []
+  );
 
   const canSync = (): boolean => {
     if (!creatorProfile?.lastSyncedAt) return true;
@@ -1551,8 +1583,9 @@ export default function CreatorStatusPage() {
                   </button>
                   <button
                     onClick={handleOpenSyncModal}
+                    data-testid="open-sync-modal"
                     disabled={!canSync()}
-                    title={canSync() ? 'Update your follower counts' : `Next sync available ${getNextSyncTime()}`}
+                    title={canSync() ? 'Read your follower counts from each platform' : `Next sync available ${getNextSyncTime()}`}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -1892,54 +1925,40 @@ export default function CreatorStatusPage() {
                 }}>
                   Connected Platforms
                 </h3>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
+                <p style={{
+                  fontSize: '13px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  margin: '0 0 16px',
+                  lineHeight: '1.6'
                 }}>
-                  {creatorProfile.platforms.map((platform, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 16px',
-                        background: `${platformColors[platform.type] || platformColors.other}10`,
-                        borderRadius: '10px',
-                        border: `1px solid ${platformColors[platform.type] || platformColors.other}30`
-                      }}
-                    >
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px'
-                      }}>
-                        <span style={{
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: platformColors[platform.type] || platformColors.other,
-                          textTransform: 'capitalize'
-                        }}>
-                          {platform.type}
-                        </span>
-                        <span style={{
-                          fontSize: '14px',
-                          color: 'rgba(255, 255, 255, 0.6)'
-                        }}>
-                          @{platform.handle}
-                        </span>
-                      </div>
-                      <span style={{
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: '#fff'
-                      }}>
-                        {followersLabel(platform.followerCount)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                  We read these counts from the public channel. If you have renamed a
+                  channel, change the handle here and prove the new one with a code.
+                </p>
+                <PlatformMaintenance
+                  platforms={creatorProfile.platforms}
+                  endpointBase="/api/v1/content-creators/me/platforms"
+                  onPlatformPatch={handlePlatformPatch}
+                />
+                {creatorProfile.followerReviewFlaggedAt && (
+                  <div
+                    data-testid="follower-review-flag"
+                    style={{
+                      marginTop: '16px',
+                      background: 'rgba(251, 191, 36, 0.08)',
+                      border: '1px solid rgba(251, 191, 36, 0.28)',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      fontSize: '13px',
+                      color: '#fbbf24',
+                      lineHeight: '1.6'
+                    }}
+                  >
+                    {creatorProfile.followerReviewReason
+                      ? creatorProfile.followerReviewReason
+                      : `One of your counts came in below the ${DEFAULT_MIN_FOLLOWERS.toLocaleString()} minimum.`}{' '}
+                    An admin will review it. Nothing on your profile has changed.
+                  </div>
+                )}
               </div>
 
               {/* Actions */}
@@ -2195,6 +2214,7 @@ export default function CreatorStatusPage() {
                 application.platforms?.length > 0 && (
                   <VerificationPanel
                     platforms={application.platforms}
+                    endpointBase="/api/v1/content-creator-applications/me/platforms"
                     checks={application.checks}
                     onRefresh={refreshApplication}
                   />
@@ -3324,11 +3344,17 @@ export default function CreatorStatusPage() {
               color: 'rgba(255, 255, 255, 0.7)',
               marginBottom: '20px',
               lineHeight: '1.6'
-            }}>
-              Enter your current follower counts for each platform. You can sync once every 24 hours.
+            }} data-testid="sync-explainer">
+              We read your follower counts straight from each public channel. You can sync
+              once every 24 hours.
+              {syncPlatforms.some(p => !platformIsReadable(p.type))
+                ? ' The only counts to fill in are for platforms we cannot read.'
+                : ''}
             </p>
 
-            {/* Platform Inputs */}
+            {/* Platform rows. A box is only offered where a typed number is
+                still the only number there is: everything we can read is read,
+                and an input whose contents the API discards is a lie. */}
             <div style={{ marginBottom: '24px' }}>
               {syncPlatforms.map((platform, index) => (
                 <div key={platform.type} style={{
@@ -3346,31 +3372,50 @@ export default function CreatorStatusPage() {
                   }}>
                     {platform.type}
                   </div>
-                  <input
-                    type="number"
-                    min="0"
-                    value={platform.followerCount}
-                    onChange={(e) => {
-                      const newPlatforms = [...syncPlatforms];
-                      newPlatforms[index].followerCount = e.target.value;
-                      setSyncPlatforms(newPlatforms);
-                    }}
-                    placeholder="Follower count"
-                    style={{
-                      flex: 1,
-                      padding: '12px 14px',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '10px',
-                      color: '#fff',
-                      fontSize: '14px'
-                    }}
-                  />
+                  {platformIsReadable(platform.type) ? (
+                    <div
+                      data-testid={`sync-read-${platform.type}`}
+                      style={{
+                        flex: 1,
+                        padding: '12px 14px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px dashed rgba(255, 255, 255, 0.12)',
+                        borderRadius: '10px',
+                        color: 'rgba(255, 255, 255, 0.55)',
+                        fontSize: '13px'
+                      }}
+                    >
+                      We read this from {platformLabel(platform.type)}
+                    </div>
+                  ) : (
+                    <input
+                      type="number"
+                      min="0"
+                      max="1000000000"
+                      data-testid={`sync-input-${platform.type}`}
+                      value={platform.followerCount}
+                      onChange={(e) => {
+                        const newPlatforms = [...syncPlatforms];
+                        newPlatforms[index] = { ...newPlatforms[index], followerCount: e.target.value };
+                        setSyncPlatforms(newPlatforms);
+                      }}
+                      placeholder="Follower count"
+                      style={{
+                        flex: 1,
+                        padding: '12px 14px',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontSize: '14px'
+                      }}
+                    />
+                  )}
                 </div>
               ))}
             </div>
 
-            {/* Note about 500 minimum */}
+            {/* Note about the follower minimum */}
             <div style={{
               background: 'rgba(251, 191, 36, 0.1)',
               border: '1px solid rgba(251, 191, 36, 0.2)',
@@ -3383,28 +3428,31 @@ export default function CreatorStatusPage() {
                 color: '#fbbf24',
                 margin: 0
               }}>
-                <strong>Note:</strong> The Content Creator Program requires at least 500 followers on one platform.
+                <strong>Note:</strong> The Content Creator Program requires at least{' '}
+                {DEFAULT_MIN_FOLLOWERS.toLocaleString()} followers on one platform.
                 If your counts drop below this, you&apos;ll enter a 30-day grace period.
               </p>
             </div>
 
-            {/* Verification warning */}
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '8px',
-              padding: '12px',
-              marginBottom: '24px'
-            }}>
-              <p style={{
-                fontSize: '12px',
-                color: 'rgba(255, 255, 255, 0.5)',
-                margin: 0
+            {/* Only worth saying where a typed number is still accepted. */}
+            {syncPlatforms.some(p => !platformIsReadable(p.type)) && (
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '24px'
               }}>
-                Follower counts are subject to periodic verification by our system.
-                Knowingly entering false information may result in suspension from the Creator Program.
-              </p>
-            </div>
+                <p style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  margin: 0
+                }}>
+                  Counts you enter yourself are checked by our team.
+                  Knowingly entering false information may result in suspension from the Creator Program.
+                </p>
+              </div>
+            )}
 
             {/* Actions */}
             <div style={{
@@ -3435,6 +3483,7 @@ export default function CreatorStatusPage() {
               </button>
               <button
                 onClick={handleSyncFollowers}
+                data-testid="sync-submit"
                 disabled={syncSaving}
                 style={{
                   flex: 1,
