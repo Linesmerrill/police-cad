@@ -5512,6 +5512,52 @@
       </div>
     </div>
 
+    <!-- Grant extra lifetime Premium transfers. Same shape as the removal
+         dialog above: the inputs and the confirmation live in one dialog, so
+         there is no second backdrop stacked on this one. -->
+    <div class="modal fade" id="ccTransfersModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
+              <span>&times;</span>
+            </button>
+            <h4 class="modal-title">Grant Premium transfers</h4>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="ccTransfersCreatorId" />
+            <input type="hidden" id="ccTransfersCurrentLimit" />
+            <p style="color:#9aa0b4; font-size:13px; margin:0 0 1rem;">
+              Raises the lifetime transfer limit for
+              <span id="ccTransfersCreatorName" style="font-weight:600; color:#e5e7eb;"></span>.
+              Transfers already used are not reset.
+              <span id="ccTransfersCurrentLine" style="display:block; margin-top:6px;"></span>
+            </p>
+            <div class="form-group">
+              <label for="ccTransfersAmount" style="color: #e5e7eb; margin-bottom: 0.5rem;">Extra transfers <span style="color: #ef4444;">*</span></label>
+              <input type="number" id="ccTransfersAmount" class="form-control" min="1" max="10" step="1" value="1"
+                     style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;" />
+              <small style="color:#6b7280;">Between 1 and 10.</small>
+            </div>
+            <div class="form-group">
+              <label for="ccTransfersReason" style="color: #e5e7eb; margin-bottom: 0.5rem;">Reason <span style="color: #ef4444;">*</span></label>
+              <textarea id="ccTransfersReason" class="form-control" rows="3"
+                        placeholder="Why this creator is getting more transfers. Stored on the audit record."
+                        style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;"></textarea>
+            </div>
+            <div id="ccTransfersPreview" class="alert" style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 0;"></div>
+            <div id="ccTransfersError" style="color:#ef4444; font-size:13px; margin-top:0.75rem; display:none;"></div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-gradient" id="confirmGrantTransfersBtn">
+              <i class="fas fa-right-left" style="margin-right: 8px;"></i>Grant transfers
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Add Admin Modal -->
     <div class="modal fade" id="addAdminModal" tabindex="-1" role="dialog">
       <div class="modal-dialog">
@@ -11919,6 +11965,28 @@
             meta.push(`1st approval <b>${escapeHtml(new Date(app.firstApprovalAt).toLocaleDateString())}</b>`);
           }
 
+          // Lifetime Partner Premium transfer allowance. Only printed for rows
+          // the API actually sent it on -- defaulting here would show a number
+          // that is not in the database. A zero limit is never real (the
+          // default is 3 and an admin can only raise it), so it reads as unset.
+          const hasTransferInfo = status === 'approved' && !!app.creatorId && (
+            app.transfersUsed !== undefined ||
+            app.transferLimit !== undefined ||
+            app.transfersRemaining !== undefined
+          );
+          const ccTransferLimit = app.transferLimit || 3;
+          const ccTransfersUsed = app.transfersUsed || 0;
+          if (hasTransferInfo) {
+            const remaining = typeof app.transfersRemaining === 'number'
+              ? Math.max(0, app.transfersRemaining)
+              : Math.max(0, ccTransferLimit - ccTransfersUsed);
+            meta.push(
+              `<span data-cc-transfers="${escapeHtml(String(app.creatorId))}">` +
+              `Transfers <b>${ccTransfersUsed} of ${ccTransferLimit}</b> ` +
+              `(<b>${remaining}</b> left)</span>`
+            );
+          }
+
           // Their answer, clamped to two lines. Every application carries one --
           // it is required at 50 characters minimum -- so an empty block means
           // a record from before the question existed, and gets left off rather
@@ -11931,10 +11999,14 @@
               </div>` : '';
 
           let removeBtn = '';
+          let transfersBtn = '';
           if (status === 'approved' && app.creatorId) {
             removeBtn = app.creatorStatus === 'removed'
               ? `<button class="ac-btn" disabled><i class="fas fa-user-slash"></i> Removed</button>`
               : `<button class="ac-btn cc-btn-danger" onclick="showRemoveModal('${escapeHtml(ccJsStr(app.creatorId))}', '${escapeHtml(ccJsStr(displayName))}')"><i class="fas fa-user-slash"></i> Remove</button>`;
+            if (app.creatorStatus !== 'removed') {
+              transfersBtn = `<button class="ac-btn" title="Grant extra lifetime Premium transfers" onclick="showGrantTransfersModal('${escapeHtml(ccJsStr(app.creatorId))}', '${escapeHtml(ccJsStr(displayName))}', ${ccTransfersUsed}, ${hasTransferInfo ? ccTransferLimit : 0})"><i class="fas fa-right-left"></i> Transfers</button>`;
+            }
           }
 
           html += `
@@ -11956,6 +12028,7 @@
                   <a class="ac-btn ac-btn-accent" href="/admin/creator-application/${encodeURIComponent(String(appId))}" title="Open the full review page for this application">
                     <i class="fas fa-clipboard-check"></i> Review
                   </a>
+                  ${transfersBtn}
                   ${removeBtn}
                 </div>
               </div>${answerHtml}
@@ -12064,6 +12137,116 @@
             button.prop('disabled', false);
             button.html('<i class="fas fa-user-slash" style="margin-right: 8px;"></i>Remove from Program');
             // Ensure modal backdrop is always cleaned up
+            setTimeout(function() {
+              if (!$('.modal.show').length) {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('padding-right', '');
+              }
+            }, 300);
+          }
+        });
+      });
+
+
+      // ---------------------------------------------------------------
+      // Grant extra lifetime Premium transfers.
+      //
+      // Posted to our own Express route, not straight to the API: the mutation
+      // has to sit behind an admin session on this origin, and the shared API
+      // key must stay server-side.
+      // ---------------------------------------------------------------
+      function ccTransfersUpdatePreview() {
+        const limit = parseInt($('#ccTransfersCurrentLimit').val(), 10);
+        const amount = parseInt($('#ccTransfersAmount').val(), 10);
+        if (!Number.isInteger(amount) || amount < 1 || amount > 10) {
+          $('#ccTransfersPreview').text('Enter a number of transfers between 1 and 10.');
+          return;
+        }
+        const word = amount === 1 ? 'transfer' : 'transfers';
+        if (Number.isInteger(limit) && limit > 0) {
+          $('#ccTransfersPreview').text(`Lifetime limit goes from ${limit} to ${limit + amount} (${amount} extra ${word}).`);
+        } else {
+          $('#ccTransfersPreview').text(`Adds ${amount} ${word} to this creator's lifetime limit.`);
+        }
+      }
+
+      function showGrantTransfersModal(creatorId, displayName, used, limit) {
+        $('#ccTransfersCreatorId').val(creatorId);
+        $('#ccTransfersCreatorName').text(displayName);
+        $('#ccTransfersCurrentLimit').val(limit || '');
+        $('#ccTransfersAmount').val(1);
+        $('#ccTransfersReason').val('');
+        $('#ccTransfersError').hide().text('');
+        $('#ccTransfersCurrentLine').text(
+          limit ? `Currently ${used || 0} of ${limit} used.` : ''
+        );
+        ccTransfersUpdatePreview();
+        $('#ccTransfersModal').modal('show');
+      }
+
+      $(document).on('input change', '#ccTransfersAmount', ccTransfersUpdatePreview);
+
+      $('#confirmGrantTransfersBtn').click(function() {
+        const creatorId = $('#ccTransfersCreatorId').val();
+        const amount = parseInt($('#ccTransfersAmount').val(), 10);
+        const reason = $('#ccTransfersReason').val().trim();
+        const $error = $('#ccTransfersError');
+
+        // Field-level, and naming the allowed range rather than silently
+        // coercing whatever was typed.
+        if (!Number.isInteger(amount) || amount < 1 || amount > 10) {
+          $error.text('Enter a number of transfers between 1 and 10.').show();
+          $('#ccTransfersAmount').focus();
+          return;
+        }
+        if (!reason) {
+          $error.text('A reason is required.').show();
+          $('#ccTransfersReason').focus();
+          return;
+        }
+        $error.hide().text('');
+
+        const button = $(this);
+        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Granting...');
+
+        $.ajax({
+          url: `/admin/content-creators/${encodeURIComponent(creatorId)}/transfers`,
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ additional: amount, reason: reason }),
+          success: function(data) {
+            $('#ccTransfersModal').modal('hide');
+            // Patch the row in place rather than reloading the queue, so the
+            // new allowance is on screen the moment the API confirms it.
+            const used = data && typeof data.transfersUsed === 'number' ? data.transfersUsed : null;
+            const newLimit = data && typeof data.transferLimit === 'number' ? data.transferLimit : null;
+            const remaining = data && typeof data.transfersRemaining === 'number'
+              ? data.transfersRemaining
+              : (used !== null && newLimit !== null ? Math.max(0, newLimit - used) : null);
+            const $cell = $(`[data-cc-transfers="${creatorId}"]`);
+            if (used !== null && newLimit !== null && remaining !== null) {
+              const html = `Transfers <b>${used} of ${newLimit}</b> (<b>${remaining}</b> left)`;
+              if ($cell.length) {
+                $cell.html(html);
+              } else {
+                loadCCApplications();
+              }
+            } else {
+              loadCCApplications();
+            }
+            trackAdminAction('cc_grant_transfers', `Granted ${amount} Premium transfer${amount === 1 ? '' : 's'} to creator ${creatorId}: ${reason}`);
+            showInfoModal('Success', `<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Granted ${amount} extra transfer${amount === 1 ? '' : 's'}.`);
+          },
+          error: function(xhr) {
+            const reasonText = (xhr.responseJSON && (
+              (xhr.responseJSON.response && xhr.responseJSON.response.message) ||
+              xhr.responseJSON.message ||
+              xhr.responseJSON.error
+            )) || `HTTP ${xhr.status}`;
+            $error.text(`Failed to grant transfers: ${reasonText}`).show();
+          },
+          complete: function() {
+            button.prop('disabled', false).html('<i class="fas fa-right-left" style="margin-right: 8px;"></i>Grant transfers');
             setTimeout(function() {
               if (!$('.modal.show').length) {
                 $('.modal-backdrop').remove();

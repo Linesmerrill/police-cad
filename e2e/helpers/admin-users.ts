@@ -296,3 +296,37 @@ export async function removePasskeyOwner(): Promise<void> {
     await db.collection('admin_users').deleteOne({ _id: TEST_PASSKEY_OWNER_ID });
   });
 }
+
+// A second non-owner `admin` row on its own id, for the Content Creators panel
+// spec. Dedicated rather than shared with seedConsoleStaff so that spec and the
+// Server Promos spec can run on parallel workers without one file's cleanup
+// deleting the other's session mid-run.
+export const TEST_CONSOLE_CC_STAFF_ID = new ObjectId('a6a6a6a6a6a6a6a6a6a6a6a6');
+export const TEST_CONSOLE_CC_STAFF_EMAIL = 'console-cc-staff@test.com';
+export const TEST_CONSOLE_CC_STAFF_PASSWORD = 'console-cc-staff-pw-1';
+
+export async function seedConsoleCreatorStaff(): Promise<void> {
+  const hash = bcrypt.hashSync(TEST_CONSOLE_CC_STAFF_PASSWORD);
+  await withDb(async (db) => {
+    await db.collection('admin_users').replaceOne(
+      { _id: TEST_CONSOLE_CC_STAFF_ID },
+      {
+        _id: TEST_CONSOLE_CC_STAFF_ID,
+        email: TEST_CONSOLE_CC_STAFF_EMAIL,
+        password: hash,
+        firstName: 'Console',
+        lastName: 'CreatorStaff',
+        role: 'admin',
+        roles: ['admin'],
+        createdAt: new Date(),
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function removeConsoleCreatorStaff(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_CC_STAFF_ID });
+  });
+}

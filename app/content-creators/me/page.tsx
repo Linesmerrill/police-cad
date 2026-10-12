@@ -23,7 +23,8 @@ import {
   CalendarIcon,
   UserGroupIcon,
   LinkIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ArrowsRightLeftIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
 
@@ -141,6 +142,12 @@ interface CreatorProfile {
       communityName?: string;
       communityId?: string;
     };
+    // Lifetime Partner Premium transfers. All three are optional: a creator
+    // record written before transfers existed carries none of them, and the
+    // API applies the same defaults transferCounts() does below.
+    transfersUsed?: number;
+    transfersRemaining?: number;
+    transferLimit?: number;
   };
   // Grace period fields
   gracePeriodStartedAt?: string;
@@ -233,6 +240,109 @@ function formatFollowerCount(count: number): string {
 // Count and noun together, so the two cannot be rendered out of agreement.
 function followersLabel(count: number): string {
   return count === 1 ? '1 follower' : `${formatFollowerCount(count)} followers`;
+}
+
+// Lifetime Partner Premium transfers.
+//
+// Every field is optional on the wire, so the defaults here have to match the
+// API's. A limit of 0 is never a real value -- the default is 3 and an admin
+// can only raise it -- so a zero reads as "not sent" rather than as "no
+// transfers allowed", which would wrongly lock a creator out of the feature.
+const DEFAULT_TRANSFER_LIMIT = 3;
+
+function transferCounts(entitlements: CreatorProfile['entitlements']) {
+  const limit = entitlements.transferLimit || DEFAULT_TRANSFER_LIMIT;
+  const used = entitlements.transfersUsed || 0;
+  const remaining = typeof entitlements.transfersRemaining === 'number'
+    ? Math.max(0, entitlements.transfersRemaining)
+    : Math.max(0, limit - used);
+  return { limit, used, remaining };
+}
+
+// Count and noun together so the confirmation sentence cannot disagree with
+// itself, including at zero, where "0 transfers" reads worse than the words.
+function transfersLabel(count: number): string {
+  if (count <= 0) return 'no transfers';
+  return count === 1 ? '1 transfer' : `${count} transfers`;
+}
+
+// Reads the reason out of an API error body. The Go API answers with
+// `{response: {message}}`, this site's own Express proxy with a top-level
+// `{message}` / `{error}`, so both shapes have to be tried. Returns a bare
+// reason, so the caller supplies context exactly once.
+function errorReason(data: unknown, fallback: string): string {
+  const body = (data || {}) as { response?: { message?: string }; message?: string; error?: string };
+  return body.response?.message || body.message || body.error || fallback;
+}
+
+// The quiet entry point to the transfer flow, rendered only under an active
+// community boost. Deliberately a text link rather than a CTA: a creator who
+// is happy where their boost sits should never be nudged to move it, and there
+// are only three of these for the life of the account.
+function TransferPremiumControl({
+  counts,
+  onOpen
+}: {
+  counts: { limit: number; used: number; remaining: number };
+  onOpen: () => void;
+}) {
+  const exhausted = counts.remaining <= 0;
+
+  return (
+    <div style={{
+      marginTop: '14px',
+      paddingTop: '14px',
+      borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+    }}>
+      <button
+        type="button"
+        data-testid="transfer-premium-link"
+        onClick={onOpen}
+        disabled={exhausted}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          fontSize: '13px',
+          fontWeight: '500',
+          textAlign: 'left',
+          color: exhausted ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.6)',
+          textDecoration: exhausted ? 'none' : 'underline',
+          textUnderlineOffset: '2px',
+          cursor: exhausted ? 'not-allowed' : 'pointer'
+        }}
+      >
+        <ArrowsRightLeftIcon style={{ width: '14px', height: '14px', flexShrink: 0 }} />
+        Transfer Premium to another community
+      </button>
+
+      {exhausted && (
+        <div data-testid="transfer-exhausted-note" style={{
+          fontSize: '12px',
+          lineHeight: '1.5',
+          color: 'rgba(255, 255, 255, 0.45)',
+          marginTop: '8px'
+        }}>
+          You&apos;ve used all of your free transfers.{' '}
+          <Link href="/contact-us" style={{ color: '#fbbf24', textDecoration: 'underline' }}>
+            Contact LPC support
+          </Link>{' '}
+          to request another.
+        </div>
+      )}
+
+      <div data-testid="transfer-count" style={{
+        fontSize: '11px',
+        color: 'rgba(255, 255, 255, 0.35)',
+        marginTop: '8px'
+      }}>
+        Transfers used: {counts.used} of {counts.limit}
+      </div>
+    </div>
+  );
 }
 
 // Turns an application into the four stages the applicant sees.
@@ -367,6 +477,15 @@ export default function CreatorStatusPage() {
   const [promotionError, setPromotionError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState<{ _id: string; name: string } | null>(null);
+  // Transfer flow. Separate state from the claim flow above on purpose: the
+  // two share the owned-communities fetch but nothing else, and an error from
+  // one must never surface inside the other's modal.
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showTransferConfirmModal, setShowTransferConfirmModal] = useState(false);
+  const [transferTarget, setTransferTarget] = useState<{ _id: string; name: string } | null>(null);
+  const [transferAcknowledged, setTransferAcknowledged] = useState(false);
+  const [transferring, setTransferring] = useState(false);
+  const [transferError, setTransferError] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editBio, setEditBio] = useState('');
@@ -537,9 +656,12 @@ export default function CreatorStatusPage() {
     }
   };
 
-  const fetchOwnedCommunities = async () => {
+  // Shared by the claim and transfer flows, each passing its own error slot.
+  const fetchOwnedCommunities = async (
+    setError: (message: string | null) => void = setPromotionError
+  ) => {
     setLoadingCommunities(true);
-    setPromotionError(null);
+    setError(null);
 
     try {
       const response = await fetch('/api/v1/content-creators/me/owned-communities', {
@@ -551,11 +673,11 @@ export default function CreatorStatusPage() {
       if (response.ok && data.success) {
         setOwnedCommunities(data.communities || []);
       } else {
-        setPromotionError(data.message || 'Failed to load communities');
+        setError(errorReason(data, 'Failed to load communities'));
       }
     } catch (error) {
       console.error('Error fetching owned communities:', error);
-      setPromotionError('Failed to load communities');
+      setError('Failed to load communities');
     } finally {
       setLoadingCommunities(false);
     }
@@ -622,6 +744,93 @@ export default function CreatorStatusPage() {
     setShowConfirmModal(false);
     setSelectedCommunity(null);
   };
+
+  const handleOpenTransfer = () => {
+    setTransferTarget(null);
+    setTransferAcknowledged(false);
+    setTransferError(null);
+    setShowTransferModal(true);
+    fetchOwnedCommunities(setTransferError);
+  };
+
+  const handleSelectTransferTarget = (community: { _id: string; name: string }) => {
+    setTransferTarget(community);
+    setTransferAcknowledged(false);
+    setTransferError(null);
+    setShowTransferConfirmModal(true);
+  };
+
+  const handleCancelTransferConfirm = () => {
+    setShowTransferConfirmModal(false);
+    setTransferTarget(null);
+    setTransferAcknowledged(false);
+  };
+
+  const handleConfirmTransfer = async () => {
+    // The checkbox gate is enforced here as well as on the button, so a stale
+    // render can never post a transfer the creator has not acknowledged.
+    if (!transferTarget || !creatorProfile || !transferAcknowledged) return;
+
+    setTransferring(true);
+    setTransferError(null);
+
+    try {
+      const response = await fetch('/api/v1/content-creators/me/community-promotion/transfer', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ communityId: transferTarget._id })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const previous = transferCounts(creatorProfile.entitlements);
+        // Patched locally rather than refetched: the card and the counter
+        // update the moment the API confirms.
+        setCreatorProfile({
+          ...creatorProfile,
+          entitlements: {
+            ...creatorProfile.entitlements,
+            communityPlan: {
+              active: true,
+              communityName: data.toCommunityName || transferTarget.name,
+              communityId: data.toCommunityId || transferTarget._id
+            },
+            transfersUsed: typeof data.transfersUsed === 'number' ? data.transfersUsed : previous.used + 1,
+            transfersRemaining: typeof data.transfersRemaining === 'number'
+              ? data.transfersRemaining
+              : Math.max(0, previous.remaining - 1),
+            transferLimit: typeof data.transferLimit === 'number' ? data.transferLimit : previous.limit
+          }
+        });
+        // The picker's "applied" flags now point at the new community; the
+        // next open refetches, so just drop the stale list.
+        setOwnedCommunities([]);
+        setShowTransferConfirmModal(false);
+        setShowTransferModal(false);
+        setTransferTarget(null);
+        setTransferAcknowledged(false);
+      } else {
+        setTransferError(errorReason(data, 'Failed to transfer your Premium boost. Please try again.'));
+      }
+    } catch (error) {
+      console.error('Error transferring community promotion:', error);
+      setTransferError('Failed to transfer your Premium boost. Please try again.');
+    } finally {
+      setTransferring(false);
+    }
+  };
+
+  // Everything the creator owns except the community the boost is already on.
+  const currentBoostCommunityId = creatorProfile?.entitlements.communityPlan.communityId;
+  const transferDestinations = ownedCommunities.filter(
+    (community) => community._id !== currentBoostCommunityId && !community.isPromotionApplied
+  );
+  const currentBoostCommunityName =
+    creatorProfile?.entitlements.communityPlan.communityName || 'your current community';
 
   const handleOpenEditModal = () => {
     if (creatorProfile) {
@@ -1583,7 +1792,7 @@ export default function CreatorStatusPage() {
                     </div>
                     {creatorProfile.entitlements.communityPlan.active ? (
                       <>
-                        <div style={{
+                        <div data-testid="community-plan-name" style={{
                           fontSize: '18px',
                           fontWeight: '700',
                           color: '#fff'
@@ -1597,6 +1806,10 @@ export default function CreatorStatusPage() {
                         }}>
                           $96/year value
                         </div>
+                        <TransferPremiumControl
+                          counts={transferCounts(creatorProfile.entitlements)}
+                          onOpen={handleOpenTransfer}
+                        />
                       </>
                     ) : (
                       <>
@@ -3397,6 +3610,485 @@ export default function CreatorStatusPage() {
                 }}
               >
                 {applyingPromotion ? 'Applying...' : 'Confirm & Apply'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer destination picker. Same shell as the claim picker above so
+          the two read as one feature, with the current community left out of
+          the list rather than shown greyed -- it is not a destination. */}
+      {showTransferModal && creatorProfile && (
+        <div data-testid="transfer-picker-modal" style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#12121f',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            padding: '32px',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: 'rgba(251, 191, 36, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px'
+            }}>
+              <ArrowsRightLeftIcon style={{ width: '30px', height: '30px', color: '#fbbf24' }} />
+            </div>
+
+            <h3 style={{
+              fontSize: '1.25rem',
+              fontWeight: '700',
+              color: '#fff',
+              textAlign: 'center',
+              marginBottom: '12px'
+            }}>
+              Transfer Premium
+            </h3>
+
+            <p style={{
+              fontSize: '14px',
+              lineHeight: '1.6',
+              color: 'rgba(255, 255, 255, 0.7)',
+              textAlign: 'center',
+              marginBottom: '24px'
+            }}>
+              Choose where to move your free Premium boost. It leaves{' '}
+              <strong style={{ color: '#fff' }}>{currentBoostCommunityName}</strong> as soon as you confirm.
+            </p>
+
+            {transferError && (
+              <div data-testid="transfer-picker-error" style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '16px',
+                fontSize: '14px',
+                color: '#ef4444',
+                textAlign: 'center'
+              }}>
+                {transferError}
+              </div>
+            )}
+
+            {loadingCommunities ? (
+              <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  border: '3px solid rgba(251, 191, 36, 0.2)',
+                  borderTopColor: '#fbbf24',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  margin: '0 auto 12px'
+                }} />
+                <p style={{
+                  fontSize: '14px',
+                  color: 'rgba(255, 255, 255, 0.5)'
+                }}>
+                  Loading your communities...
+                </p>
+              </div>
+            ) : transferDestinations.length === 0 ? (
+              <div data-testid="transfer-no-destinations" style={{
+                textAlign: 'center',
+                padding: '32px 16px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderRadius: '12px',
+                marginBottom: '16px'
+              }}>
+                <UserGroupIcon style={{
+                  width: '40px',
+                  height: '40px',
+                  color: 'rgba(255, 255, 255, 0.3)',
+                  margin: '0 auto 12px'
+                }} />
+                <p style={{
+                  fontSize: '14px',
+                  color: 'rgba(255, 255, 255, 0.6)'
+                }}>
+                  You don&apos;t own another community to move it to.
+                </p>
+                <p style={{
+                  fontSize: '13px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  marginTop: '8px'
+                }}>
+                  Your boost stays on {currentBoostCommunityName}.
+                </p>
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                marginBottom: '16px'
+              }}>
+                {transferDestinations.map((community) => {
+                  // A community paying for its own plan is refused by the API,
+                  // so it is shown with the reason rather than offered.
+                  const hasExistingSubscription = !!community.currentPlan &&
+                    ['basic', 'elite', 'base'].includes(community.currentPlan.toLowerCase());
+                  const isDisabled = hasExistingSubscription || transferring;
+
+                  return (
+                    <div key={community._id}>
+                      <button
+                        type="button"
+                        data-testid={`transfer-destination-${community._id}`}
+                        onClick={() => !isDisabled && handleSelectTransferTarget({ _id: community._id, name: community.name })}
+                        disabled={isDisabled}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '16px',
+                          background: hasExistingSubscription
+                            ? 'rgba(107, 114, 128, 0.1)'
+                            : 'rgba(255, 255, 255, 0.03)',
+                          border: hasExistingSubscription
+                            ? '1px solid rgba(107, 114, 128, 0.3)'
+                            : '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: hasExistingSubscription ? '12px 12px 0 0' : '12px',
+                          cursor: isDisabled ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s',
+                          opacity: transferring && !hasExistingSubscription ? 0.5 : 1
+                        }}
+                      >
+                        <div style={{ textAlign: 'left' }}>
+                          <div style={{
+                            fontSize: '15px',
+                            fontWeight: '600',
+                            color: hasExistingSubscription ? 'rgba(255, 255, 255, 0.5)' : '#fff'
+                          }}>
+                            {community.name}
+                          </div>
+                          {community.currentPlan && (
+                            <div style={{
+                              fontSize: '12px',
+                              color: 'rgba(255, 255, 255, 0.5)',
+                              marginTop: '4px'
+                            }}>
+                              Current: {community.currentPlan.charAt(0).toUpperCase() + community.currentPlan.slice(1)} Plan
+                            </div>
+                          )}
+                        </div>
+                        {hasExistingSubscription ? (
+                          <span style={{
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: 'rgba(255, 255, 255, 0.4)',
+                            padding: '6px 12px',
+                            background: 'rgba(107, 114, 128, 0.2)',
+                            borderRadius: '6px'
+                          }}>
+                            Unavailable
+                          </span>
+                        ) : (
+                          <span style={{
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: '#fbbf24',
+                            padding: '6px 12px',
+                            background: 'rgba(251, 191, 36, 0.1)',
+                            borderRadius: '6px'
+                          }}>
+                            Select
+                          </span>
+                        )}
+                      </button>
+                      {hasExistingSubscription && (
+                        <div style={{
+                          padding: '12px 16px',
+                          background: 'rgba(245, 158, 11, 0.08)',
+                          border: '1px solid rgba(245, 158, 11, 0.2)',
+                          borderTop: 'none',
+                          borderRadius: '0 0 12px 12px',
+                          fontSize: '13px',
+                          lineHeight: '1.5',
+                          color: 'rgba(255, 255, 255, 0.7)'
+                        }}>
+                          <ExclamationTriangleIcon style={{
+                            width: '14px',
+                            height: '14px',
+                            color: '#f59e0b',
+                            display: 'inline',
+                            verticalAlign: 'middle',
+                            marginRight: '6px'
+                          }} />
+                          This community already has a paid plan. Cancel it first, then move your boost here.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <button
+              type="button"
+              data-testid="transfer-picker-cancel"
+              onClick={() => {
+                setShowTransferModal(false);
+                setTransferError(null);
+              }}
+              disabled={transferring}
+              style={{
+                width: '100%',
+                padding: '14px',
+                borderRadius: '10px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: transferring ? 'not-allowed' : 'pointer',
+                opacity: transferring ? 0.5 : 1
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer confirmation. Names both communities, because the one losing
+          the boost is the part that gets missed, and spends the transfer in
+          plain numbers -- there are only ever three. */}
+      {showTransferConfirmModal && transferTarget && creatorProfile && (
+        <div data-testid="transfer-confirm-modal" style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10001,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#12121f',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            padding: '32px',
+            maxWidth: '480px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: 'rgba(251, 191, 36, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px'
+            }}>
+              <ArrowsRightLeftIcon style={{ width: '30px', height: '30px', color: '#fbbf24' }} />
+            </div>
+
+            <h3 style={{
+              fontSize: '1.25rem',
+              fontWeight: '700',
+              color: '#fff',
+              textAlign: 'center',
+              marginBottom: '20px'
+            }}>
+              Move your Premium boost?
+            </h3>
+
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '10px',
+              padding: '16px',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: '600',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: 'rgba(255, 255, 255, 0.4)',
+                marginBottom: '4px'
+              }}>
+                Losing Premium
+              </div>
+              <div data-testid="transfer-confirm-from" style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                color: '#fff',
+                marginBottom: '14px'
+              }}>
+                {currentBoostCommunityName}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: '600',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: 'rgba(255, 255, 255, 0.4)',
+                marginBottom: '4px'
+              }}>
+                Gaining Premium
+              </div>
+              <div data-testid="transfer-confirm-to" style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                color: '#fbbf24'
+              }}>
+                {transferTarget.name}
+              </div>
+            </div>
+
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              borderRadius: '10px',
+              padding: '14px',
+              marginBottom: '20px'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px'
+              }}>
+                <ExclamationTriangleIcon style={{
+                  width: '18px',
+                  height: '18px',
+                  color: '#ef4444',
+                  flexShrink: 0,
+                  marginTop: '2px'
+                }} />
+                <p data-testid="transfer-confirm-detail" style={{
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  margin: 0
+                }}>
+                  This takes effect immediately.{' '}
+                  <strong>{currentBoostCommunityName}</strong> drops back to the free plan right
+                  away, and <strong>{transferTarget.name}</strong> gets Premium at the same moment.
+                  It uses 1 of your {transferCounts(creatorProfile.entitlements).limit} permanent
+                  lifetime transfers, leaving you{' '}
+                  {transfersLabel(transferCounts(creatorProfile.entitlements).remaining - 1)} after
+                  this one.
+                </p>
+              </div>
+            </div>
+
+            <label
+              htmlFor="transferAcknowledge"
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+                marginBottom: '20px',
+                fontSize: '13px',
+                lineHeight: '1.5',
+                color: 'rgba(255, 255, 255, 0.8)',
+                cursor: 'pointer'
+              }}
+            >
+              <input
+                id="transferAcknowledge"
+                data-testid="transfer-acknowledge"
+                type="checkbox"
+                checked={transferAcknowledged}
+                onChange={(e) => setTransferAcknowledged(e.target.checked)}
+                disabled={transferring}
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  marginTop: '2px',
+                  accentColor: '#fbbf24',
+                  flexShrink: 0,
+                  cursor: transferring ? 'not-allowed' : 'pointer'
+                }}
+              />
+              I understand this is permanent and uses one of my transfers
+            </label>
+
+            {transferError && (
+              <div data-testid="transfer-confirm-error" style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '16px',
+                fontSize: '14px',
+                color: '#ef4444',
+                textAlign: 'center'
+              }}>
+                {transferError}
+              </div>
+            )}
+
+            <div style={{
+              display: 'flex',
+              gap: '12px'
+            }}>
+              <button
+                type="button"
+                data-testid="transfer-confirm-cancel"
+                onClick={handleCancelTransferConfirm}
+                disabled={transferring}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: '10px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: transferring ? 'not-allowed' : 'pointer',
+                  opacity: transferring ? 0.5 : 1
+                }}
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                data-testid="transfer-confirm-submit"
+                onClick={handleConfirmTransfer}
+                disabled={!transferAcknowledged || transferring}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: '10px',
+                  background: !transferAcknowledged || transferring
+                    ? 'rgba(251, 191, 36, 0.25)'
+                    : 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                  border: 'none',
+                  color: !transferAcknowledged || transferring ? 'rgba(0, 0, 0, 0.45)' : '#000',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  cursor: !transferAcknowledged || transferring ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {transferring ? 'Transferring...' : 'Transfer Premium'}
               </button>
             </div>
           </div>

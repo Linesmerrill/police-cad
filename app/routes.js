@@ -1556,6 +1556,48 @@ module.exports = function (app, passport, server, nextApp, handle) {
     };
   }
 
+  // Grant a creator extra lifetime Partner Premium transfers.
+  //
+  // Through Express rather than straight from the console so the mutation
+  // requires a real admin session on our origin, and so the shared API key the
+  // interceptor attaches never reaches the browser. The admin identity is taken
+  // from the session, not from anything the page sends.
+  app.post("/admin/content-creators/:creatorId/transfers", requireAdminSession, async function (req, res) {
+    const creatorId = String(req.params.creatorId || "");
+    if (!isValidObjectId(creatorId)) {
+      return res.status(400).json({ message: "Invalid creator ID" });
+    }
+    const additional = Number(req.body && req.body.additional);
+    if (!Number.isInteger(additional) || additional < 1 || additional > 10) {
+      return res.status(400).json({ message: "Enter a number of transfers between 1 and 10" });
+    }
+    const reason = String((req.body && req.body.reason) || "").trim();
+    if (!reason) {
+      return res.status(400).json({ message: "A reason is required" });
+    }
+    const adminId = req.session.admin && (req.session.admin.id || req.session.admin._id);
+    try {
+      const response = await axios.post(
+        `${policeCadApiUrl}/api/v1/admin/content-creators/${creatorId}/transfers`,
+        { additional: additional, reason: reason },
+        {
+          headers: {
+            ...config.headers,
+            ...(adminId ? { "X-User-ID": String(adminId) } : {}),
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return res.json(response.data);
+    } catch (error) {
+      console.error("[admin-creator-transfers] grant failed:", error.message);
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      }
+      return res.status(500).json({ message: "Failed to grant transfers" });
+    }
+  });
+
   app.get("/admin/metrics/api", requireAdminSession, proxyAdminMetrics("/api/v2/metrics"));
   app.get("/admin/metrics/api/slow-queries", requireAdminSession, proxyAdminMetrics("/api/v2/metrics/slow-queries"));
   app.get("/admin/metrics/api/charts", requireAdminSession, proxyAdminMetrics("/api/v2/metrics/charts"));
@@ -6203,6 +6245,39 @@ module.exports = function (app, passport, server, nextApp, handle) {
         res.status(error.response.status).json(error.response.data);
       } else {
         res.status(500).json({ success: false, message: "Failed to apply community promotion" });
+      }
+    }
+  });
+
+  // Move an existing community promotion to another community the creator owns.
+  //
+  // Server-side for the same reason as the claim above: the API decides whether
+  // the caller really is the creator and owns the destination, and the userId it
+  // is handed comes from the logged-in session, not from the browser. The
+  // response is forwarded verbatim, including the 409 bodies the dashboard
+  // shows (`transfer_limit_reached`, destination already boosted, nothing to
+  // transfer), so the status code is never flattened on the way back.
+  app.post("/api/v1/content-creators/me/community-promotion/transfer", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.post(
+        `${policeCadApiUrl}/api/v1/content-creators/me/community-promotion/transfer`,
+        { communityId: req.body && req.body.communityId },
+        {
+          headers: {
+            ...config.headers,
+            'X-User-ID': userId.toString(),
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error transferring community promotion:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ success: false, message: "Failed to transfer community promotion" });
       }
     }
   });
