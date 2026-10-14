@@ -859,7 +859,24 @@ function updateDepartmentJoinButton(departmentId, status) {
   // Global variables for invite codes
   let inviteCodesList = [];
   const API_URL = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
-  
+
+  // Why a request failed. Invite codes go through our own Express routes, which
+  // answer with a top-level { message } of their own but forward the Go API's
+  // { response: { message } } verbatim, so both shapes have to be read. Never
+  // throws: a non-JSON body degrades to the status instead of leaking a parse
+  // error into the message.
+  async function inviteCodeErrorReason(response) {
+    try {
+      const data = await response.json();
+      return (data && data.response && data.response.message)
+        || (data && data.message)
+        || (data && data.error)
+        || `HTTP ${response.status}`;
+    } catch (parseError) {
+      return `HTTP ${response.status}`;
+    }
+  }
+
   // Open invite codes modal
   window.openInviteCodesModal = function() {
     const modal = document.getElementById('inviteCodesModal');
@@ -1105,33 +1122,32 @@ function updateDepartmentJoinButton(departmentId, status) {
     
     // Get community ID from EJS globals (same as other functions in this file)
     const communityId = window?.communityId || (typeof COMMUNITY_ID !== 'undefined' ? COMMUNITY_ID : null) || (window.community && window.community._id) || null;
-    const userId = window.dbUser?._id;
-    
-    if (!communityId || !userId) {
-      alert('Error: Missing community or user information');
+
+    if (!communityId) {
+      alert('Error: Missing community information');
       return;
     }
-    
+
     try {
-      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/add-invite-code?userId=${userId}`, {
+      // Through our own server route, which names the creator from the session.
+      // See the "Invite codes" block in app/routes.js.
+      const response = await fetch(`/community/${communityId}/invite-codes`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${window.dbUser?.token || ''}`
+          'Content-Type': 'application/json'
         },
+        credentials: 'same-origin',
         body: JSON.stringify({
           code: code,
           maxUses: maxUses,
-          expiresAt: expiresAt,
-          createdBy: userId
+          expiresAt: expiresAt
         })
       });
-      
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create invite code');
+        throw new Error(await inviteCodeErrorReason(response));
       }
-      
+
       const data = await response.json();
       
       // Generate TinyURL link (matches mobile app)
@@ -1163,18 +1179,16 @@ function updateDepartmentJoinButton(departmentId, status) {
     listDiv.style.display = 'none';
     
     try {
-      const response = await fetch(`${API_URL}/api/v2/community/${communityId}/invite-codes?page=${page}&limit=${limit}`, {
+      const response = await fetch(`/community/${communityId}/invite-codes?page=${page}&limit=${limit}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${window.dbUser?.token || ''}`
-        }
+        credentials: 'same-origin'
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         displayInviteCodes(data.inviteCodes, data.pagination);
       } else {
-        throw new Error('Failed to load invite codes');
+        throw new Error(await inviteCodeErrorReason(response));
       }
     } catch (error) {
       console.error('Error loading invite codes:', error);

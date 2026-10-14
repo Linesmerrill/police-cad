@@ -4482,12 +4482,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
     try {
       const { inviteCode } = req.body;
       
-      const apiUrl = `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/join`;
+      // The joining user is the logged-in session, named on the query string so
+      // the API reads it the same way it reads the caller of every other
+      // community action the website proxies (it is only believed because the
+      // axios interceptor adds the X-API-Key, which never reaches a browser).
+      // The body still carries it as well so this and the API can deploy in
+      // either order; the API ignores the body copy.
+      const userId = req.user._doc ? req.user._doc._id : req.user._id;
+      const apiUrl = `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/join?userId=${userId}`;
       const response = await axios.post(
         apiUrl,
         {
           inviteCode,
-          userId: req.user._id,
+          userId,
         },
         { timeout: 5000 }
       );
@@ -4601,6 +4608,116 @@ module.exports = function (app, passport, server, nextApp, handle) {
           redirect: `/invite/${req.body.inviteCode}`,
         });
       }
+    }
+  });
+
+  // Invite codes: create / list / delete / delete-expired (proxy to Go backend).
+  //
+  // These run server-side for the same reason as the bulk member actions
+  // further down: the API decides whether the caller may manage members, and it
+  // only believes the userId it is handed when the request also carries the
+  // shared X-API-Key that the axios interceptor attaches and that never reaches
+  // the browser. The userId comes from the logged-in session, so the page no
+  // longer has to say who it is. Statuses and bodies are forwarded verbatim so
+  // a 403 reaches the UI with the API's own explanation.
+  function inviteCodeActor(req) {
+    return req.user._doc ? req.user._doc._id : req.user._id;
+  }
+
+  function forwardInviteCodeFailure(res, label, error) {
+    console.error(`[invite-codes] ${label} failed:`, error.message);
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    return res.status(502).json({ message: "Something went wrong. Please try again." });
+  }
+
+  app.post("/community/:communityId/invite-codes", apiAuthCheck, async function (req, res) {
+    const communityId = req.params.communityId;
+    if (!isValidObjectId(communityId)) {
+      return res.status(400).json({ message: "Invalid community ID" });
+    }
+    // Shapes only: the API owns the rules (length, charset, duplicate codes)
+    // and its messages are what the admin reads. These guards just stop a
+    // non-string or an object being forwarded as a code or a date.
+    const body = req.body || {};
+    if (typeof body.code !== "string" || !body.code.trim()) {
+      return res.status(400).json({ message: "Invite code is required" });
+    }
+    if (body.expiresAt !== undefined && body.expiresAt !== null && typeof body.expiresAt !== "string") {
+      return res.status(400).json({ message: "Invalid expiry" });
+    }
+    if (body.maxUses !== undefined && (!Number.isInteger(body.maxUses) || body.maxUses < 0)) {
+      return res.status(400).json({ message: "Max uses must be zero or more" });
+    }
+    try {
+      const response = await axios.post(
+        `${policeCadApiUrl}/api/v1/community/${communityId}/add-invite-code?userId=${inviteCodeActor(req)}`,
+        {
+          code: body.code,
+          expiresAt: body.expiresAt === undefined ? null : body.expiresAt,
+          maxUses: body.maxUses,
+        },
+        { headers: { ...config.headers, "Content-Type": "application/json" } }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardInviteCodeFailure(res, "create", error);
+    }
+  });
+
+  app.get("/community/:communityId/invite-codes", apiAuthCheck, async function (req, res) {
+    const communityId = req.params.communityId;
+    if (!isValidObjectId(communityId)) {
+      return res.status(400).json({ message: "Invalid community ID" });
+    }
+    const page = parseInt(req.query.page, 10);
+    const limit = parseInt(req.query.limit, 10);
+    const params = new URLSearchParams({
+      userId: String(inviteCodeActor(req)),
+      page: String(Number.isFinite(page) && page > 0 ? page : 1),
+      limit: String(Number.isFinite(limit) && limit > 0 && limit <= 100 ? limit : 10),
+    });
+    try {
+      const response = await axios.get(
+        `${policeCadApiUrl}/api/v2/community/${communityId}/invite-codes?${params.toString()}`,
+        { headers: { ...config.headers } }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardInviteCodeFailure(res, "list", error);
+    }
+  });
+
+  app.delete("/invite-codes/:id", apiAuthCheck, async function (req, res) {
+    const inviteCodeId = req.params.id;
+    if (!isValidObjectId(inviteCodeId)) {
+      return res.status(400).json({ message: "Invalid invite code ID" });
+    }
+    try {
+      const response = await axios.delete(
+        `${policeCadApiUrl}/api/v1/invite-code/${inviteCodeId}?userId=${inviteCodeActor(req)}`,
+        { headers: { ...config.headers } }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardInviteCodeFailure(res, "delete", error);
+    }
+  });
+
+  app.delete("/community/:communityId/invite-codes/expired", apiAuthCheck, async function (req, res) {
+    const communityId = req.params.communityId;
+    if (!isValidObjectId(communityId)) {
+      return res.status(400).json({ message: "Invalid community ID" });
+    }
+    try {
+      const response = await axios.delete(
+        `${policeCadApiUrl}/api/v1/community/${communityId}/invite-codes/expired?userId=${inviteCodeActor(req)}`,
+        { headers: { ...config.headers } }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardInviteCodeFailure(res, "delete-expired", error);
     }
   });
 
