@@ -6105,10 +6105,13 @@ async function loadInviteCodes(page = 1) {
 
   try {
     const communityId = '<%= community._id %>';
-    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
-    const response = await fetch(`${apiUrl}/api/v2/community/${communityId}/invite-codes?page=${page}&limit=10`);
-    if (!response.ok) throw new Error('Failed to load invite codes');
+    // Through our own server route, which attaches the logged-in user. See the
+    // "Invite codes" block in app/routes.js.
+    const response = await fetch(`/community/${communityId}/invite-codes?page=${page}&limit=10`, {
+      credentials: 'same-origin'
+    });
+    if (!response.ok) throw new Error(await apiErrorReason(response));
 
     const data = await response.json();
     inviteCodesData = data.inviteCodes || [];
@@ -6138,7 +6141,12 @@ async function loadInviteCodes(page = 1) {
     console.error('Error loading invite codes:', error);
     if (loadingDiv) loadingDiv.style.display = 'none';
     if (listContainer) {
-      listContainer.innerHTML = '<div style="text-align:center; padding:2rem; color:#ef4444;"><i class="fa fa-exclamation-triangle" style="font-size:2rem; margin-bottom:1rem;"></i><p>Failed to load invite codes</p></div>';
+      // display:block as well as the markup: the container starts hidden, so
+      // without it the reason was written into a panel nobody could see.
+      listContainer.style.display = 'block';
+      listContainer.innerHTML = '<div style="text-align:center; padding:2rem; color:#ef4444;"><i class="fa fa-exclamation-triangle" style="font-size:2rem; margin-bottom:1rem;"></i><p id="inviteCodesError" style="margin:0;"></p></div>';
+      const errorText = listContainer.querySelector('#inviteCodesError');
+      if (errorText) errorText.textContent = `Failed to load invite codes: ${error.message}`;
     }
   }
 }
@@ -6172,15 +6180,14 @@ function renderInviteCodesPagination() {
 
 async function deleteExpiredInviteCodes() {
   const communityId = '<%= community._id %>';
-  const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
   try {
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/invite-codes/expired`, {
+    const response = await fetch(`/community/${communityId}/invite-codes/expired`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' }
+      credentials: 'same-origin'
     });
 
-    if (!response.ok) throw new Error('Failed to delete expired codes');
+    if (!response.ok) throw new Error(await apiErrorReason(response));
 
     const data = await response.json();
     showToast(`Deleted ${data.deletedCount} expired invite code${data.deletedCount !== 1 ? 's' : ''}`, 3000, 'success');
@@ -6188,7 +6195,7 @@ async function deleteExpiredInviteCodes() {
     loadInviteCodes(1); // Reload from page 1
   } catch (error) {
     console.error('Error deleting expired codes:', error);
-    showToast('Failed to delete expired codes', 3000, 'error');
+    showToast(`Failed to delete expired codes: ${error.message}`, 3000, 'error');
   }
 }
 
@@ -6372,11 +6379,13 @@ async function createInviteCode() {
 
   try {
     const communityId = '<%= community._id %>';
-    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
-    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/add-invite-code?userId=${window.dbUser?._id || ''}`, {
+    // Our own server route names the creator from the session, so the page
+    // sends only what the admin typed.
+    const response = await fetch(`/community/${communityId}/invite-codes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
       body: JSON.stringify({ code, expiresAt, maxUses })
     });
 
@@ -6524,21 +6533,19 @@ async function deleteInviteCode() {
   if (!deleteInviteCodeId) return;
 
   try {
-    const communityId = '<%= community._id %>';
-    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
-
-    const response = await fetch(`${apiUrl}/api/v1/invite-code/${deleteInviteCodeId}?userId=${window.dbUser?._id || ''}`, {
-      method: 'DELETE'
+    const response = await fetch(`/invite-codes/${deleteInviteCodeId}`, {
+      method: 'DELETE',
+      credentials: 'same-origin'
     });
 
-    if (!response.ok) throw new Error('Failed to delete invite code');
+    if (!response.ok) throw new Error(await apiErrorReason(response));
 
     closeDeleteConfirmModal();
     loadInviteCodes();
     showToast('Invite code deleted', 2000, 'success');
   } catch (error) {
     console.error('Error deleting invite code:', error);
-    showToast('Failed to delete invite code', 3000, 'error');
+    showToast(`Failed to delete invite code: ${error.message}`, 3000, 'error');
   }
 }
 
