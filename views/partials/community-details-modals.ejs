@@ -6239,6 +6239,30 @@ function formatExpiryTime(expiresAt) {
   return { dateStr, timeStr, relativeStr };
 }
 
+// A username comes from whoever signed up, so it never goes into innerHTML raw.
+function escapeInviteText(value) {
+  var div = document.createElement('div');
+  div.textContent = value == null ? '' : String(value);
+  return div.innerHTML;
+}
+
+// Who made a code and when.
+//
+// The API resolves the creator's account into createdByUser. Two things leave
+// that empty and they are not the same: a code minted before the API recorded
+// a creator at all (this modal never sent one, so everything it made before
+// October 2026 holds none), and a code whose creator has since deleted their
+// account. Neither is a lookup that failed, so neither says "unknown".
+function inviteCreatorLine(code) {
+  var when = code.createdAt ? new Date(code.createdAt) : null;
+  var on = when && !isNaN(when.getTime()) ? when.toLocaleDateString() : '';
+  var username = code.createdByUser && code.createdByUser.username;
+  if (username) return 'Created by ' + escapeInviteText(username) + (on ? ' on ' + on : '');
+  var accountGone = String(code.createdBy || '').trim() !== '';
+  if (!on) return accountGone ? 'Account no longer exists' : 'Creator not recorded';
+  return 'Created on ' + on + (accountGone ? ', account no longer exists' : ', creator not recorded');
+}
+
 function renderInviteCodes() {
   const listContainer = document.getElementById('inviteCodesList');
   if (!listContainer) return;
@@ -6281,6 +6305,9 @@ function renderInviteCodes() {
         </div>
         <div style="margin-top:0.25rem; font-size:0.75rem;">
           ${expiryDisplay}
+        </div>
+        <div style="margin-top:0.25rem; font-size:0.75rem; color:#718096;">
+          <i class="fa fa-user" style="margin-right:0.25rem;"></i>${inviteCreatorLine(code)}
         </div>
       </div>
       <div style="display:flex; gap:0.5rem; flex-shrink:0;">
