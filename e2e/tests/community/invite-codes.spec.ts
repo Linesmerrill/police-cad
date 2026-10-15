@@ -23,16 +23,31 @@ interface FakeCode {
   remainingUses: number;
   uses: number;
   expiresAt: string | null;
+  createdAt: string;
+  createdBy: string;
+  createdByUser?: { id: string; username: string } | null;
 }
 
 const IN_A_WEEK = new Date(Date.now() + 7 * 24 * 3600_000).toISOString();
 const LAST_WEEK = new Date(Date.now() - 7 * 24 * 3600_000).toISOString();
+const MADE_ON = '2026-03-04T12:00:00.000Z';
+/** A username is whatever someone signed up with, markup included. */
+const CREATOR_NAME = 'Kim <b>Doe</b>';
+const CREATOR_ID = '11'.padEnd(24, '0');
 
+/**
+ * The three creator states a community really has: a code whose creator we can
+ * name, one naming an account that is gone, and an older one that recorded no
+ * creator at all.
+ */
 function seedCodes(): FakeCode[] {
   return [
-    { _id: 'a1'.padEnd(24, '0'), code: 'ALPHA1', maxUses: 5, remainingUses: 3, uses: 2, expiresAt: IN_A_WEEK },
-    { _id: 'b2'.padEnd(24, '0'), code: 'BRAVO2', maxUses: 0, remainingUses: 0, uses: 9, expiresAt: null },
-    { _id: 'c3'.padEnd(24, '0'), code: 'OLDONE', maxUses: 1, remainingUses: 1, uses: 0, expiresAt: LAST_WEEK },
+    { _id: 'a1'.padEnd(24, '0'), code: 'ALPHA1', maxUses: 5, remainingUses: 3, uses: 2, expiresAt: IN_A_WEEK,
+      createdAt: MADE_ON, createdBy: CREATOR_ID, createdByUser: { id: CREATOR_ID, username: CREATOR_NAME } },
+    { _id: 'b2'.padEnd(24, '0'), code: 'BRAVO2', maxUses: 0, remainingUses: 0, uses: 9, expiresAt: null,
+      createdAt: MADE_ON, createdBy: '22'.padEnd(24, '0'), createdByUser: null },
+    { _id: 'c3'.padEnd(24, '0'), code: 'OLDONE', maxUses: 1, remainingUses: 1, uses: 0, expiresAt: LAST_WEEK,
+      createdAt: MADE_ON, createdBy: '', createdByUser: null },
   ];
 }
 
@@ -132,6 +147,9 @@ async function mockInviteCodeRoutes(page: Page, refusals: Refusals = {}) {
             remainingUses: Number(body.maxUses || 0),
             uses: 0,
             expiresAt: (body.expiresAt as string) || null,
+            createdAt: new Date().toISOString(),
+            createdBy: CREATOR_ID,
+            createdByUser: { id: CREATOR_ID, username: CREATOR_NAME },
           },
           ...codes,
         ];
@@ -193,6 +211,22 @@ test.describe('Community invite codes', { tag: '@auth' }, () => {
     // No caller id on the query string: the route reads it from the session.
     expect(recorded.lists[0].searchParams.get('userId')).toBeNull();
     expect(recorded.directApiCalls).toEqual([]);
+  });
+
+  test('names who created each code, and what is known when it cannot', async ({ page }) => {
+    await mockInviteCodeRoutes(page);
+    test.skip(!(await openCommunity(page)), 'Community API not reachable, the community page did not render');
+    await openInviteCodes(page);
+    await expect(row(page, 'ALPHA1')).toBeVisible();
+
+    // The date is rendered in the browser's locale, so match the shape.
+    await expect(row(page, 'ALPHA1')).toContainText(`Created by ${CREATOR_NAME} on`);
+    // The creator's name is text, not markup.
+    await expect(row(page, 'ALPHA1').locator('b')).toHaveCount(0);
+    await expect(row(page, 'BRAVO2')).toContainText(/Created on .+, account no longer exists/);
+    await expect(row(page, 'OLDONE')).toContainText(/Created on .+, creator not recorded/);
+    // Nothing anywhere says the lookup failed.
+    await expect(page.locator('#inviteCodesList')).not.toContainText(/unknown/i);
   });
 
   test('creates a code through the site\'s own route and names no creator', async ({ page }) => {
