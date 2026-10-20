@@ -535,7 +535,9 @@
 
   async function load() {
     const q = new URLSearchParams();
-    if (CIVILIAN_ID) q.set('civilianId', CIVILIAN_ID); else if (USER_ID) q.set('userId', USER_ID);
+    if (CIVILIAN_ID) q.set('civilianId', CIVILIAN_ID);
+    // Identifies the viewer. With a civilian it is not a filter.
+    if (USER_ID) q.set('userId', USER_ID);
     q.set('page', state.page);
     q.set('limit', state.limit);
     if (state.status) q.set('status', state.status);

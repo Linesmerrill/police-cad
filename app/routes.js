@@ -2672,9 +2672,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
 
     const userId = (req.user && req.user._id) ? String(req.user._id) : null;
+    // A pinned civilian must be the viewer's own. Anything else falls through
+    // to the viewer's own civilians below, as if nothing had been pinned.
     let civilian = null;
-    if (civilianId) {
-      try { civilian = await Civilian.findById(ObjectId(civilianId)).lean(); } catch (e) {}
+    if (civilianId && userId) {
+      try {
+        civilian = await Civilian.findOne({ _id: ObjectId(civilianId), "civilian.userID": userId }).lean();
+      } catch (e) {}
     }
 
     // Fetch the user's persisted "active civilian" for this community (the
@@ -2712,6 +2716,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
 
     if (!civilian && activeCivilianId) {
+      // Already verified above to be this user's civilian in this community.
       try { civilian = await Civilian.findById(ObjectId(activeCivilianId)).lean(); } catch (e) {}
     }
     if (!civilian && userId) {
