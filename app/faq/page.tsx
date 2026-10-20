@@ -86,7 +86,7 @@ const faqData = [
       },
       {
         question: 'How do I upgrade my account to create more communities?',
-        answer: (<>You can upgrade your account through our mobile app while we set up web access for purchases. The subscription tiers are:
+        answer: (<>You can upgrade your account on the website from the <a href="/pricing" style={linkStyle}>Pricing page</a> or in our mobile app. The subscription tiers are:
           <ul style={{ marginTop: '0.75rem', marginBottom: '0.5rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
             <li style={{ marginBottom: '0.25rem' }}><strong>Free</strong> — Create 1 community</li>
             <li style={{ marginBottom: '0.25rem' }}><strong>Base</strong> ($2/month) — Create up to 5 communities</li>
@@ -113,7 +113,7 @@ const faqData = [
       },
       {
         question: 'How do I promote my community or make it Elite?',
-        answer: (<>Currently, community promotions are available through our mobile app. From your community settings, tap the &quot;Promote&quot; button to choose a promotion tier. The available tiers are:
+        answer: (<>You can buy a promotion on the website at <a href="/community-pricing" style={linkStyle}>www.linespolice-cad.com/community-pricing</a> or in our mobile app by tapping the &quot;Boost&quot; button on your community&apos;s home page. Any approved member of a community can buy or upgrade a promotion for it, not just the owner or admins. The available tiers are:
           <ul style={{ marginTop: '0.75rem', marginBottom: '0.5rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
             <li style={{ marginBottom: '0.25rem' }}><strong>Basic</strong> — Promotional text in search results</li>
             <li style={{ marginBottom: '0.25rem' }}><strong>Standard</strong> — Promotional text + verified community badge</li>
@@ -122,6 +122,10 @@ const faqData = [
           </ul>
           Promotions are available in 1-month, 3-month, and 6-month durations with discounts for longer commitments.
         </>)
+      },
+      {
+        question: 'Can I upgrade or downgrade my community\'s promotion?',
+        answer: (<>Yes, you can upgrade to a higher tier while a promotion is active, and the remaining value of your current tier is credited toward the new one. Upgrades and extensions are made on the website at <a href="/community-pricing" style={linkStyle}>www.linespolice-cad.com/community-pricing</a>. You cannot downgrade to a lower tier while a promotion is active.</>)
       }
     ]
   },
@@ -142,7 +146,7 @@ const faqData = [
       },
       {
         question: 'Is there an iOS or Android app?',
-        answer: (<>Yes! We have native apps for both platforms. Download the <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank" rel="noopener noreferrer" style={linkStyle}>iOS app from the App Store</a> or the <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" rel="noopener noreferrer" style={linkStyle}>Android app from Google Play</a>. The mobile apps include features like account upgrades and community promotions that are currently only available on mobile.</>)
+        answer: (<>Yes! We have native apps for both platforms. Download the <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank" rel="noopener noreferrer" style={linkStyle}>iOS app from the App Store</a> or the <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" rel="noopener noreferrer" style={linkStyle}>Android app from Google Play</a>. Account upgrades and community promotions can be purchased in the mobile apps or on the website.</>)
       },
       {
         question: 'Why isn\'t the site working on my phone?',
