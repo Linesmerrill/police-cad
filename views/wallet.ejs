@@ -959,7 +959,7 @@
     const balEl = document.getElementById('balanceValue');
     const inboxHost = document.getElementById('recentInbox');
     try {
-      const res = await fetch(`${API_URL}/api/v2/economy/wallet/${CIVILIAN_ID}`);
+      const res = await fetch(`${API_URL}/api/v2/economy/wallet/${CIVILIAN_ID}?userId=${encodeURIComponent(USER_ID)}`);
       if (!res.ok) {
         const txt = await res.text().catch(() => '');
         throw new Error(`HTTP ${res.status}${txt ? ': ' + txt.slice(0, 200) : ''}`);

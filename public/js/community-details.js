@@ -2166,7 +2166,8 @@ function updateDepartmentJoinButton(departmentId, status) {
     balanceEl.textContent = 'Loading...';
 
     try {
-      const res = await fetch(`${API_URL}/api/v2/economy/wallet/${civilianId}`);
+      const viewerId = (window.dbUser && window.dbUser._id) || window.userId || '';
+      const res = await fetch(`${API_URL}/api/v2/economy/wallet/${civilianId}?userId=${encodeURIComponent(viewerId)}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       balanceEl.textContent = window.BalanceAdjust.formatCents(Number(data.balance) || 0);
