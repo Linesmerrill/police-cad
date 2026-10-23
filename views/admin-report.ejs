@@ -73,6 +73,8 @@
     }
     label { display: block; font-size: 0.8125rem; color: var(--ac-text-muted); margin: 0 0 6px; }
     .muted { color: var(--ac-text-muted); font-size: 0.85rem; }
+    .preview-link { font-size: 0.8rem; white-space: nowrap; }
+    .preview-link i { font-size: 0.68rem; }
     /* Written by an admin, read by admins. Never shown to the community,
        its owner, or the reported player. */
     .staff-note {
@@ -247,6 +249,17 @@
     // they are members, with look-alike names highlighted. Impersonation
     // reports are mostly "they copied my name", and the dates usually show
     // who came first.
+    // A community's public page, read only, in a new tab so the report stays
+    // where the reviewer left it. Two of these side by side is how a "they
+    // copied my community" report gets judged.
+    function previewHref(communityId) {
+      return '/admin/community/' + encodeURIComponent(communityId) + '/preview?report=' + encodeURIComponent(REPORT_ID);
+    }
+    function previewLink(communityId, label) {
+      return '<a class="preview-link" href="' + previewHref(communityId) + '" target="_blank" rel="noopener">'
+        + esc(label) + ' <i class="fa fa-arrow-up-right-from-square"></i></a>';
+    }
+
     function renderPeople(people, r) {
       if (!people || (!people.reporter && !people.reported)) return '';
       var matches = people.nameMatches || [];
@@ -259,7 +272,8 @@
         var bits = [];
         if (typeof c.members === 'number') bits.push(c.members + (c.members === 1 ? ' member' : ' members'));
         if (c.createdAt) bits.push('created ' + fmtDay(c.createdAt));
-        return '<li>' + name + (bits.length ? ' <span class="muted">' + esc(bits.join(', ')) + '</span>' : '') + '</li>';
+        return '<li>' + name + (bits.length ? ' <span class="muted">' + esc(bits.join(', ')) + '</span>' : '')
+          + (c.id ? ' ' + previewLink(c.id, 'Preview') : '') + '</li>';
       }
 
       function personHtml(title, p) {
@@ -375,6 +389,13 @@
         html += '<dt>Staff notes</dt><dd>' + staffNote('Admins only:', r.internalNote) + '</dd>';
       }
       html += '</dl>';
+      if (r.itemType === 'community' && !r.targetMissing && r.itemId) {
+        html += '<div class="actions" style="margin-top:14px;">'
+          + '<a class="btn" href="' + previewHref(r.itemId) + '" target="_blank" rel="noopener">'
+          + '<i class="fa fa-eye"></i> Preview community page</a>'
+          + '<span class="muted" style="align-self:center;">Read only. Opens in a new tab.</span>'
+          + '</div>';
+      }
       html += '<div style="margin-top:14px;"><h2>What the reporter wrote</h2>';
       html += '<div class="evidence">' + (r.additionalDetails ? esc(r.additionalDetails) : '<span class="muted">They picked a category but wrote nothing.</span>') + '</div></div>';
       html += '</div>';
