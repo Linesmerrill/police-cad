@@ -1451,7 +1451,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // so the page has no controls and runs no script.
   app.get("/admin/community/:id/preview", requireAdminSession, async function (req, res) {
     const id = String(req.params.id || "");
-    if (!isObjectId(id)) {
+    // Checked inline, as the other report routes do, so the guard on the
+    // upstream URL is visible where the URL is built.
+    if (!/^[a-f0-9]{24}$/i.test(id)) {
       return res.status(400).render("error", {
         message: "That is not a valid community id.",
         error: { status: 400 },
