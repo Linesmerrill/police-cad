@@ -9,10 +9,10 @@
  */
 import { test, expect, Page, Route } from '@playwright/test';
 import {
-  seedReportReviewer,
-  removeReportReviewer,
-  TEST_REPORT_REVIEWER_EMAIL,
-  TEST_REPORT_REVIEWER_PASSWORD,
+  seedPreviewReviewer,
+  removePreviewReviewer,
+  TEST_PREVIEW_REVIEWER_EMAIL,
+  TEST_PREVIEW_REVIEWER_PASSWORD,
 } from '../../helpers/admin-users';
 import { TEST_COMMUNITY_ID } from '../../helpers/seed';
 
@@ -63,8 +63,8 @@ async function mockReport(page: Page, report: Record<string, unknown>) {
 
 async function login(page: Page) {
   await page.goto('/admin');
-  await page.locator('input[name="email"]').fill(TEST_REPORT_REVIEWER_EMAIL);
-  await page.locator('input[name="password"]').fill(TEST_REPORT_REVIEWER_PASSWORD);
+  await page.locator('input[name="email"]').fill(TEST_PREVIEW_REVIEWER_EMAIL);
+  await page.locator('input[name="password"]').fill(TEST_PREVIEW_REVIEWER_PASSWORD);
   await Promise.all([
     page.waitForURL(/\/admin\/(console|profile)/, { timeout: 15_000 }),
     page.locator('button[type="submit"]').click(),
@@ -77,8 +77,8 @@ const previewPath = (communityId: string) =>
 test.describe('Admin community preview', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test.beforeAll(async () => { await seedReportReviewer(); });
-  test.afterAll(async () => { await removeReportReviewer(); });
+  test.beforeAll(async () => { await seedPreviewReviewer(); });
+  test.afterAll(async () => { await removePreviewReviewer(); });
 
   test('a community report offers a read-only preview, and so does each community in who\'s who', async ({ page }) => {
     await login(page);
