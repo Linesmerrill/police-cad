@@ -1053,7 +1053,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // than from anything the page can set.
   const reportsApiBase = () => `${process.env.POLICE_CAD_API_URL}/api/v1/admin`;
 
-  const { reportActionPath, adminActor, buildActionBody } = require("./admin-reports-proxy");
+  const { reportActionPath, adminActor, buildActionBody, isObjectId, communityPreviewView } = require("./admin-reports-proxy");
   const financeProxy = require("./finance-proxy");
 
   function reportsProxyError(res, err) {
@@ -1442,6 +1442,49 @@ module.exports = function (app, passport, server, nextApp, handle) {
       admin: req.session.admin,
       reportId: id,
     });
+  });
+
+  // A read-only look at what a community shows the world, opened from a
+  // report so staff can judge "they copied my community" by eye. The live
+  // community page cannot serve: it needs membership and acts on the community
+  // as whoever is signed in. This renders on the server from the API's preview,
+  // so the page has no controls and runs no script.
+  app.get("/admin/community/:id/preview", requireAdminSession, async function (req, res) {
+    const id = String(req.params.id || "");
+    // Checked inline, as the other report routes do, so the guard on the
+    // upstream URL is visible where the URL is built.
+    if (!/^[a-f0-9]{24}$/i.test(id)) {
+      return res.status(400).render("error", {
+        message: "That is not a valid community id.",
+        error: { status: 400 },
+      });
+    }
+    // Only ever link back to a report id, never to an arbitrary path.
+    const reportId = isObjectId(req.query.report) ? String(req.query.report) : "";
+    try {
+      const roles = encodeURIComponent(adminActor(req).roles.join(","));
+      const response = await axios.get(`${reportsApiBase()}/community-preview/${id}?roles=${roles}`, {
+        timeout: 10000,
+      });
+      return res.render("admin-community-preview", {
+        user: req.user || null,
+        admin: req.session.admin,
+        reportId,
+        community: communityPreviewView(response.data && response.data.community),
+        loadError: "",
+      });
+    } catch (err) {
+      const status = (err.response && err.response.status) || 500;
+      return res.status(status === 404 ? 404 : 502).render("admin-community-preview", {
+        user: req.user || null,
+        admin: req.session.admin,
+        reportId,
+        community: null,
+        loadError: status === 404
+          ? "This community no longer exists."
+          : "Could not load this community right now. Try again in a moment.",
+      });
+    }
   });
 
   app.get("/admin/console", requireAdminSession, function (req, res) {

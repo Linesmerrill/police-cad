@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= community ? community.name + ' - Community preview' : 'Community preview' %> - Lines Police CAD</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* The report page's own tokens, so the preview reads as part of the same
+       review rather than as the community's real page. */
+    :root {
+      --ac-bg: #0a0a0f;
+      --ac-surface: #12121f;
+      --ac-glass: rgba(255,255,255,0.04);
+      --ac-glass-border: rgba(255,255,255,0.08);
+      --ac-text: #e5e7eb;
+      --ac-text-muted: rgba(255,255,255,0.55);
+      --ac-text-dim: rgba(255,255,255,0.35);
+      --ac-accent: #8b5cf6;
+      --ac-amber: #fbbf24;
+      --ac-red: #f87171;
+      --ac-radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--ac-bg); color: var(--ac-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding-top: 36px;
+      -webkit-text-size-adjust: 100%;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 20px 80px; }
+    a { color: var(--ac-accent); text-decoration: none; }
+    .back { display:inline-flex; align-items:center; gap:8px; font-size:0.9rem; color:var(--ac-text-muted); margin-bottom:18px; }
+    .card {
+      background: var(--ac-surface); border: 1px solid var(--ac-glass-border);
+      border-radius: var(--ac-radius); padding: 20px; margin-bottom: 16px;
+    }
+    .card h2 { font-size: 0.8125rem; letter-spacing: 0.04em;
+      color: var(--ac-text-muted); margin: 0 0 12px; font-weight: 700; }
+    .muted { color: var(--ac-text-muted); font-size: 0.85rem; }
+    .notice { border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-size: 0.9rem; line-height: 1.5; }
+    .notice-info { background: rgba(139,92,246,0.10); border: 1px solid rgba(139,92,246,0.35); color: #ddd6fe; }
+    .notice-warn { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35); color: #fde68a; }
+
+    /* The community's own presentation, laid out the way its home page leads:
+       logo and name first, then what it says about itself. */
+    .hero { display: flex; gap: 20px; align-items: flex-start; }
+    .logo {
+      width: 112px; height: 112px; flex: none; border-radius: 18px; object-fit: cover;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--ac-glass-border);
+    }
+    .logo-empty { display: grid; place-items: center; color: var(--ac-text-dim); font-size: 2rem; }
+    .hero h1 { font-size: 1.6rem; margin: 2px 0 8px; word-break: break-word; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .chip {
+      padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.78rem;
+      background: var(--ac-glass); border: 1px solid var(--ac-glass-border); color: var(--ac-text-muted);
+    }
+    .facts { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; color: var(--ac-text-muted); }
+    .facts strong { color: var(--ac-text); font-weight: 600; }
+
+    /* Owner-written text is evidence: verbatim, wrapped, never trimmed. */
+    .verbatim {
+      white-space: pre-wrap; word-break: break-word; margin: 0;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--ac-glass-border);
+      border-radius: 10px; padding: 14px; font-size: 0.92rem; line-height: 1.6;
+    }
+    .verbatim + .verbatim { margin-top: 10px; }
+    .field-label { font-size: 0.78rem; color: var(--ac-text-dim); margin: 0 0 6px; }
+    .field-label + .verbatim { margin-top: 0; }
+    .field + .field { margin-top: 14px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .tile {
+      border: 1px solid var(--ac-glass-border); border-radius: 12px; overflow: hidden;
+      background: rgba(255,255,255,0.02);
+    }
+    .tile-img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: rgba(255,255,255,0.05); }
+    .tile-img-empty { display: grid; place-items: center; color: var(--ac-text-dim); font-size: 1.4rem; }
+    .tile-body { padding: 10px 12px 12px; }
+    .tile-title { font-weight: 600; font-size: 0.95rem; word-break: break-word; }
+    .tile-text { margin: 4px 0 0; font-size: 0.82rem; color: var(--ac-text-muted); white-space: pre-wrap; word-break: break-word; }
+    .img-link { display: block; }
+    .steps { margin: 0; padding-left: 20px; line-height: 1.6; }
+    .plain-url { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; word-break: break-all; }
+
+    @media (max-width: 600px) {
+      .wrap { padding: 18px 16px 64px; }
+      .hero { flex-direction: column; }
+      .logo { width: 88px; height: 88px; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/standalone-utility') %>
+
+  <div class="wrap">
+    <% if (reportId) { %>
+      <a class="back" href="/admin/report/<%= reportId %>"><i class="fa fa-arrow-left"></i> Back to the report</a>
+    <% } else { %>
+      <a class="back" href="/admin/console"><i class="fa fa-arrow-left"></i> Admin console</a>
+    <% } %>
+
+    <div class="notice notice-info">
+      <strong>Staff preview, read only.</strong> This is what the community shows its members and the community listing.
+      Nothing on this page can change the community or join it.
+    </div>
+
+    <% if (!community) { %>
+      <div class="card"><p class="muted" style="margin:0;"><%= loadError %></p></div>
+    <% } else { %>
+
+      <% if (community.pendingDeletionAt) { %>
+        <div class="notice notice-warn">The owner deleted this community on <%= community.pendingDeletionAt %>. Members can no longer open it; it is shown here as it was.</div>
+      <% } %>
+      <% if (community.listingSuspended) { %>
+        <div class="notice notice-warn">This community is delisted, so it does not appear in the community listing.</div>
+      <% } %>
+
+      <div class="card">
+        <div class="hero">
+          <% if (community.imageLink) { %>
+            <a class="img-link" href="<%= community.imageLink %>" target="_blank" rel="noopener noreferrer" title="Open the logo full size">
+              <img class="logo" src="<%= community.imageLink %>" alt="<%= community.name %> logo" referrerpolicy="no-referrer">
+            </a>
+          <% } else { %>
+            <div class="logo logo-empty" aria-label="No logo"><i class="fa fa-image"></i></div>
+          <% } %>
+          <div style="min-width:0;">
+            <h1><%= community.name %></h1>
+            <% if (community.tags.length) { %>
+              <div class="chips">
+                <% community.tags.forEach(function (tag) { %><span class="chip"><%= tag %></span><% }) %>
+              </div>
+            <% } %>
+            <div class="facts">
+              <span><strong><%= community.membersCount %></strong> <%= community.membersCount === 1 ? 'member' : 'members' %></span>
+              <% if (community.createdAt) { %><span>Created <strong><%= community.createdAt %></strong></span><% } %>
+              <% if (community.ownerName || community.ownerId) { %><span>Owner <strong><%= community.ownerName || community.ownerId %></strong></span><% } %>
+              <% if (community.visibility) { %><span><%= community.visibility === 'private' ? 'Private' : 'Public' %></span><% } %>
+              <% if (community.boostPlan) { %><span>Boost <strong><%= community.boostPlan %></strong></span><% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>About</h2>
+        <% if (community.description) { %>
+          <p class="verbatim"><%= community.description %></p>
+        <% } else { %>
+          <p class="muted" style="margin:0;">No description.</p>
+        <% } %>
+      </div>
+
+      <% if (community.promotionalText || community.promotionalDescription) { %>
+        <div class="card">
+          <h2>Community listing</h2>
+          <% if (community.promotionalText) { %>
+            <div class="field"><p class="field-label">Headline</p><p class="verbatim"><%= community.promotionalText %></p></div>
+          <% } %>
+          <% if (community.promotionalDescription) { %>
+            <div class="field"><p class="field-label">Description</p><p class="verbatim"><%= community.promotionalDescription %></p></div>
+          <% } %>
+        </div>
+      <% } %>
+
+      <div class="card">
+        <h2>Departments (<%= community.departments.length %>)</h2>
+        <% if (!community.departments.length) { %>
+          <p class="muted" style="margin:0;">No departments.</p>
+        <% } else { %>
+          <div class="grid">
+            <% community.departments.forEach(function (dept) { %>
+              <div class="tile">
+                <% if (dept.image) { %>
+                  <a class="img-link" href="<%= dept.image %>" target="_blank" rel="noopener noreferrer" title="Open the image full size">
+                    <img class="tile-img" src="<%= dept.image %>" alt="<%= dept.name %>" loading="lazy" referrerpolicy="no-referrer">
+                  </a>
+                <% } else { %>
+                  <div class="tile-img tile-img-empty" aria-label="No image"><i class="fa fa-image"></i></div>
+                <% } %>
+                <div class="tile-body">
+                  <div class="tile-title"><%= dept.name %></div>
+                  <% if (dept.description) { %><p class="tile-text"><%= dept.description %></p><% } %>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+
+      <% if (community.events.length) { %>
+        <div class="card">
+          <h2>Recent events</h2>
+          <div class="grid">
+            <% community.events.forEach(function (event) { %>
+              <div class="tile">
+                <% if (event.image) { %>
+                  <a class="img-link" href="<%= event.image %>" target="_blank" rel="noopener noreferrer" title="Open the image full size">
+                    <img class="tile-img" src="<%= event.image %>" alt="<%= event.title %>" loading="lazy" referrerpolicy="no-referrer">
+                  </a>
+                <% } %>
+                <div class="tile-body">
+                  <div class="tile-title"><%= event.title %></div>
+                  <% if (event.scheduledDate) { %><p class="tile-text"><%= event.scheduledDate %></p><% } %>
+                  <% if (event.description) { %><p class="tile-text"><%= event.description %></p><% } %>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
+
+      <% if (community.onboardingSteps.length || community.discordInviteUrl) { %>
+        <div class="card">
+          <h2>Joining</h2>
+          <% if (community.discordInviteUrl) { %>
+            <div class="field"><p class="field-label">Discord invite</p><span class="plain-url"><%= community.discordInviteUrl %></span></div>
+          <% } %>
+          <% if (community.onboardingSteps.length) { %>
+            <div class="field">
+              <p class="field-label">Steps the owner gives new members</p>
+              <ol class="steps"><% community.onboardingSteps.forEach(function (step) { %><li><%= step %></li><% }) %></ol>
+            </div>
+          <% } %>
+        </div>
+      <% } %>
+
+    <% } %>
+  </div>
+</body>
+</html>

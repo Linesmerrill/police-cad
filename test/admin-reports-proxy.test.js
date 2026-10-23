@@ -120,4 +120,78 @@ describe("admin-reports-proxy", function () {
         .forEach(function (v) { assert.equal(proxy.isObjectId(v), false, String(v)); });
     });
   });
+
+  describe("safeHttpUrl", function () {
+    it("keeps plain http and https links", function () {
+      assert.equal(proxy.safeHttpUrl("https://res.cloudinary.com/x/logo.png"), "https://res.cloudinary.com/x/logo.png");
+      assert.equal(proxy.safeHttpUrl("  http://example.com/a.png  "), "http://example.com/a.png");
+    });
+
+    // Every link on the preview was typed by the community's owner. Anything
+    // that is not a plain web link must never reach an href or a src.
+    it("drops script, data and malformed links", function () {
+      [
+        "javascript:alert(1)",
+        "JAVASCRIPT:alert(1)",
+        "data:image/svg+xml;base64,PHN2Zz4=",
+        "//evil.example/x.png",
+        "https://ok.example/a.png\" onerror=\"alert(1)",
+        "https://ok.example/a b.png",
+        "ftp://example.com/x",
+        "",
+        null,
+        undefined,
+        42,
+      ].forEach(function (v) { assert.strictEqual(proxy.safeHttpUrl(v), "", String(v)); });
+    });
+  });
+
+  describe("communityPreviewView", function () {
+    it("carries the community's presentation with every link checked", function () {
+      const view = proxy.communityPreviewView({
+        id: "6adab9b0c602a448a910d97e",
+        name: "Chicago xbox roleplay",
+        imageLink: "https://res.cloudinary.com/x/logo.png",
+        description: "Serious RP on Xbox.",
+        tags: ["Xbox", "", 7, "GTA RP"],
+        membersCount: 2,
+        discordInviteUrl: "javascript:alert(1)",
+        owner: { id: "6ab2f588ff0ab400157a820a", username: "ghosthunter" },
+        departments: [
+          { name: "CPD", description: "Chicago Police", image: "https://res.cloudinary.com/x/cpd.png" },
+          { name: "", image: "data:text/html,boom" },
+        ],
+        events: [{ title: "Patrol night", image: "https://res.cloudinary.com/x/e.png" }],
+      });
+
+      assert.equal(view.name, "Chicago xbox roleplay");
+      assert.equal(view.imageLink, "https://res.cloudinary.com/x/logo.png");
+      assert.deepEqual(view.tags, ["Xbox", "GTA RP"]);
+      assert.equal(view.discordInviteUrl, "", "an unsafe invite is dropped, not shown as a link");
+      assert.equal(view.ownerName, "ghosthunter");
+      assert.equal(view.departments[0].image, "https://res.cloudinary.com/x/cpd.png");
+      assert.equal(view.departments[1].name, "Unnamed department");
+      assert.equal(view.departments[1].image, "");
+      assert.equal(view.events[0].title, "Patrol night");
+    });
+
+    // A community created at 01:34 UTC on the 23rd was created on the 23rd,
+    // whatever timezone the server rendering the page happens to run in.
+    it("dates the community in UTC", function () {
+      const view = proxy.communityPreviewView({ createdAt: "2026-10-23T01:34:40Z", pendingDeletionAt: "nonsense" });
+      assert.equal(view.createdAt, "Oct 23, 2026");
+      assert.equal(view.pendingDeletionAt, "");
+    });
+
+    it("fills every field for a sparse or missing community", function () {
+      const view = proxy.communityPreviewView(undefined);
+      assert.equal(view.name, "Unnamed community");
+      assert.equal(view.membersCount, 0);
+      assert.deepEqual(view.tags, []);
+      assert.deepEqual(view.departments, []);
+      assert.deepEqual(view.events, []);
+      assert.deepEqual(view.onboardingSteps, []);
+      assert.equal(view.listingSuspended, false);
+    });
+  });
 });

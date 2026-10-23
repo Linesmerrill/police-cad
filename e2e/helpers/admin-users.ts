@@ -364,3 +364,37 @@ export async function removeConsoleCreatorSyncStaff(): Promise<void> {
     await db.collection('admin_users').deleteOne({ _id: TEST_CONSOLE_CC_SYNC_STAFF_ID });
   });
 }
+
+// A staff admin used only by the community preview spec. It cannot share the
+// report reviewer: both specs remove their account when they finish, and when
+// they ran in parallel one removed the other's mid-login ("Your admin access
+// has been removed").
+export const TEST_PREVIEW_REVIEWER_ID = new ObjectId('a7a7a7a7a7a7a7a7a7a7a7a8');
+export const TEST_PREVIEW_REVIEWER_EMAIL = 'preview-reviewer@test.com';
+export const TEST_PREVIEW_REVIEWER_PASSWORD = 'preview-reviewer-pw-1';
+
+export async function seedPreviewReviewer(): Promise<void> {
+  const hash = bcrypt.hashSync(TEST_PREVIEW_REVIEWER_PASSWORD);
+  await withDb(async (db) => {
+    await db.collection('admin_users').replaceOne(
+      { _id: TEST_PREVIEW_REVIEWER_ID },
+      {
+        _id: TEST_PREVIEW_REVIEWER_ID,
+        email: TEST_PREVIEW_REVIEWER_EMAIL,
+        password: hash,
+        firstName: 'Preview',
+        lastName: 'Reviewer',
+        role: 'admin',
+        roles: ['admin'],
+        createdAt: new Date(),
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function removePreviewReviewer(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('admin_users').deleteOne({ _id: TEST_PREVIEW_REVIEWER_ID });
+  });
+}

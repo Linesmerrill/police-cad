@@ -83,4 +83,75 @@ function buildActionBody(req) {
   return out;
 }
 
-module.exports = { REPORT_ACTIONS, reportActionPath, isObjectId, adminActor, adminDisplayName, buildActionBody };
+// safeHttpUrl keeps a link only if it is plain http or https. Everything in a
+// community preview was typed by the community's owner, so a "javascript:" or
+// "data:" URL in an image or invite field must never reach an href or src.
+function safeHttpUrl(value) {
+  const url = typeof value === "string" ? value.trim() : "";
+  return /^https?:\/\/[^\s"'<>]+$/i.test(url) ? url : "";
+}
+
+function textOf(value) {
+  return typeof value === "string" ? value : "";
+}
+
+function listOf(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+// dayLabel is a date as staff read it on the preview, in UTC so it is the same
+// day whichever server renders it: "Oct 23, 2026". Empty for anything that is
+// not a date.
+function dayLabel(value) {
+  if (typeof value !== "string" || !value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" });
+}
+
+// communityPreviewView shapes the API's community preview for the read-only
+// staff page: every field present, every link checked, nothing else carried.
+function communityPreviewView(community) {
+  const c = community || {};
+  return {
+    id: textOf(c.id),
+    name: textOf(c.name) || "Unnamed community",
+    imageLink: safeHttpUrl(c.imageLink),
+    description: textOf(c.description),
+    promotionalText: textOf(c.promotionalText),
+    promotionalDescription: textOf(c.promotionalDescription),
+    tags: listOf(c.tags).filter((t) => typeof t === "string" && t.trim()),
+    visibility: textOf(c.visibility),
+    membersCount: Number.isFinite(c.membersCount) ? c.membersCount : 0,
+    createdAt: dayLabel(c.createdAt),
+    discordInviteUrl: safeHttpUrl(c.discordInviteUrl),
+    onboardingSteps: listOf(c.onboardingSteps).filter((s) => typeof s === "string" && s.trim()),
+    boostPlan: textOf(c.boostPlan),
+    ownerName: textOf(c.owner && c.owner.username),
+    ownerId: textOf(c.owner && c.owner.id),
+    pendingDeletionAt: dayLabel(c.pendingDeletionAt),
+    listingSuspended: c.listingSuspended === true,
+    departments: listOf(c.departments).map((d) => ({
+      name: textOf(d && d.name) || "Unnamed department",
+      description: textOf(d && d.description),
+      image: safeHttpUrl(d && d.image),
+    })),
+    events: listOf(c.events).map((e) => ({
+      title: textOf(e && e.title) || "Untitled event",
+      scheduledDate: textOf(e && e.scheduledDate),
+      description: textOf(e && e.description),
+      image: safeHttpUrl(e && e.image),
+    })),
+  };
+}
+
+module.exports = {
+  REPORT_ACTIONS,
+  reportActionPath,
+  isObjectId,
+  adminActor,
+  adminDisplayName,
+  buildActionBody,
+  safeHttpUrl,
+  communityPreviewView,
+};
