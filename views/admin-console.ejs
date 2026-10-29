@@ -2670,8 +2670,8 @@
                     <div class="aw-sample-label"><i class="fas fa-clone"></i> Possible-duplicate flags</div>
                     <div class="aw-sample-content">
                       <div style="display:flex; flex-wrap:wrap; gap:1.5rem; align-items:center;">
-                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-flag rp-flag-owner">Invite</span><span class="aw-text">same Discord invite reused across communities</span></div>
-                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-flag rp-flag-name">Name</span><span class="aw-text">same server name under a different community (same owner)</span></div>
+                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-flag rp-flag-owner">Invite</span><span class="aw-text">same Discord invite reused across communities, within 24 hours</span></div>
+                        <div style="display:flex; align-items:center; gap:0.6rem;"><span class="rp-flag rp-flag-name">Name</span><span class="aw-text">same server name under a different community (same owner), within 24 hours</span></div>
                       </div>
                     </div>
                   </div>
@@ -2696,7 +2696,7 @@
                 <!-- Reviewing Duplicates -->
                 <div class="aw-subsection" id="rp-review-duplicates">
                   <h3 class="aw-subsection-title">Reviewing Duplicates</h3>
-                  <p class="aw-text">Possible-duplicate sets are grouped together at the top of the Promotions list under a colored header that states <em>what</em> is shared. The flags are <strong>advisory</strong> &mdash; multiple posts on different days, or two owners who happened to pick the same generic name, are allowed. Read the header, open the invites, and confirm it's genuine evasion before you act.</p>
+                  <p class="aw-text">Possible-duplicate sets are grouped together at the top of the Promotions list under a colored header that states <em>what</em> is shared. A set only forms when the posts are <strong>within 24 hours of each other</strong>, which is the posting cooldown they'd be dodging &mdash; the same server going up again weeks later is a community re-promoting, which is allowed, and is never flagged. The flags are still <strong>advisory</strong>: two owners who happened to pick the same generic name are allowed too. Read the header, open the invites, and confirm it's genuine evasion before you act.</p>
                   <div class="aw-sample-box">
                     <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: a flagged duplicate set</div>
                     <div class="aw-sample-content">
@@ -2724,14 +2724,14 @@
                       <div class="aw-step-number">2</div>
                       <div>
                         <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Read the group header</div>
-                        <div class="aw-text">An <span class="rp-flag rp-flag-owner">Invite</span> header (amber) means the same invite link was reused. A <span class="rp-flag rp-flag-name">Name</span> header (violet) means the same server name was posted under a different community by the same owner.</div>
+                        <div class="aw-text">An <span class="rp-flag rp-flag-owner">Invite</span> header (amber) means the same invite link was reused within 24 hours. A <span class="rp-flag rp-flag-name">Name</span> header (violet) means the same server name was posted under a different community by the same owner, also within 24 hours.</div>
                       </div>
                     </div>
                     <div class="aw-step">
                       <div class="aw-step-number">3</div>
                       <div>
                         <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Confirm it's genuine</div>
-                        <div class="aw-text">Open the invite links and compare timestamps. Same invite within the same window = evasion. Posts days apart, or a coincidental generic name across two unrelated owners, are fine &mdash; leave them.</div>
+                        <div class="aw-text">Open the invite links and check the posts really are the same server. Anything grouped here was already posted within 24 hours, so the timing is the part the system has checked &mdash; what's left for you is whether it's one person working around the cooldown, or a coincidental generic name across two unrelated owners, which you can leave.</div>
                       </div>
                     </div>
                   </div>
@@ -3862,7 +3862,7 @@
         <!-- Panel: Server Promos (RP promotion moderation) -->
         <div class="ac-panel" id="panel-rp-promos">
           <p style="color:#9aa0b4; font-size:14px; margin:0 0 16px; max-width:760px;">
-            Review every server promotion posted to Discord. Possible-duplicate flags are advisory (same owner, server name, or invite) — confirm before acting. Remove a post to delete it from Discord, or restrict a user with an escalating, appealable ban (7 days → 30 days → 1 year → permanent).
+            Review every server promotion posted to Discord. Possible-duplicate flags are advisory and only cover posts made within 24 hours of each other (same invite, or same server name under one owner) — confirm before acting. Remove a post to delete it from Discord, or restrict a user with an escalating, appealable ban (7 days → 30 days → 1 year → permanent).
           </p>
           <div class="rp-subtabs" style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
             <button type="button" class="ac-btn rp-subtab active" data-rp-view="promos">
