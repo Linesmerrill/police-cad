@@ -224,6 +224,67 @@ const faqData = [
     ]
   },
   {
+    category: 'Developer API',
+    icon: 'fa-code',
+    color: '#38bdf8',
+    questions: [
+      {
+        question: 'What is the LPC Developer API and who is it for?',
+        answer: (<>It lets something you build talk to Lines Police CAD directly. It is aimed at people running a <strong>FiveM or other GTA role-play server</strong>, a <strong>Discord bot</strong>, or a tool of their own. Everything your integration sends shows up live in the CAD on the website — calls, unit status, civilians, vehicles and BOLOs appear on the dashboards exactly as if someone had typed them in. See the <a href="/api-docs" style={linkStyle}>API reference</a>.</>)
+      },
+      {
+        question: 'I am building a FiveM mod. Can I sync it to LPC?',
+        answer: (<>Yes, and it is free to do on the Free plan within its limits. Your server calls the API when something happens in game — a call goes out, a unit changes status, a vehicle is registered — and it appears in the CAD for everyone in that community straight away. The <a href="/api-docs" style={linkStyle}>reference</a> includes a working FiveM resource you can start from. Higher limits come with the paid plans; nothing about syncing itself costs money.</>)
+      },
+      {
+        question: 'Can I use an AI coding agent (Claude, ChatGPT, Copilot, Cursor) to build my integration?',
+        answer: (<>Yes, and it is a reasonable way to do it. Point the agent at the <a href="/api-docs" style={linkStyle}>API reference</a> and its quickstart — both list every endpoint, what each permission unlocks and the errors to expect, which is most of what an agent needs.
+          <br /><br />
+          One thing to be firm about, whoever or whatever writes the code: <strong>your key belongs in server-side configuration only, never in client code.</strong> In FiveM that means setting it with <code>set</code> and not <code>setr</code> — a <code>setr</code> convar is replicated to every connected client, which hands your key to anyone who joins. Agents will not necessarily know that, so check it yourself.</>)
+      },
+      {
+        question: 'How do I get a key?',
+        answer: (<>Turn on developer access at <a href="/developer" style={linkStyle}>the developer console</a>, then create a key. You pick what the key may do and which community it may act in.
+          <br /><br />
+          The key is <strong>shown once, when you create it</strong>. We store only a hash of it, so we cannot show it to you again — copy it somewhere safe. If you lose it, rotate the key and you get a new one that keeps the same permissions and communities.</>)
+      },
+      {
+        question: 'Is it free? What are the limits?',
+        answer: (<>There is nothing separate to buy. Your API limits follow the LPC subscription you already have:
+          <ul style={{ marginTop: '0.75rem', marginBottom: '0.5rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Free</strong> — 60 requests a minute, 10,000 a day, up to 2 keys</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Base</strong> — 120 a minute, 25,000 a day, up to 3 keys</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Premium</strong> — 300 a minute, 100,000 a day, up to 5 keys</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Premium Plus</strong> — 600 a minute, 250,000 a day, up to 10 keys</li>
+          </ul>
+          Limits are counted <strong>per key</strong>, not per community, so a key covering three communities shares one allowance across all three. Use separate keys if you want separate budgets. See <a href="/pricing" style={linkStyle}>plans and pricing</a>.</>)
+      },
+      {
+        question: 'Can someone\u2019s key touch my community without permission?',
+        answer: (<>No. A key only reaches a community it created itself, or one an <strong>owner or administrator has approved it into</strong>. Anyone can ask; only someone who can manage that community can say yes.
+          <br /><br />
+          Owners and admins can see every key with access to their community, and <strong>revoke any of them at any time</strong>, without involving the developer. A revoked key stops working on its very next request.</>)
+      },
+      {
+        question: 'What can a key do, and what can it never do?',
+        answer: (<>A key can do the things a CAD needs to do, and only those — each one is a permission you tick when you create the key:
+          <ul style={{ marginTop: '0.75rem', marginBottom: '0.75rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Dispatch</strong> — read and write calls, set unit status and location, read and create BOLOs</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Records</strong> — look up and register civilians, vehicles and firearms, and issue licenses</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Members</strong> — read the roster, and invite, approve, promote or remove members</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Player accounts</strong> — create and link player accounts from a game identifier</li>
+          </ul>
+          There is <strong>no permission at all</strong> for money or wallets, billing or subscriptions, passwords, email or anything else to do with account security, site administration, or a community&apos;s own settings and roles. Those are not scopes a developer can ask for, so no key can be given them by anyone.</>)
+      },
+      {
+        question: 'Where are the docs, and where do I get help?',
+        answer: (<>The <a href="/api-docs" style={linkStyle}>API reference</a> has every endpoint, a quickstart and a working FiveM example. Your keys, your usage and your limits are in <a href="/developer" style={linkStyle}>the developer console</a>.
+          <br /><br />
+          If something is not working, <a href="/contact-us" style={linkStyle}>contact us</a> through Discord. Have your key&apos;s visible prefix ready (the <code>lpc_live_…</code> part the console shows) — never the full key.</>)
+      },
+    ]
+  },
+  {
     category: 'Content Creator Program',
     icon: 'fa-video',
     color: '#fbbf24',
