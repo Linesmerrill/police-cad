@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= communityName ? communityName + ' - API keys' : 'API keys' %> - Lines Police CAD</title>
+  <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* The rp- token set the other newer community pages use. */
+    :root {
+      --rp-bg: #08090c;
+      --rp-surface: #0e1117;
+      --rp-glass: rgba(255,255,255,0.04);
+      --rp-glass-border: rgba(255,255,255,0.08);
+      --rp-text: #e2e8f0;
+      --rp-text-muted: #94a3b8;
+      --rp-text-dim: #64748b;
+      --rp-accent: #38bdf8;
+      --rp-green: #34d399;
+      --rp-amber: #fbbf24;
+      --rp-red: #f87171;
+      --rp-radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--rp-bg); color: var(--rp-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding-top: 36px;
+      -webkit-text-size-adjust: 100%;
+    }
+    .rp-shell { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+    a { color: var(--rp-accent); text-decoration: none; }
+    .back { display:inline-flex; align-items:center; gap:0.5rem; color: var(--rp-text-muted); font-size:0.9rem; margin-bottom:1.25rem; }
+    h1 { font-size: 1.75rem; font-weight: 800; margin: 0 0 0.4rem; letter-spacing: -0.02em; }
+    .lede { color: var(--rp-text-muted); line-height: 1.7; margin: 0 0 2rem; max-width: 64ch; }
+    .card {
+      background: var(--rp-surface); border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius); padding: 1.5rem; margin-bottom: 1.25rem;
+    }
+    .notice { border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 1.25rem; font-size: 0.93rem; line-height: 1.6; }
+    .notice-warn { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.35); color: #fde68a; }
+    .notice-err { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.35); color: #fecaca; }
+    .notice-ok { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.35); color: #a7f3d0; }
+    .key-row { border-top: 1px solid var(--rp-glass-border); padding: 1.15rem 0; }
+    .key-row:first-of-type { border-top: 0; }
+    .key-head { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: flex-start; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .dim { color: var(--rp-text-dim); font-size: 0.85rem; }
+    .muted { color: var(--rp-text-muted); font-size: 0.88rem; }
+    .chip {
+      display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px;
+      font-size: 0.75rem; background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border); color: var(--rp-text-muted);
+    }
+    .chip-write { color: var(--rp-amber); border-color: rgba(251,191,36,0.35); }
+    .badge { display:inline-block; padding:0.18rem 0.6rem; border-radius:999px; font-size:0.75rem; font-weight:700; }
+    .badge-pending { background: rgba(251,191,36,0.15); color: var(--rp-amber); }
+    .badge-active { background: rgba(52,211,153,0.15); color: var(--rp-green); }
+    .badge-revoked { background: rgba(255,255,255,0.07); color: var(--rp-text-dim); }
+    .btn {
+      display:inline-flex; align-items:center; gap:0.4rem;
+      padding: 0.5rem 0.95rem; border-radius: 8px; cursor: pointer;
+      font-family: inherit; font-size: 0.9rem; font-weight: 700;
+      background: var(--rp-accent); color: #04121c; border: 1px solid transparent;
+    }
+    .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+    .btn:focus-visible, a:focus-visible { outline: 2px solid var(--rp-accent); outline-offset: 2px; }
+    .btn-ghost { background: var(--rp-glass); color: var(--rp-text); border-color: var(--rp-glass-border); }
+    .btn-danger { background: rgba(248,113,113,0.14); color: var(--rp-red); border-color: rgba(248,113,113,0.35); }
+    .empty { color: var(--rp-text-muted); margin: 0; }
+    @media (max-width: 600px) {
+      .rp-shell { padding: 1.5rem 1rem 4rem; }
+      h1 { font-size: 1.45rem; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/standalone-utility') %>
+  <%- include('partials/dd-modal') %>
+
+  <div class="rp-shell">
+    <a class="back" href="/community/<%= communityId %>"><i class="fa fa-arrow-left"></i> Back to the community</a>
+
+    <h1>API keys</h1>
+    <p class="lede">
+      Developer keys with access to <strong><%= communityName || 'this community' %></strong>.
+      A key can read and change this community's data within the scopes it holds, so only approve
+      ones you recognise, and withdraw any you no longer want.
+      <a href="/api-docs">What is a developer key?</a>
+    </p>
+
+    <% if (loadError) { %>
+      <div class="notice notice-err"><%= loadError %></div>
+    <% } else if (!canManage) { %>
+      <div class="notice notice-warn">
+        You need the <strong>manage community settings</strong> permission to see or change this
+        community's API keys. Ask an admin or the owner.
+      </div>
+    <% } else { %>
+      <div id="feedback"></div>
+      <div class="card">
+        <div id="keys">
+          <p class="empty">Loading&hellip;</p>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <% if (canManage && !loadError) { %>
+  <script>
+    (function () {
+      var COMMUNITY_ID = <%- JSON.stringify(communityId) %>;
+      var keysEl = document.getElementById('keys');
+      var feedbackEl = document.getElementById('feedback');
+
+      function escapeHtml(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      function feedback(kind, message) {
+        feedbackEl.innerHTML = '<div class="notice notice-' + kind + '">' + escapeHtml(message) + '</div>';
+        if (kind === 'ok') {
+          window.setTimeout(function () { feedbackEl.innerHTML = ''; }, 6000);
+        }
+      }
+
+      function badge(status) {
+        if (status === 'pending') return '<span class="badge badge-pending">Waiting for approval</span>';
+        if (status === 'active') return '<span class="badge badge-active">Active</span>';
+        return '<span class="badge badge-revoked">Access withdrawn</span>';
+      }
+
+      function render(data) {
+        var keys = (data && data.keys) || [];
+        if (keys.length === 0) {
+          keysEl.innerHTML = '<p class="empty">No developer keys have asked for access to this ' +
+            'community. Nothing to do.</p>';
+          return;
+        }
+
+        var html = '';
+        if (data.pendingCount > 0) {
+          html += '<div class="notice notice-warn">' + data.pendingCount +
+            (data.pendingCount === 1 ? ' key is' : ' keys are') +
+            ' waiting for your decision.</div>';
+        }
+
+        keys.forEach(function (row) {
+          var scopes = (row.scopes || []).map(function (scope) {
+            var isWrite = scope.indexOf(':write') !== -1 || scope.indexOf(':provision') !== -1;
+            return '<span class="chip' + (isWrite ? ' chip-write' : '') + '">' +
+              escapeHtml(scope) + '</span>';
+          }).join(' ');
+
+          var actions = '';
+          if (row.canApprove) {
+            actions += '<button type="button" class="btn" data-action="approve" data-key="' +
+              escapeHtml(row.keyId) + '" data-name="' + escapeHtml(row.keyName) + '">Approve</button>';
+          }
+          if (row.canRevoke) {
+            actions += '<button type="button" class="btn btn-danger" data-action="revoke" data-key="' +
+              escapeHtml(row.keyId) + '" data-name="' + escapeHtml(row.keyName) + '">Withdraw access</button>';
+          }
+
+          html += '<div class="key-row">' +
+            '<div class="key-head">' +
+              '<div style="min-width:0;">' +
+                '<strong>' + escapeHtml(row.keyName) + '</strong> ' + badge(row.status) +
+                '<div class="dim mono">' + escapeHtml(row.displayPrefix) + '</div>' +
+                (row.developerName
+                  ? '<div class="muted">Developer: ' + escapeHtml(row.developerName) + '</div>'
+                  : '') +
+                '<div class="muted">' + escapeHtml(row.source) + '</div>' +
+                '<div style="margin-top:0.5rem;">' + scopes + '</div>' +
+                (row.writeScopes && row.writeScopes.length
+                  ? '<div class="muted" style="margin-top:0.5rem;">This key can <strong>change</strong> ' +
+                    'data in this community.</div>'
+                  : '') +
+              '</div>' +
+              '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' + actions + '</div>' +
+            '</div>' +
+          '</div>';
+        });
+
+        keysEl.innerHTML = html;
+      }
+
+      function load() {
+        fetch('/api/developer/community/' + COMMUNITY_ID + '/keys', { credentials: 'include' })
+          .then(function (response) {
+            return response.json().then(function (data) {
+              if (!response.ok) throw new Error(data && data.message ? data.message : 'Could not load keys');
+              return data;
+            });
+          })
+          .then(render)
+          .catch(function (error) {
+            keysEl.innerHTML = '';
+            feedback('err', error.message || 'Could not load keys');
+          });
+      }
+
+      function act(action, keyId, name) {
+        fetch('/api/developer/community/' + COMMUNITY_ID + '/keys/' + keyId + '/' + action, {
+          method: 'POST',
+          credentials: 'include',
+        })
+          .then(function (response) {
+            return response.json().then(function (data) {
+              if (!response.ok) throw new Error(data && data.message ? data.message : 'That did not work');
+              return data;
+            });
+          })
+          .then(function () {
+            feedback('ok', action === 'approve'
+              ? 'Approved ' + name + '.'
+              : 'Withdrew access for ' + name + '.');
+            load();
+          })
+          .catch(function (error) {
+            feedback('err', error.message || 'That did not work');
+          });
+      }
+
+      keysEl.addEventListener('click', function (event) {
+        var button = event.target.closest('button[data-action]');
+        if (!button) return;
+
+        var action = button.getAttribute('data-action');
+        var keyId = button.getAttribute('data-key');
+        var name = button.getAttribute('data-name');
+
+        // Both decisions are worth a beat: approving hands a third party write
+        // access to the community, and withdrawing breaks a running
+        // integration. ddModal, never a native confirm.
+        if (action === 'approve') {
+          window.ddModal({
+            type: 'warning',
+            icon: 'fa-key',
+            title: 'Approve this key?',
+            message: '<strong>' + escapeHtml(name) + '</strong> will be able to read and change ' +
+              'this community within the scopes it holds.',
+            detail: 'You can withdraw access at any time, and it stops working immediately.',
+            confirmText: 'Approve',
+            onConfirm: function () { act('approve', keyId, name); },
+          });
+          return;
+        }
+
+        window.ddModal({
+          type: 'danger',
+          icon: 'fa-ban',
+          title: 'Withdraw access?',
+          message: '<strong>' + escapeHtml(name) + '</strong> stops working on this community ' +
+            'immediately.',
+          detail: 'Anything the developer built against it will start failing. Their key keeps ' +
+            'working on their other communities.',
+          confirmText: 'Withdraw access',
+          onConfirm: function () { act('revoke', keyId, name); },
+        });
+      });
+
+      load();
+    })();
+  </script>
+  <% } %>
+</body>
+</html>
