@@ -83,7 +83,13 @@ jobs:
           POLICE_CAD_API_URL: http://localhost:8081
           POLICE_CAD_API_TOKEN: e2e-placeholder-token
           NODE_ENV: production
-          RATE_LIMIT_MAX: "10000"
+          # The limiter sits in front of the static and /_next middleware, so it
+          # counts every asset, not every page: one page load is dozens of
+          # requests. The whole suite runs from one IP, and as it grew it
+          # crossed 10,000 and started getting 429s on public pages, which
+          # looked like product failures. Raised rather than disabled, so the
+          # limiter is still exercised and a runaway loop still trips it.
+          RATE_LIMIT_MAX: "200000"
 
       - name: Wait for services
         working-directory: police-cad
