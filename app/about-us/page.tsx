@@ -242,6 +242,87 @@ export default function AboutUs() {
               })}
             </div>
 
+            {/* Build on LPC */}
+            <div style={{ marginBottom: '4rem' }}>
+              <div style={{
+                backgroundColor: 'rgba(15, 15, 20, 0.6)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                borderRadius: '1rem',
+                padding: 'clamp(1.5rem, 4vw, 2.5rem)',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)'
+              }}>
+                <h2 style={{
+                  fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+                  fontWeight: '700',
+                  color: '#fbbf24',
+                  marginBottom: '1rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Build on LPC
+                </h2>
+                <p style={{
+                  fontSize: '1.0625rem',
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  lineHeight: '1.7',
+                  marginBottom: '1rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                }}>
+                  Building your own FiveM mod, another GTA role-play integration, or a Discord bot?
+                  You can sync it to LPC for free. Everything your mod sends shows up live in the CAD
+                  on the website &mdash; calls, unit status, civilians, vehicles and BOLOs appear on
+                  the dashboards as they happen.
+                </p>
+                <p style={{
+                  fontSize: '1.0625rem',
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  lineHeight: '1.7',
+                  marginBottom: '1.5rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                }}>
+                  Using an AI coding agent to write it is a reasonable way to start &mdash; point it
+                  at the reference and the quickstart. Keep your key in server-side configuration
+                  only, never in client code. It is free on the Free plan within its limits, and the
+                  higher limits come with the paid plans.
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <a
+                    href="/developer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '0.625rem 1.25rem',
+                      borderRadius: '0.5rem',
+                      backgroundColor: '#38bdf8',
+                      color: '#04131c',
+                      fontWeight: '600',
+                      textDecoration: 'none',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}
+                  >
+                    Developer console
+                  </a>
+                  <a
+                    href="/api-docs"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '0.625rem 1.25rem',
+                      borderRadius: '0.5rem',
+                      border: '1px solid rgba(255, 255, 255, 0.25)',
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      fontWeight: '600',
+                      textDecoration: 'none',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}
+                  >
+                    API reference
+                  </a>
+                </div>
+              </div>
+            </div>
+
             {/* Contributions Section */}
             <div style={{
               marginBottom: '4rem'
