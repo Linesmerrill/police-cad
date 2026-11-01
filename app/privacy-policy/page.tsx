@@ -130,6 +130,36 @@ export default function PrivacyPolicy() {
       )
     },
     {
+      id: 'the-developer-api',
+      title: 'The Developer API',
+      content: (
+        <>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>Lines Police CAD offers a Developer API so that third-party integrations, such as a game server modification, can read and write community data with permission. This section explains what that means for your data.</p>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>If You Are a Developer</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>When you turn on developer access we record your Lines Police CAD account id, what you told us you are building and any project link you supplied, the date and version of the developer terms you accepted, and the keys issued to you.</p>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>We store only a hash of each API key, never the key itself. We also record how your keys are used: request counts, which endpoints were called, the responses given, and the communities each key reached. We use that to enforce rate limits, to investigate abuse, to support you when something breaks, and to decide how the API should develop. It is not sold or used for advertising.</p>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>If a Community You Are In Uses an Integration</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>A community owner can grant an integration access to their community. When they do, the integration can see and change community data within the scopes the key holds. That can include your characters, vehicles, firearms, licences, call history, unit status and your membership of that community.</p>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>An integration cannot see data from communities that have not granted it access, and it cannot reach your account itself. It cannot change your password or email, see or move money, read your billing or subscription, or alter your roles and permissions. Those are closed to every key at every tier.</p>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>A community owner can withdraw an integration's access at any time, which stops it immediately.</p>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Accounts Created for Players by an Integration</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>An integration can create a Lines Police CAD account for a player so that what they build in a game appears on the website and in the app. If that happens to you:</p>
+          <ul style={{ margin: '1.25rem 0', paddingLeft: '2rem', listStyleType: 'disc', listStylePosition: 'outside' }}>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>The account holds only what the game needs: a display name, the game identifier the integration supplied, such as a FiveM licence, Steam id or Discord id, and the records created for you.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>It holds no email address and no password, and nobody can sign into it, including the developer who created it.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>It is never matched to you by an email address an integration supplies. We do not accept one for this purpose.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>You can take ownership of it by claiming it, which needs proof: a one-time code shown to you in the game, or a Discord account already linked to your Lines Police CAD account.</li>
+            <li style={{ margin: '0.5rem 0', lineHeight: '1.8', display: 'list-item', color: 'rgba(255, 255, 255, 0.7)' }}>Once you claim it, it is an ordinary account of yours and this Privacy Policy applies to it in full.</li>
+          </ul>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>Accounts created this way and never claimed are deleted, along with the records attached to them. If you would like one removed sooner, or would like to know what one holds, contact us and we will deal with it.</p>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fbbf24', marginTop: '2.5rem', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>Sign In With Google and Apple</h3>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>If you sign in with Google or Apple, we receive from them an identifier for your account with that provider, and your email address and name where you allow it. We store the identifier, because that is what we match you by on later sign-ins, along with the email address and name if we received them.</p>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>We do not receive or store your password for that provider. If you use Apple's Hide My Email, we only ever see the forwarding address Apple creates for us, not your real one, and we treat it as belonging to this service rather than as your personal address.</p>
+          <p style={{ margin: '1.25rem 0', textAlign: 'left', lineHeight: '1.8', color: 'rgba(255, 255, 255, 0.7)' }}>You can disconnect Google or Apple from your account at any time in your settings, as long as you still have another way to sign in.</p>
+        </>
+      )
+    },
+    {
       title: 'Changes To This Privacy Policy',
       content: (
         <>
