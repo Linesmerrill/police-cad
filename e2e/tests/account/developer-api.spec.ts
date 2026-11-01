@@ -46,6 +46,93 @@ async function mockKeys(page: Page, keys: unknown[]) {
   });
 }
 
+const SECOND_COMMUNITY_ID = '507f1f77bcf86cd799439099';
+
+const QUIET_USAGE = {
+  plan: 'free',
+  days: 30,
+  from: '2026-10-03',
+  to: '2026-11-01',
+  series: [{ day: '2026-11-01', requests: 0, rejected: 0, rejected401: 0, rejected403: 0, rejected429: 0, accountsMade: 0 }],
+  keys: [],
+  requestsToday: 0,
+  rejectedToday: 0,
+  requestsThisMonth: 0,
+  totalRequests: 0,
+  totalRejected: 0,
+  peakDay: 0,
+  dailyLimit: LIMITS.requestsPerDay,
+  minuteLimit: LIMITS.requestsPerMinute,
+  dailyPercent: 0,
+  resetsAt: '2026-11-02T00:00:00Z',
+};
+
+const BUSY_USAGE = {
+  ...QUIET_USAGE,
+  series: [{ day: '2026-11-01', requests: 2500, rejected: 4, rejected401: 1, rejected403: 0, rejected429: 3, accountsMade: 0 }],
+  keys: [{ keyId: KEY_ID, name: 'My FiveM server', status: 'active', requests: 2500, rejected: 4, lastUsedAt: '2026-11-01T08:00:00Z' }],
+  requestsToday: 2500,
+  rejectedToday: 4,
+  requestsThisMonth: 41000,
+  totalRequests: 2500,
+  totalRejected: 4,
+  peakDay: 2500,
+  dailyPercent: 25,
+};
+
+/**
+ * The console loads its account once for the whole section and then the page's
+ * own data, so a spec that mocks only one of them gets a page that renders
+ * half of itself. One helper, so every spec stands the same ground up.
+ */
+async function mockConsole(
+  page: Page,
+  opts: { account: Record<string, unknown>; keys: unknown[]; usage?: Record<string, unknown> }
+) {
+  await mockAccount(page, opts.account);
+  await mockKeys(page, opts.keys);
+  await page.route('**/api/developer/usage*', (route: Route) => json(route, opts.usage || QUIET_USAGE));
+  await page.route('**/api/developer/communities', (route: Route) =>
+    json(route, {
+      data: [
+        { id: COMMUNITY_ID, name: 'test community', canGrant: true },
+        { id: SECOND_COMMUNITY_ID, name: 'second community', canGrant: true },
+      ],
+      totalCount: 2,
+    })
+  );
+  await page.route('**/api/developer/keys/*/usage*', (route: Route) =>
+    json(route, {
+      plan: 'free',
+      requestsToday: (opts.usage || QUIET_USAGE).requestsToday,
+      requestsThisMonth: (opts.usage || QUIET_USAGE).requestsThisMonth,
+      dailyLimit: LIMITS.requestsPerDay,
+      minuteLimit: LIMITS.requestsPerMinute,
+      dailyPercent: (opts.usage || QUIET_USAGE).dailyPercent,
+      resetsAt: '2026-11-02T00:00:00Z',
+      errorsToday: { rateLimited: 0, unauthorized: 0, forbidden: 0 },
+      hasErrorsToday: false,
+      series: [],
+    })
+  );
+  // One key, in full, for the key page.
+  await page.route('**/api/developer/keys/*', (route: Route) => {
+    const method = route.request().method();
+    if (method !== 'GET') return route.fallback();
+    const url = route.request().url();
+    const id = url.split('/api/developer/keys/')[1].split('?')[0].split('/')[0];
+    const row = (opts.keys as { key: { id: string } }[]).find((k) => k.key.id === id);
+    if (!row) return json(route, { response: { message: 'key not found' } }, 404);
+    return json(route, {
+      key: (row as Record<string, unknown>).key,
+      communities: (row as Record<string, unknown>).communities,
+      limits: LIMITS,
+      plan: 'free',
+      availableScopes: SCOPES,
+    });
+  });
+}
+
 const DISABLED_ACCOUNT = {
   enabled: false,
   limits: LIMITS,
@@ -57,7 +144,8 @@ const DISABLED_ACCOUNT = {
 
 const ENABLED_ACCOUNT = {
   enabled: true,
-  account: { id: 'dev1', plan: 'free', planActive: false, status: 'active' },
+  account: { id: 'dev1', status: 'active', createdAt: '2026-09-01T00:00:00Z' },
+  entitlement: { plan: 'free', source: 'website', websitePlan: '', lapsed: false },
   limits: LIMITS,
   availableScopes: SCOPES,
   keyCount: 1,
@@ -96,32 +184,40 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
     await expect(enable).toBeEnabled();
   });
 
-  test('an enabled account lists its keys, scopes and plan limits', async ({ page }) => {
-    await mockAccount(page, ENABLED_ACCOUNT);
-    await mockKeys(page, ONE_KEY);
+  test('the console reports the plan it is actually serving limits for', async ({ page }) => {
+    // The regression this exists for: the plan label came from a field the API
+    // had stopped sending, so every account rendered "Free" beside the limits
+    // it was really getting. The label and the numbers have to agree.
+    await mockConsole(page, { account: ENABLED_ACCOUNT, keys: ONE_KEY });
     await page.goto('/developer');
 
-    await expect(page.getByText('Your plan: Free')).toBeVisible();
-    await expect(page.getByText('60 requests a minute, 10,000 a day, up to 2 keys.')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
+    await expect(page.getByText('You are on Free')).toBeVisible();
+    await expect(page.getByText('60 requests a minute')).toBeVisible();
+    await expect(page.getByText('10,000 a day')).toBeVisible();
+  });
 
-    const row = page.getByTestId('key-row');
+  test('the key list shows a key, its communities and its permissions', async ({ page }) => {
+    await mockConsole(page, { account: ENABLED_ACCOUNT, keys: ONE_KEY });
+    await page.goto('/developer/keys');
+
+    const row = page.locator('.dc-table tbody tr');
     await expect(row).toHaveCount(1);
     await expect(row).toContainText('My FiveM server');
     // The prefix is shown; the key itself does not exist to show.
     await expect(row).toContainText('lpc_live_a1b2c3d4');
-    await expect(row).toContainText('units:write');
     await expect(row).toContainText('test community');
+    await expect(row).toContainText('3 permissions');
   });
 
   test('creating a key reveals it exactly once, with a warning', async ({ page }) => {
-    await mockAccount(page, ENABLED_ACCOUNT);
-    await mockKeys(page, []);
+    await mockConsole(page, { account: ENABLED_ACCOUNT, keys: [] });
     await page.route('**/api/developer/keys', (route: Route) => {
       if (route.request().method() === 'POST') {
         return json(
           route,
           {
-            key: { id: KEY_ID, name: 'New key', displayPrefix: 'lpc_live_zzzz', scopes: ['units:write'], status: 'active' },
+            key: { id: KEY_ID, name: 'New key', displayPrefix: 'lpc_live_zzzz', lastFour: 'aa11', scopes: ['units:write'], status: 'active', createdAt: '2026-11-01T09:00:00Z' },
             plaintextKey: 'lpc_live_thisisthesecretvalue',
           },
           201
@@ -130,24 +226,45 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
       return json(route, { keys: [], limits: LIMITS });
     });
 
-    await page.goto('/developer');
-    await page.getByTestId('new-key-button').click();
-    await expect(page.getByTestId('create-key-form')).toBeVisible();
+    await page.goto('/developer/keys/new');
+    await page.locator('#dc-key-name').fill('New key');
+    await page.locator('#dc-community').selectOption(COMMUNITY_ID);
+    await page.getByRole('button', { name: 'Read only' }).click();
+    await page.getByRole('button', { name: 'Create key' }).click();
 
-    await page.locator('#dev-key-name').fill('New key');
-    // A key with no community needs the provisioning scope, which the form says.
-    await page.locator('input[value="communities:provision"]').check();
-    await page.getByTestId('create-key-submit').click();
-
-    const reveal = page.getByTestId('key-reveal');
+    const reveal = page.locator('.dc-secret');
     await expect(reveal).toBeVisible();
     await expect(reveal).toContainText('lpc_live_thisisthesecretvalue');
-    await expect(reveal).toContainText('this is the one and only time it can be shown');
+    await expect(reveal).toContainText('the one and only time it can be shown');
+  });
+
+  test('the create form says which field is missing rather than disabling itself', async ({ page }) => {
+    // A disabled button with nothing beside it is what sent people hunting for
+    // what they had done wrong.
+    await mockConsole(page, { account: ENABLED_ACCOUNT, keys: [] });
+    await page.goto('/developer/keys/new');
+
+    const submit = page.getByRole('button', { name: 'Create key' });
+    await expect(submit).toBeEnabled();
+    await submit.click();
+
+    await expect(page.getByText('Give the key a name so you can tell it apart later.')).toBeVisible();
+    await expect(page.getByText(/Pick a community, or choose "No community"/)).toBeVisible();
+  });
+
+  test('choosing no community ticks the permission that makes that work', async ({ page }) => {
+    // The old form told people to leave the field blank and then refused the
+    // result. The copy and the rule have to say the same thing.
+    await mockConsole(page, { account: ENABLED_ACCOUNT, keys: [] });
+    await page.goto('/developer/keys/new');
+
+    await page.locator('#dc-community').selectOption('__none__');
+    await expect(page.locator('input[type=checkbox]').nth(4)).toBeChecked();
+    await expect(page.locator('.dc-notice-body')).toContainText('communities:provision');
   });
 
   test('revoking a key asks first, through the page and not a native dialog', async ({ page }) => {
-    await mockAccount(page, ENABLED_ACCOUNT);
-    await mockKeys(page, ONE_KEY);
+    await mockConsole(page, { account: ENABLED_ACCOUNT, keys: ONE_KEY });
 
     let deleteCalled = false;
     await page.route(`**/api/developer/keys/${KEY_ID}`, (route: Route) => {
@@ -166,45 +283,85 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
       await dialog.dismiss();
     });
 
-    await page.goto('/developer');
-    // Scoped to the key's own row: "Turn off and revoke all keys" further down
-    // the page matches a bare "Revoke" too.
-    await page.getByTestId('key-row').getByRole('button', { name: 'Revoke' }).click();
+    await page.goto(`/developer/keys/${KEY_ID}`);
+    await page.getByRole('button', { name: 'Revoke key' }).click();
 
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByRole('dialog')).toContainText('stops working immediately');
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText('stops working immediately');
+    // It names what the key actually reaches, rather than saying "its access".
+    await expect(dialog).toContainText('test community');
+    await expect(dialog).toContainText('units:write');
     expect(deleteCalled).toBe(false);
 
-    await page.getByTestId('confirm-action').click();
+    await dialog.getByRole('button', { name: 'Revoke key' }).click();
     await expect.poll(() => deleteCalled).toBe(true);
     expect(nativeDialog).toBe(false);
   });
 
-  test('the usage panel shows today against the limit', async ({ page }) => {
-    await mockAccount(page, ENABLED_ACCOUNT);
-    await mockKeys(page, ONE_KEY);
-    await page.route(`**/api/developer/keys/${KEY_ID}/usage*`, (route: Route) =>
-      json(route, {
-        plan: 'free',
-        requestsToday: 2500,
-        requestsThisMonth: 41000,
-        dailyLimit: 10000,
-        minuteLimit: 60,
-        dailyPercent: 25,
-        resetsAt: '2026-11-01T00:00:00Z',
-        errorsToday: { rateLimited: 3, unauthorized: 1, forbidden: 0 },
-        hasErrorsToday: true,
-        series: [],
-      })
+  test('a key page can add and remove communities without a new secret', async ({ page }) => {
+    await mockConsole(page, { account: ENABLED_ACCOUNT, keys: ONE_KEY });
+
+    let added: string | null = null;
+    await page.route(`**/api/developer/keys/${KEY_ID}/communities`, (route: Route) => {
+      added = JSON.parse(route.request().postData() || '{}').communityId;
+      return json(route, { grant: { status: 'active' }, communityName: 'second community', added: true }, 201);
+    });
+
+    await page.goto(`/developer/keys/${KEY_ID}`);
+    await page.locator('#dc-add-community').selectOption(SECOND_COMMUNITY_ID);
+    await page.getByRole('button', { name: 'Add community' }).click();
+
+    await expect.poll(() => added).toBe(SECOND_COMMUNITY_ID);
+    // No secret is revealed: editing a key must not mean redeploying it.
+    await expect(page.locator('.dc-secret')).toHaveCount(0);
+  });
+
+  test('the key page says the budget is per key, not per community', async ({ page }) => {
+    // The one real consequence of several communities on one key, stated
+    // rather than left to be discovered from a 429.
+    await mockConsole(page, { account: ENABLED_ACCOUNT, keys: ONE_KEY });
+    await page.goto(`/developer/keys/${KEY_ID}`);
+
+    await expect(page.getByText(/counted per key, not per community/i)).toBeVisible();
+  });
+
+  test('usage shows today against the limit, and which key spent it', async ({ page }) => {
+    await mockConsole(page, { account: ENABLED_ACCOUNT, keys: ONE_KEY, usage: BUSY_USAGE });
+    await page.goto('/developer/usage');
+
+    await expect(page.getByText('2,500')).toBeVisible();
+    await expect(page.getByText('of 10,000', { exact: false })).toBeVisible();
+    await expect(page.locator('.dc-table')).toContainText('My FiveM server');
+  });
+
+  test('notices can be dismissed and do not come back on reload', async ({ page }) => {
+    await mockConsole(page, { account: ENABLED_ACCOUNT, keys: ONE_KEY });
+    await page.route(`**/api/developer/keys/${KEY_ID}/communities`, (route: Route) =>
+      json(route, { grant: { status: 'active' }, communityName: 'second community', added: true }, 201)
     );
 
-    await page.goto('/developer');
-    await page.getByRole('button', { name: 'Usage' }).click();
+    await page.goto(`/developer/keys/${KEY_ID}`);
+    await page.locator('#dc-add-community').selectOption(SECOND_COMMUNITY_ID);
+    await page.getByRole('button', { name: 'Add community' }).click();
 
-    const panel = page.getByTestId('usage-panel');
-    await expect(panel).toContainText('2,500');
-    await expect(panel).toContainText('requests today of 10,000');
-    await expect(panel).toContainText('429 rate limited: 3');
+    const notice = page.locator('.dc-notice-good');
+    await expect(notice).toBeVisible();
+    await notice.getByRole('button', { name: 'Dismiss' }).click();
+    await expect(notice).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.locator('.dc-notice-good')).toHaveCount(0);
+  });
+
+  test('every console page needs a login', async ({ browser }) => {
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    for (const path of ['/developer', '/developer/usage', '/developer/keys', '/developer/keys/new', '/developer/settings']) {
+      await page.goto(path);
+      await expect(page).toHaveURL(/\/login/);
+    }
+    await context.close();
   });
 
   test('the claim page takes a code however a player types it', async ({ page }) => {
@@ -321,10 +478,5 @@ test.describe('Developer API docs', () => {
     await expect(page.getByText(/Send the key in .*Authorization.*not .*X-API-Key/)).toBeVisible();
     await expect(page.getByText(/Use .*set.*not .*setr/)).toBeVisible();
     await expect(page.getByText('Do not loop over your players.')).toBeVisible();
-  });
-
-  test('the developer page needs a login', async ({ page }) => {
-    await page.goto('/developer');
-    await expect(page).toHaveURL(/\/login/);
   });
 });

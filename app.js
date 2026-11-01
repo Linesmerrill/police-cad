@@ -8,6 +8,7 @@ require("./app/api-key-interceptor");
 
 var express = require("express");
 var cookieParser = require("cookie-parser");
+var developerHost = require("./app/developer-host");
 var session = require("express-session");
 var MongoStore = require("connect-mongo")(session);
 var mongoose = require("mongoose");
@@ -109,6 +110,12 @@ app.use(
     cookie: {
       path: "/",
       maxAge: 1000 * 60 * 60 * 24 * 30, // 1 Month (30 days) see: https://www.npmjs.com/package/connect-mongodb-session
+      // Host-only today, which is why the developer console on its own
+      // subdomain cannot see a www session yet. Undefined until
+      // DEVELOPER_CONSOLE_CUTOVER is set, so deploying this signs nobody out;
+      // flipping it widens the cookie to the parent domain and replaces every
+      // existing session once. See app/developer-host.js.
+      domain: developerHost.sessionCookieDomain(),
     },
   })
 );
@@ -119,6 +126,11 @@ app.use(passport.session());
 
 // Use the flash.
 app.use(flash());
+
+// The developer console's own host. Inert until DEVELOPER_CONSOLE_HOST is set,
+// so www keeps serving /developer exactly as it does now. Installed after
+// passport so the sign-in bounce can see whether there is a session.
+developerHost.install(app);
 
 app.use(function forceLiveDomain(req, res, next) {
   var host = req.get("Host");
