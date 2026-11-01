@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SocialSignIn from '@/components/SocialSignIn';
 import Link from 'next/link';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
@@ -384,6 +385,8 @@ function LoginForm() {
             <input type="hidden" name="password" id="hiddenPassword" />
             <input type="hidden" name="redirect" id="hiddenRedirect" />
           </form>
+
+          <SocialSignIn />
 
           {/* Login Form */}
           <form onSubmit={handleSubmit}>
