@@ -273,8 +273,29 @@ const faqData = [
             <li style={{ marginBottom: '0.25rem' }}><strong>Records</strong> — look up and register civilians, vehicles and firearms, and issue licenses</li>
             <li style={{ marginBottom: '0.25rem' }}><strong>Members</strong> — read the roster, and invite, approve, promote or remove members</li>
             <li style={{ marginBottom: '0.25rem' }}><strong>Player accounts</strong> — create and link player accounts from a game identifier</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Report drafts</strong> — prepare a draft incident, arrest or citation report from what happened in the game, for someone in your community to read and file</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Warrants</strong> — read your community&apos;s warrants, and ask for one</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Simulated characters</strong> — mark the NPCs a server invents, so they stay out of your name database</li>
           </ul>
-          There is <strong>no permission at all</strong> for money or wallets, billing or subscriptions, passwords, email or anything else to do with account security, site administration, or a community&apos;s own settings and roles. Those are not scopes a developer can ask for, so no key can be given them by anyone.</>)
+          There is <strong>no permission at all</strong> for money or wallets, billing or subscriptions, passwords, email or anything else to do with account security, site administration, or a community&apos;s own settings and roles. Those are not scopes a developer can ask for, so no key can be given them by anyone.
+          <br /><br />
+          Two more are worth naming, because they sound like things a key could do and are not. <strong>A key cannot file a report.</strong> It writes a draft, and someone in your community with the <strong>manage records</strong> permission reads it and decides — there is no endpoint on the API that files one. And <strong>a key cannot issue a warrant.</strong> A request it makes always waits for a reviewer, even in a community that has auto-approve switched on for its own officers.</>)
+      },
+      {
+        question: 'An integration wants to write reports for my community. What actually happens?',
+        answer: (<>Nothing gets filed without one of your people saying so.
+          <br /><br />
+          The integration writes a <strong>draft</strong> — what it saw, as a list of plain facts, plus whatever narrative it generated, kept separately. Anyone in your community with the <strong>manage records</strong> permission opens <strong>Report drafts</strong> from the community menu, reads the two halves side by side, and either files it as a real report or sends it back with a reason the officer sees in the game.
+          <br /><br />
+          Three things we do on your behalf while that draft is being written: the <strong>officer it names has to be one of yours</strong>, in a department, and if your community restricts a report form by role or rank then the integration has to clear those gates too. The <strong>charges are priced from your own penal code</strong>, so an integration cannot invent a fine or a jail term. And an AI-written narrative is <strong>labelled as AI-written</strong> on the review screen and in the filed report — it is an account of events, and we never present it as evidence.</>)
+      },
+      {
+        question: 'A server populated my community with NPCs. How do I get rid of them?',
+        answer: (<>Two ways, and you do not need the developer&apos;s help for either.
+          <br /><br />
+          First, you probably do not have to. An integration marks the characters it invents as simulated, and <strong>those are already hidden</strong> from the name database, the rosters and the lookups your officers use. They are only visible if someone deliberately asks for them.
+          <br /><br />
+          Second, if you want them gone: open <strong>API keys</strong> from your community menu, find the key, and choose <strong>Remove its records</strong>. &ldquo;Test records only&rdquo; deletes the simulated ones and nothing else. &ldquo;Everything it made&rdquo; also removes characters and vehicles that key created for real players, so only pick that one if you mean it. Either works even after you have withdrawn the key&apos;s access — which is the case it is really there for.</>)
       },
       {
         question: 'Where are the docs, and where do I get help?',

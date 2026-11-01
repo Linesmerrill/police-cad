@@ -425,9 +425,65 @@ export const SCOPE_GROUPS: Record<string, string> = {
   'communities:provision': 'Provisioning',
   'members:read': 'Members',
   'members:write': 'Members',
+  'reports:read': 'Reports',
+  'reports:write': 'Reports',
+  'warrants:read': 'Reports',
+  'warrants:write': 'Reports',
 };
 
-export const GROUP_ORDER = ['Community', 'Dispatch', 'Records', 'Members', 'Provisioning'];
+export const GROUP_ORDER = [
+  'Community',
+  'Dispatch',
+  'Records',
+  'Reports',
+  'Members',
+  'Provisioning',
+];
+
+/**
+ * Plain-English labels for the permission list.
+ *
+ * The scope string is what the API answers with and what a developer puts in
+ * their code, so it stays on screen. But `reports:write` does not tell a
+ * community owner approving a key what it means, and the API's own one-line
+ * description is written for the developer rather than for them. These are the
+ * owner's reading of each permission: what a key holding it can actually do to
+ * their community.
+ *
+ * A scope with no entry falls back to the API's description, so a new scope
+ * shipped on the API side never renders a blank row here.
+ */
+export const SCOPE_LABELS: Record<string, string> = {
+  'community:read': 'See the community, its departments and its ten-codes',
+  'units:read': 'See who is on duty',
+  'units:write': 'Set a unit\'s status, ten-code and location',
+  'calls:read': 'Read the dispatch board',
+  'calls:write': 'Put calls on the dispatch board, update and close them',
+  'bolos:read': 'Read BOLOs',
+  'bolos:write': 'Post BOLOs',
+  'civilians:read': 'Look characters up by name',
+  'civilians:write': 'Create characters for linked players',
+  'vehicles:read': 'Look vehicles up by plate',
+  'vehicles:write': 'Register vehicles',
+  'firearms:read': 'Look firearms up by serial',
+  'firearms:write': 'Register firearms',
+  'licenses:write': 'Issue licences to characters',
+  'reports:read': 'Read back the report drafts it wrote',
+  'reports:write':
+    'Prepare draft reports for a person here to read and file. It cannot file one',
+  'warrants:read': 'Read the community\'s warrants',
+  'warrants:write':
+    'Ask for a warrant. The request waits for a reviewer, as it does in the CAD',
+  'players:provision': 'Create and link player accounts from game identifiers',
+  'communities:provision': 'Create new communities owned by the developer',
+  'members:read': 'Read the member roster',
+  'members:write': 'Invite, approve, promote and remove members',
+};
+
+/** The owner's reading of a permission, falling back to the API's own. */
+export function scopeLabel(scope: string, fallback: string): string {
+  return SCOPE_LABELS[scope] || fallback;
+}
 
 export function groupScopes(scopes: Scope[]): { group: string; scopes: Scope[] }[] {
   const groups = new Map<string, Scope[]>();

@@ -7613,6 +7613,134 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Removing what a key wrote. Its own route rather than folded into the
+  // approve/revoke one above, because it deletes rows and the two actions
+  // should not share a URL shape that makes them look interchangeable.
+  app.delete("/api/developer/community/:communityId/keys/:keyId/records", apiAuthCheck, async function (req, res) {
+    const { communityId, keyId } = req.params;
+    if (!/^[a-f0-9]{24}$/i.test(communityId) || !/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That id is not valid." });
+    }
+    const scope = req.body && req.body.scope === "all" ? "all" : "synthetic";
+    try {
+      const response = await axios.delete(
+        `${developerApiBase()}/community/${communityId}/keys/${keyId}/records?userId=${encodeURIComponent(developerActor(req))}`,
+        {
+          headers: { ...config.headers, "Content-Type": "application/json" },
+          // The API insists on being told which community it is deleting from,
+          // so a stale id cannot run a cleanup against the wrong one. We send
+          // the one from the path we just validated.
+          data: { scope, confirm: communityId },
+          timeout: 20000,
+        }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "remove that key's records", error);
+    }
+  });
+
+  // The report-draft review queue. These proxy routes exist because the API
+  // requires the first-party gateway secret on them, which the axios
+  // interceptor attaches server-side and which never reaches a browser.
+  app.get("/api/developer/community/:communityId/report-drafts", apiAuthCheck, async function (req, res) {
+    const communityId = req.params.communityId;
+    if (!/^[a-f0-9]{24}$/i.test(communityId)) {
+      return res.status(400).json({ message: "That community id is not valid." });
+    }
+    const query = new URLSearchParams({ userId: developerActor(req) });
+    ["status", "kind", "page", "limit"].forEach(function (name) {
+      const value = req.query[name];
+      if (typeof value === "string" && value.trim()) query.set(name, value.trim());
+    });
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/community/${communityId}/report-drafts?${query.toString()}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "load this community's report drafts", error);
+    }
+  });
+
+  app.get("/api/developer/community/:communityId/report-drafts/:draftId", apiAuthCheck, async function (req, res) {
+    const { communityId, draftId } = req.params;
+    if (!/^[a-f0-9]{24}$/i.test(communityId) || !/^[a-f0-9]{24}$/i.test(draftId)) {
+      return res.status(400).json({ message: "That id is not valid." });
+    }
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/community/${communityId}/report-drafts/${draftId}?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "load that report draft", error);
+    }
+  });
+
+  app.post("/api/developer/community/:communityId/report-drafts/:draftId/:action", apiAuthCheck, async function (req, res) {
+    const { communityId, draftId, action } = req.params;
+    if (!/^[a-f0-9]{24}$/i.test(communityId) || !/^[a-f0-9]{24}$/i.test(draftId)) {
+      return res.status(400).json({ message: "That id is not valid." });
+    }
+    if (action !== "file" && action !== "reject") {
+      return res.status(400).json({ message: "Unknown action." });
+    }
+    const notes = typeof req.body?.notes === "string" ? req.body.notes.slice(0, 2000) : "";
+    try {
+      const response = await axios.post(
+        `${developerApiBase()}/community/${communityId}/report-drafts/${draftId}/${action}?userId=${encodeURIComponent(developerActor(req))}`,
+        { notes },
+        { headers: { ...config.headers, "Content-Type": "application/json" }, timeout: 15000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(
+        res,
+        action === "file" ? "file that report" : "reject that draft",
+        error
+      );
+    }
+  });
+
+  // The review queue page. Gated on "manage records", which is the permission
+  // that governs records everywhere else in the product — filing a draft
+  // creates a record and rejecting one discards a proposed record, so a new
+  // permission for it would have had to be added to four surfaces for no gain.
+  app.get("/community/:hash/report-drafts", authCheck, async function (req, res) {
+    const communityId = req.params.hash;
+    if (!/^[a-f0-9]{24}$/i.test(communityId)) {
+      return res.status(400).render("page-not-found", { user: req.user });
+    }
+
+    let communityName = "";
+    let loadError = null;
+    try {
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, {
+        headers: { ...config.headers },
+        timeout: 10000,
+      });
+      communityName = response.data?.community?.name || "";
+    } catch (error) {
+      loadError = "We could not load this community just now. Try again shortly.";
+    }
+
+    const canReview = loadError
+      ? false
+      : await userCanManageCommunity(req, communityId, "manage records");
+
+    res.render("community-report-drafts", {
+      user: req.user,
+      communityId,
+      communityName,
+      loadError,
+      canReview,
+      buildVersion: app.locals.buildVersion,
+    });
+  });
+
   // The community-side key page. EJS, next to the other community settings
   // pages, and gated on the same permission the settings card checks.
   app.get("/community/:hash/api-keys", authCheck, async function (req, res) {

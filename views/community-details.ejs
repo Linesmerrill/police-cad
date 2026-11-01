@@ -3,7 +3,15 @@
   // Global permission logic - defined at the very beginning for use throughout the template
   let canManageAnnouncements = false;
   let canManageDepartments = false;
+  // Reviewing report drafts is governed by "manage records", the permission
+  // that already governs records everywhere else: filing a draft creates a
+  // record and rejecting one discards a proposed record. Owner always passes,
+  // the same as every other check here.
+  let canReviewReportDrafts = false;
   const userId = user && user._doc ? String(user._doc._id) : null;
+  if (userId && community.community && String(community.community.ownerID || '') === userId) {
+    canReviewReportDrafts = true;
+  }
   if (userId && community.community && Array.isArray(community.community.roles)) {
     community.community.roles.forEach(function(role) {
       if (Array.isArray(role.members) && role.members.includes(userId)) {
@@ -20,6 +28,12 @@
               (perm.name === "manage departments" && perm.enabled === true)
             ) {
               canManageDepartments = true;
+            }
+            if (
+              (perm.name === "administrator" && perm.enabled === true) ||
+              (perm.name === "manage records" && perm.enabled === true)
+            ) {
+              canReviewReportDrafts = true;
             }
           });
         }

@@ -15,7 +15,7 @@
 
 import { useMemo } from 'react';
 import type { Scope } from '@/lib/developer-api';
-import { groupScopes } from '@/lib/developer-api';
+import { groupScopes, scopeLabel } from '@/lib/developer-api';
 
 export type Preset = {
   id: string;
@@ -40,6 +40,16 @@ export const SCOPE_PRESETS: Preset[] = [
       scope.startsWith('units:') ||
       scope.startsWith('bolos:') ||
       scope === 'community:read',
+  },
+  {
+    id: 'reports',
+    label: 'Reports',
+    hint: 'Prepare draft reports and ask for warrants. Neither one files anything.',
+    match: (scope) =>
+      scope.startsWith('reports:') ||
+      scope.startsWith('warrants:') ||
+      scope === 'community:read' ||
+      scope === 'civilians:read',
   },
   {
     id: 'full',
@@ -230,7 +240,7 @@ export default function ScopePicker({
                   />
                   <span className={`name${write ? ' is-write' : ''}`}>{scope.scope}</span>
                 </span>
-                <span className="desc">{scope.description}</span>
+                <span className="desc">{scopeLabel(scope.scope, scope.description)}</span>
               </label>
             );
           })}
