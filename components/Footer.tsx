@@ -7,7 +7,11 @@ import { ClipboardDocumentIcon, CheckIcon } from '@heroicons/react/24/outline';
 const footerLinks = {
   information: [
     { name: 'Release Log', href: 'https://github.com/Linesmerrill/police-cad/releases', external: true },
-    { name: 'Developers', href: 'https://linesmerrill.github.io/MerrillLines/', external: true },
+    // "Developers" pointed at Merrill's personal site, which is not what a
+    // developer looking for the API expects to find. The URL is unchanged; the
+    // label now says what is actually there, and the API has its own entry.
+    { name: 'About the Creator', href: 'https://linesmerrill.github.io/MerrillLines/', external: true },
+    { name: 'Developer API', href: '/api-docs' },
     { name: 'System Status', href: 'https://status.linespolice-cad.com', external: true },
   ],
   about: [
