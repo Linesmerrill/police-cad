@@ -12,7 +12,7 @@
  * developer-api.spec.ts already uses.
  */
 import { test, expect, Page, Route } from '@playwright/test';
-import { headingReady, shootBothWidths } from '../../helpers/shots';
+import { PHONE, shoot } from '../../helpers/shots';
 
 const KEY_ID = 'aaaaaaaaaaaaaaaaaaaaaaa1';
 const HOOK_ID = 'ffffffffffffffffffffff01';
@@ -144,12 +144,6 @@ test.describe('A key’s request history', () => {
     // The route template, not a path with a community id in it.
     await expect(page.getByText('/communities/{communityId}/reports/drafts')).toBeVisible();
 
-    await shootBothWidths(
-      page,
-      test.info(),
-      'console key page, activity populated',
-      headingReady(page, 'Recent requests')
-    );
   });
 
   test('the page says what the feed does not hold, and for how long', async ({ page }) => {
@@ -167,14 +161,6 @@ test.describe('A key’s request history', () => {
     await expect(page.getByText(/Kept for 30 days/)).toBeVisible();
     await expect(page.getByText(/X-Request-Id/)).toBeVisible();
 
-    // Both panels empty, which is what a new key looks like and the state
-    // easiest to get wrong.
-    await shootBothWidths(
-      page,
-      test.info(),
-      'console key page, activity and webhooks empty',
-      headingReady(page, 'Recent requests')
-    );
   });
 
   test('the filter asks the API for that outcome', async ({ page }) => {
@@ -370,12 +356,6 @@ test.describe('Webhooks', () => {
     await expect(page.getByText('404')).toBeVisible();
     await expect(page.getByText('endpoint answered 404')).toBeVisible();
 
-    await shootBothWidths(
-      page,
-      test.info(),
-      'console key page, webhook with its attempt log open',
-      headingReady(page, 'Webhooks')
-    );
   });
 
   test('a revoked key is offered no webhooks at all', async ({ page }) => {
@@ -431,3 +411,133 @@ test.describe('Developer API docs: polling, webhooks, attachments', () => {
     await expect(page.getByText(/is never/).first()).toBeVisible();
   });
 });
+
+/**
+ * Pictures for the pull request, in their own block.
+ *
+ * Separate from the assertions above so a screenshot can never be the reason a
+ * behavioural test fails, and one width each via test.use rather than resizing
+ * mid-test.
+ */
+test.describe('Screenshots: the key page at desktop width', () => {
+  test('activity and webhooks, populated', async ({ page }, testInfo) => {
+    await mockConsole(page);
+    await mockOneWebhook(page);
+    await mockBusyActivity(page);
+
+    await page.goto(`/developer/keys/${KEY_ID}`);
+    await expect(page.getByRole('heading', { name: 'Recent requests' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Webhooks' })).toBeVisible();
+    await shoot(page, testInfo, 'console key page, activity and webhooks', { fullPage: true });
+  });
+
+  test('both panels empty, which is what a new key looks like', async ({ page }, testInfo) => {
+    await mockConsole(page);
+    await mockNoWebhooks(page);
+    await page.route(`**/api/developer/keys/${KEY_ID}/activity**`, (route: Route) =>
+      json(route, { data: [], totalCount: 0, page: 1, limit: 25, retentionDays: 30 })
+    );
+
+    await page.goto(`/developer/keys/${KEY_ID}`);
+    await expect(page.getByRole('heading', { name: 'Recent requests' })).toBeVisible();
+    await shoot(page, testInfo, 'console key page, activity and webhooks empty', { fullPage: true });
+  });
+});
+
+test.describe('Screenshots: the key page at phone width', () => {
+  test.use({ viewport: PHONE });
+
+  test('the activity table scrolls inside its card', async ({ page }, testInfo) => {
+    await mockConsole(page);
+    await mockOneWebhook(page);
+    await mockBusyActivity(page);
+
+    await page.goto(`/developer/keys/${KEY_ID}`);
+    await expect(page.getByRole('heading', { name: 'Recent requests' })).toBeVisible();
+    // The shot worth looking at. Four columns and a route template in one of
+    // them, so this table is always wider than 390px: it has to scroll inside
+    // its card rather than push the page sideways.
+    await shoot(page, testInfo, 'console key page, activity and webhooks', { fullPage: true });
+  });
+});
+
+/** One webhook, mid-life: delivered before, one failure since. */
+async function mockOneWebhook(page: Page) {
+  await page.route(`**/api/developer/keys/${KEY_ID}/webhooks`, (route: Route) => {
+    if (route.request().method() !== 'GET') return route.fallback();
+    return json(route, {
+      webhooks: [
+        {
+          id: HOOK_ID,
+          url: 'https://sixpd.example.com/lpc/webhook',
+          events: [],
+          communities: [],
+          status: 'active',
+          secretPrefix: 'whsec_0123',
+          consecutiveFailures: 1,
+          lastStatus: 502,
+          lastError: 'endpoint answered 502',
+          lastDeliveryAt: '2026-11-01T21:50:00Z',
+          createdAt: '2026-10-20T00:00:00Z',
+          eventsLabel: 'every event',
+          communitiesLabel: 'every community this key can reach',
+        },
+      ],
+      limits: {
+        maxPerKey: 3,
+        maxAttempts: 6,
+        signatureToleranceSeconds: 300,
+        disableAfterFailures: 20,
+        deliveryRetentionDays: 14,
+      },
+      eventTypes: ['call.created', 'call.closed'],
+    });
+  });
+}
+
+/** A feed with one of each outcome, so the shot shows all three pill states. */
+async function mockBusyActivity(page: Page) {
+  await page.route(`**/api/developer/keys/${KEY_ID}/activity**`, (route: Route) =>
+    json(route, {
+      data: [
+        {
+          requestId: 'req_abc123def456',
+          correlationId: 'sixpd-tick-8821',
+          communityId: 'bbbbbbbbbbbbbbbbbbbbbbbb',
+          method: 'POST',
+          route: '/communities/{communityId}/reports/drafts',
+          status: 403,
+          outcome: 'denied',
+          errorCode: 'missing_scope',
+          requiredScope: 'reports:write',
+          durationMs: 12,
+          at: '2026-11-01T21:14:00Z',
+        },
+        {
+          requestId: 'req_0f1e2d3c4b5a',
+          communityId: 'bbbbbbbbbbbbbbbbbbbbbbbb',
+          method: 'PUT',
+          route: '/communities/{communityId}/units/status/bulk',
+          status: 200,
+          outcome: 'ok',
+          durationMs: 31,
+          at: '2026-11-01T21:13:02Z',
+        },
+        {
+          requestId: 'req_9a8b7c6d5e4f',
+          method: 'GET',
+          route: '/communities/{communityId}/changes',
+          status: 429,
+          outcome: 'rate_limited',
+          errorCode: 'rate_limited',
+          durationMs: 4,
+          at: '2026-11-01T21:12:40Z',
+        },
+      ],
+      totalCount: 3,
+      page: 1,
+      limit: 25,
+      retentionDays: 30,
+    })
+  );
+}
