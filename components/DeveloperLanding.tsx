@@ -245,7 +245,10 @@ export default function DeveloperLanding({
   }, [data.websiteTiers]);
 
   const current = data.entitlement?.plan || '';
-  const upgradeUrl = data.upgradeUrl || '/community-pricing';
+  // /pricing sells the user subscription, which is what API limits follow.
+  // /community-pricing sells community promotions — a different product, and
+  // what this used to point at.
+  const upgradeUrl = data.upgradeUrl || '/pricing';
   // One class for every cell in the plan someone is actually on, so the column
   // reads as a column rather than a highlighted header with nothing under it.
   const cell = (plan: string) => (plan === current ? 'dl-mono dl-cell-current' : 'dl-mono');

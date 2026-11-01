@@ -16,10 +16,22 @@ import DeveloperLanding from '@/components/DeveloperLanding';
 
 type Scope = { scope: string; description: string };
 
+// The plan names people see. One map, so the dashboard and the landing page
+// cannot call the same plan different things.
+const PLAN_LABELS: Record<string, string> = {
+  free: 'Free',
+  base: 'Base',
+  premium: 'Premium',
+  premium_plus: 'Premium Plus',
+};
+
 type DeveloperAccount = {
   id: string;
-  plan: string;
-  planActive: boolean;
+  // No plan here on purpose. The tier comes from the website subscription and
+  // is reported in `entitlement` on the response, not on the account. A `plan`
+  // field used to live here, was removed when tiers moved to the subscription,
+  // and the page went on reading it — so it was undefined and every account
+  // rendered as "Free" regardless of what they were paying for.
   appName?: string;
   appUrl?: string;
   status: string;
@@ -62,6 +74,14 @@ type AccountResponse = {
   entitlement?: { plan: string; source: string; websitePlan: string; lapsed: boolean };
   communities?: { plan: string; owned: number; cap: number; unlimited: boolean };
   termsReacceptRequired?: boolean;
+};
+
+type CommunityOption = {
+  id: string;
+  name: string;
+  // Whether this person can approve a key into it themselves. False means the
+  // key is created and then waits, which the form says before they commit.
+  canGrant: boolean;
 };
 
 type Grant = {
@@ -175,8 +195,18 @@ export default function DeveloperPage() {
   // does not load.
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
 
-  const [usageFor, setUsageFor] = useState<string | null>(null);
-  const [usage, setUsage] = useState<Usage | null>(null);
+  // Usage is shown for every key rather than behind a toggle, keyed by key id.
+  // A number you have to ask for is a number nobody looks at.
+  const [usageByKey, setUsageByKey] = useState<Record<string, Usage>>({});
+
+  // The communities this user is in, for the key form's picker. Replaces a
+  // free-text "Community id" field, which asked people to know something they
+  // do not know.
+  const [communities, setCommunities] = useState<CommunityOption[] | null>(null);
+
+  // Per-field errors, so a problem is shown next to the field that has it
+  // rather than only in a banner at the top of a long page.
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; scopes?: string }>({});
 
   const loadAccount = useCallback(async () => {
     const response = await fetch('/api/developer/account', { credentials: 'include' });
@@ -191,18 +221,84 @@ export default function DeveloperPage() {
     return (data?.keys || []) as KeyRow[];
   }, []);
 
+  // Load usage for every live key, rather than one at a time behind a toggle.
+  //
+  // Each key is its own request, which is what the endpoint offers, but they go
+  // out together and a failure on one leaves the others showing. Usage is a
+  // nicety: a key whose counters did not load still renders.
+  const loadUsage = useCallback(async (rows: KeyRow[]) => {
+    const live = rows.filter((row) => row.key.status !== 'revoked');
+    if (live.length === 0) {
+      setUsageByKey({});
+      return;
+    }
+    const results = await Promise.all(
+      live.map(async (row) => {
+        try {
+          const response = await fetch(`/api/developer/keys/${row.key.id}/usage`, {
+            credentials: 'include',
+          });
+          if (!response.ok) return null;
+          return [row.key.id, (await response.json()) as Usage] as const;
+        } catch {
+          return null;
+        }
+      })
+    );
+    const next: Record<string, Usage> = {};
+    results.forEach((entry) => {
+      if (entry) next[entry[0]] = entry[1];
+    });
+    setUsageByKey(next);
+  }, []);
+
+  // The communities this user belongs to, for the picker.
+  const loadCommunities = useCallback(async () => {
+    try {
+      const response = await fetch('/api/developer/communities', { credentials: 'include' });
+      if (!response.ok) {
+        setCommunities([]);
+        return;
+      }
+      const data = await response.json();
+      setCommunities((data?.data || []) as CommunityOption[]);
+    } catch {
+      // An empty list renders the empty state, which is a better failure than
+      // a form that will not open.
+      setCommunities([]);
+    }
+  }, []);
+
   const refresh = useCallback(async () => {
     try {
       const acct = await loadAccount();
       setAccount(acct);
-      setKeys(acct.enabled ? await loadKeys() : []);
+      const rows = acct.enabled ? await loadKeys() : [];
+      setKeys(rows);
       setError(null);
+      if (acct.enabled) {
+        // Both are secondary to the page rendering, so neither is awaited.
+        void loadUsage(rows);
+        void loadCommunities();
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
-  }, [loadAccount, loadKeys]);
+  }, [loadAccount, loadKeys, loadUsage, loadCommunities]);
+
+  // Notices clear themselves.
+  //
+  // A success banner that never goes away stops being a notice and becomes part
+  // of the page: it was still announcing a key created ten minutes ago. Errors
+  // stay until dismissed or until the next action replaces them, because the
+  // reader may need to act on them.
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 5000);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   useEffect(() => {
     let cancelled = false;
@@ -251,7 +347,93 @@ export default function DeveloperPage() {
     }
   }
 
+  // Presets, because the scope list is long and most keys are one of three
+  // shapes. Picking one ticks its scopes; everything stays editable after.
+  const SCOPE_PRESETS: { id: string; label: string; hint: string; match: (s: string) => boolean }[] = [
+    {
+      id: 'read',
+      label: 'Read only',
+      hint: 'Everything this key can see, nothing it can change.',
+      match: (scope) => scope.endsWith(':read'),
+    },
+    {
+      id: 'dispatch',
+      label: 'Dispatch',
+      hint: 'Run a CAD from a game server: calls, units and BOLOs.',
+      match: (scope) =>
+        scope.startsWith('calls:') ||
+        scope.startsWith('units:') ||
+        scope.startsWith('bolos:') ||
+        scope === 'community:read',
+    },
+    {
+      id: 'full',
+      label: 'Everything',
+      hint: 'Every permission your plan allows.',
+      match: () => true,
+    },
+  ];
+
+  function applyPreset(presetId: string) {
+    const preset = SCOPE_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    const available = (account?.availableScopes || []).map((s) => s.scope);
+    const picked = available.filter(preset.match);
+    setKeyScopes(picked);
+    setFieldErrors((prev) => ({ ...prev, scopes: undefined }));
+  }
+
+  // Which preset, if any, the current selection is exactly.
+  const activePreset = useMemo(() => {
+    const available = (account?.availableScopes || []).map((s) => s.scope);
+    const chosen = [...keyScopes].sort().join(',');
+    if (!chosen) return null;
+    const found = SCOPE_PRESETS.find(
+      (preset) => available.filter(preset.match).sort().join(',') === chosen
+    );
+    return found ? found.id : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keyScopes, account?.availableScopes]);
+
+  // Choosing "no community" means the key must be able to make its own, which
+  // is the one scope that makes that coherent. Ticked automatically rather
+  // than left as a trap: the old form told people to leave the field blank and
+  // then refused the result.
+  function onCommunityChange(value: string) {
+    setKeyCommunity(value);
+    if (value === '' && !keyScopes.includes('communities:provision')) {
+      const available = (account?.availableScopes || []).map((s) => s.scope);
+      if (available.includes('communities:provision')) {
+        setKeyScopes((prev) => [...prev, 'communities:provision']);
+        setFieldErrors((prev) => ({ ...prev, scopes: undefined }));
+      }
+    }
+  }
+
+  function validateKeyForm(): boolean {
+    const next: { name?: string; scopes?: string } = {};
+    if (!keyName.trim()) next.name = 'Give the key a name.';
+    if (keyScopes.length === 0) next.scopes = 'Pick at least one permission.';
+    else if (!keyCommunity && !keyScopes.includes('communities:provision')) {
+      // The copy and the rule now say the same thing. This is reachable only if
+      // someone unticks the scope after choosing "no community".
+      next.scopes =
+        'With no community chosen, this key needs "Create communities owned by you".';
+    }
+    setFieldErrors(next);
+    if (next.name) {
+      document.getElementById('dev-key-name')?.focus();
+    } else if (next.scopes) {
+      document.getElementById('dev-key-scopes')?.scrollIntoView({ block: 'center' });
+    }
+    return Object.keys(next).length === 0;
+  }
+
   async function createKey() {
+    // Validated here rather than by disabling the button. A disabled button
+    // with no explanation is the thing that sent people looking for what they
+    // had done wrong.
+    if (!validateKeyForm()) return;
     setBusy(true);
     setError(null);
     try {
@@ -266,6 +448,7 @@ export default function DeveloperPage() {
       setKeyName('');
       setKeyScopes([]);
       setKeyCommunity('');
+      setFieldErrors({});
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');
@@ -274,13 +457,16 @@ export default function DeveloperPage() {
     }
   }
 
-  function confirmRevokeKey(keyId: string, name: string) {
+  function confirmRevokeKey(row: KeyRow) {
     setConfirmation({
-      title: 'Revoke this key?',
-      message: `Anything using <strong>${escapeHtml(name)}</strong> stops working immediately.`,
+      title: `Revoke ${row.key.name}?`,
+      message:
+        `This key stops working immediately and can't be brought back. ` +
+        `Anything using it will start failing.<br /><br />It currently has:<br /><br />` +
+        keyAccessSummary(row),
       confirmText: 'Revoke key',
       danger: true,
-      onConfirm: () => revokeKey(keyId, name),
+      onConfirm: () => revokeKey(row.key.id, row.key.name),
     });
   }
 
@@ -304,12 +490,35 @@ export default function DeveloperPage() {
     }
   }
 
-  function confirmRotateKey(keyId: string, name: string) {
+  // What a key actually reaches, by name.
+  //
+  // "Its communities carry across" told somebody nothing: they still had to go
+  // and look at which communities those were. These dialogs list them.
+  function keyAccessSummary(row: KeyRow): string {
+    const permissions = row.key.scopes.length
+      ? row.key.scopes.map(escapeHtml).join(', ')
+      : 'No permissions';
+    const live = row.communities.filter((c) => c.grant.status !== 'revoked');
+    const communities = live.length
+      ? live
+          .map((c) =>
+            c.grant.status === 'pending'
+              ? `${escapeHtml(c.communityName)} (waiting for approval)`
+              : escapeHtml(c.communityName)
+          )
+          .join(', ')
+      : 'No communities yet';
+    return `Permissions: ${permissions}.<br />Communities: ${communities}.`;
+  }
+
+  function confirmRotateKey(row: KeyRow) {
     setConfirmation({
-      title: 'Rotate this key?',
-      message: `You get a new key now, and <strong>${escapeHtml(name)}</strong> stops working. Its communities carry across.`,
+      title: `Rotate ${row.key.name}?`,
+      message:
+        `We'll create a new key and the old one stops working immediately. ` +
+        `The new key keeps:<br /><br />${keyAccessSummary(row)}`,
       confirmText: 'Rotate key',
-      onConfirm: () => rotateKey(keyId, name),
+      onConfirm: () => rotateKey(row.key.id, row.key.name),
     });
   }
 
@@ -330,23 +539,12 @@ export default function DeveloperPage() {
     }
   }
 
-  async function openUsage(keyId: string) {
-    if (usageFor === keyId) {
-      setUsageFor(null);
-      setUsage(null);
-      return;
-    }
-    setUsageFor(keyId);
-    setUsage(null);
-    const response = await fetch(`/api/developer/keys/${keyId}/usage`, { credentials: 'include' });
-    if (response.ok) setUsage(await response.json());
-  }
 
   async function disableAccount() {
     setBusy(true);
     try {
       await postJson('/api/developer/account/disable');
-      setNotice('Developer account turned off and all keys revoked.');
+      setNotice('Developer access is off. All your keys were revoked.');
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');
@@ -428,7 +626,11 @@ export default function DeveloperPage() {
           border: 1px solid var(--rp-glass-border); color: var(--rp-text-muted);
         }
         .dev-chip-write { color: var(--rp-amber); border-color: rgba(251, 191, 36, 0.35); }
-        .dev-notice { border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.92rem; line-height: 1.5; }
+        .dev-notice {
+          border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.25rem;
+          font-size: 0.92rem; line-height: 1.5;
+          display: flex; align-items: flex-start; gap: 0.75rem; justify-content: space-between;
+        }
         .dev-notice-ok { background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.35); color: #a7f3d0; }
         .dev-notice-err { background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.35); color: #fecaca; }
         .dev-notice-warn { background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.35); color: #fde68a; }
@@ -442,10 +644,53 @@ export default function DeveloperPage() {
         .dev-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
         .dev-scope-group { margin-bottom: 1.1rem; }
         .dev-scope-group-name { font-size: 0.75rem; letter-spacing: 0.05em; color: var(--rp-text-dim); margin-bottom: 0.5rem; }
+        /* The checkbox is centred on the scope-name line, with the
+           description on its own line underneath. Aligning the checkbox to the
+           top of the whole label left it floating above the name, because the
+           label is two lines tall and the name is only one. */
         .dev-scope {
-          display: flex; gap: 0.6rem; align-items: flex-start;
-          padding: 0.5rem 0.65rem; border-radius: 8px; cursor: pointer;
+          display: block; padding: 0.5rem 0.65rem; border-radius: 8px; cursor: pointer;
         }
+        .dev-scope-head { display: flex; align-items: center; gap: 0.6rem; }
+        .dev-scope-head input { margin: 0; flex: 0 0 auto; }
+        .dev-scope-name { font-size: 0.85rem; }
+        .dev-scope-desc {
+          display: block; color: var(--rp-text-muted); font-size: 0.85rem;
+          line-height: 1.5; margin-top: 0.2rem;
+          /* Lines up under the name rather than under the checkbox. */
+          padding-left: calc(13px + 0.6rem);
+        }
+        .dev-req { color: var(--rp-red); }
+        .dev-sr-only {
+          position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+          overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+        }
+        .dev-field-hint {
+          color: var(--rp-text-dim); font-size: 0.8rem; margin: 0.4rem 0 0; line-height: 1.5;
+        }
+        .dev-field-err {
+          color: #fecaca; font-size: 0.82rem; margin: 0.4rem 0 0; line-height: 1.5;
+        }
+        .dev-input-bad { border-color: rgba(248, 113, 113, 0.65); }
+        .dev-presets { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.6rem 0 0.25rem; }
+        .dev-preset {
+          padding: 0.35rem 0.7rem; border-radius: 999px; cursor: pointer;
+          background: transparent; border: 1px solid var(--rp-glass-border);
+          color: var(--rp-text-muted); font-family: inherit; font-size: 0.8rem;
+        }
+        .dev-preset:hover { background: var(--rp-glass); color: var(--rp-text); }
+        .dev-preset-on {
+          background: rgba(56, 189, 248, 0.14); border-color: rgba(56, 189, 248, 0.5);
+          color: var(--rp-accent);
+        }
+        .dev-preset:focus-visible,
+        .dev-notice-close:focus-visible { outline: 2px solid var(--rp-accent); outline-offset: 2px; }
+        .dev-notice-close {
+          background: transparent; border: 0; cursor: pointer; color: inherit;
+          font-size: 1.25rem; line-height: 1; padding: 0 0.25rem; opacity: 0.75;
+          flex: 0 0 auto;
+        }
+        .dev-notice-close:hover { opacity: 1; }
         .dev-scope:hover { background: var(--rp-glass); }
         .dev-reveal {
           background: rgba(56, 189, 248, 0.07); border: 1px solid rgba(56, 189, 248, 0.4);
@@ -659,15 +904,39 @@ export default function DeveloperPage() {
               dashboard and gets a plain title. */}
           {!loading && account?.enabled && <h1 className="dev-h1">Developer API</h1>}
 
-          {error && <div className="dev-notice dev-notice-err">{error}</div>}
-          {notice && <div className="dev-notice dev-notice-ok">{notice}</div>}
+          {error && (
+            <div className="dev-notice dev-notice-err" role="alert" data-testid="notice-error">
+              <span>{error}</span>
+              <button
+                type="button"
+                className="dev-notice-close"
+                aria-label="Dismiss"
+                onClick={() => setError(null)}
+              >
+                &times;
+              </button>
+            </div>
+          )}
+          {notice && (
+            <div className="dev-notice dev-notice-ok" role="status" data-testid="notice-ok">
+              <span>{notice}</span>
+              <button
+                type="button"
+                className="dev-notice-close"
+                aria-label="Dismiss"
+                onClick={() => setNotice(null)}
+              >
+                &times;
+              </button>
+            </div>
+          )}
 
           {newKey && (
             <div className="dev-reveal" data-testid="key-reveal">
-              <strong>Copy your key now.</strong>
+              <strong>Copy your key now</strong>
               <p style={{ color: 'var(--rp-text-muted)', margin: '0.4rem 0 0', fontSize: '0.9rem' }}>
-                We store only a hash of it, so this is the one and only time it can be shown. If
-                you lose it, rotate the key rather than asking us for it.
+                This is the only time we can show it. We store a hash, not the key, so we
+                can&apos;t show it to you again. If you lose it, rotate the key.
               </p>
               <code className="dev-reveal-key dev-mono">{newKey}</code>
               <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
@@ -691,7 +960,7 @@ export default function DeveloperPage() {
                     setCopied(false);
                   }}
                 >
-                  I have saved it
+                  I&apos;ve saved it
                 </button>
               </div>
             </div>
@@ -728,19 +997,26 @@ export default function DeveloperPage() {
                 >
                   <div>
                     <h2 className="dev-h2" style={{ marginBottom: '0.35rem' }}>
-                      Your plan: {account.account?.plan === 'pro' ? 'Pro' : 'Free'}
+                      Your plan: {PLAN_LABELS[account.entitlement?.plan || 'free'] || 'Free'}
                     </h2>
                     <p style={{ color: 'var(--rp-text-muted)', margin: 0, fontSize: '0.9rem' }}>
-                      {account.limits.requestsPerMinute} requests a minute,{' '}
+                      {account.limits.requestsPerMinute.toLocaleString()} requests a minute,{' '}
                       {account.limits.requestsPerDay.toLocaleString()} a day, up to{' '}
                       {account.limits.keysPerDeveloper} keys.
                     </p>
+                    {account.entitlement?.lapsed && (
+                      <p className="dev-field-hint">
+                        Your {PLAN_LABELS[account.entitlement.websitePlan] ||
+                          account.entitlement.websitePlan}{' '}
+                        subscription has lapsed, so these are the Free limits.
+                      </p>
+                    )}
                   </div>
                   {/* There is no Developer API product to buy: limits follow the
                       website subscription, so the only upgrade path is the plan
                       page. Shown unless they are already on the top plan. */}
                   {account.entitlement?.plan !== 'premium_plus' ? (
-                    <a className="dev-btn" href={account.upgradeUrl || '/community-pricing'}>
+                    <a className="dev-btn" href={account.upgradeUrl || '/pricing'}>
                       Raise your limits
                     </a>
                   ) : null}
@@ -773,7 +1049,8 @@ export default function DeveloperPage() {
 
                 {atKeyLimit && (
                   <div className="dev-notice dev-notice-warn" style={{ marginTop: '1rem' }}>
-                    You are at your plan&apos;s key limit. Revoke one to make another.
+                    You&apos;ve reached your plan&apos;s key limit. Revoke a key, or raise your
+                    limits, to create another.
                   </div>
                 )}
 
@@ -781,67 +1058,145 @@ export default function DeveloperPage() {
                   <div style={{ marginTop: '1.5rem' }} data-testid="create-key-form">
                     <div style={{ marginBottom: '1rem' }}>
                       <label className="dev-label" htmlFor="dev-key-name">
-                        Name
+                        Name <span className="dev-req" aria-hidden="true">*</span>
+                        <span className="dev-sr-only">(required)</span>
                       </label>
                       <input
                         id="dev-key-name"
-                        className="dev-input"
+                        className={`dev-input${fieldErrors.name ? ' dev-input-bad' : ''}`}
                         value={keyName}
-                        onChange={(e) => setKeyName(e.target.value)}
-                        placeholder="My FiveM server"
+                        onChange={(e) => {
+                          setKeyName(e.target.value);
+                          if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: undefined }));
+                        }}
+                        placeholder="e.g. My FiveM server"
                         maxLength={60}
+                        required
+                        aria-invalid={fieldErrors.name ? true : undefined}
+                        aria-describedby={fieldErrors.name ? 'dev-key-name-err' : undefined}
                       />
+                      {fieldErrors.name && (
+                        <p className="dev-field-err" id="dev-key-name-err" role="alert">
+                          {fieldErrors.name}
+                        </p>
+                      )}
                     </div>
 
                     <div style={{ marginBottom: '1rem' }}>
                       <label className="dev-label" htmlFor="dev-key-community">
-                        Community id
+                        Community
                       </label>
-                      <input
-                        id="dev-key-community"
-                        className="dev-input dev-mono"
-                        value={keyCommunity}
-                        onChange={(e) => setKeyCommunity(e.target.value)}
-                        placeholder="Leave blank if this key will create its own communities"
-                      />
-                      <p
-                        style={{
-                          color: 'var(--rp-text-dim)',
-                          fontSize: '0.8rem',
-                          margin: '0.4rem 0 0',
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        A key works in one community unless it can create its own. If you are not
-                        the owner or an admin there, your request waits for one of them to approve
-                        it.
-                      </p>
+                      {communities === null ? (
+                        <p className="dev-field-hint">Loading your communities…</p>
+                      ) : (
+                        <>
+                          <select
+                            id="dev-key-community"
+                            className="dev-input"
+                            value={keyCommunity}
+                            onChange={(e) => onCommunityChange(e.target.value)}
+                          >
+                            <option value="">None — this key creates its own communities</option>
+                            {communities.map((c) => (
+                              <option value={c.id} key={c.id}>
+                                {c.name}
+                                {c.canGrant ? '' : ' — needs owner/admin approval'}
+                              </option>
+                            ))}
+                          </select>
+                          <p className="dev-field-hint">
+                            {keyCommunity === '' ? (
+                              <>
+                                With no community chosen, this key can only work in communities it
+                                creates itself, so{' '}
+                                <span className="dev-mono">communities:provision</span> is ticked
+                                below.
+                              </>
+                            ) : communities.find((c) => c.id === keyCommunity)?.canGrant ? (
+                              'You can approve this key yourself, so it will work straight away.'
+                            ) : (
+                              'You are not the owner or an admin there, so the key waits for one of them to approve it.'
+                            )}
+                          </p>
+                          {communities.length === 0 && (
+                            <p className="dev-field-hint">
+                              You are not in any communities yet. A key with no community can still
+                              create its own.
+                            </p>
+                          )}
+                        </>
+                      )}
                     </div>
 
-                    <div style={{ marginBottom: '1rem' }}>
-                      <span className="dev-label">What may this key do?</span>
+                    <div style={{ marginBottom: '1rem' }} id="dev-key-scopes">
+                      <span className="dev-label">
+                        What may this key do? <span className="dev-req" aria-hidden="true">*</span>
+                      </span>
+                      <p className="dev-field-hint" style={{ marginTop: 0 }}>
+                        Pick at least one. Start from a preset and adjust.
+                      </p>
+
+                      <div className="dev-presets" role="group" aria-label="Permission presets">
+                        {SCOPE_PRESETS.map((preset) => (
+                          <button
+                            type="button"
+                            key={preset.id}
+                            className={`dev-preset${activePreset === preset.id ? ' dev-preset-on' : ''}`}
+                            onClick={() => applyPreset(preset.id)}
+                            title={preset.hint}
+                            aria-pressed={activePreset === preset.id}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                        {keyScopes.length > 0 && (
+                          <button
+                            type="button"
+                            className="dev-preset"
+                            onClick={() => setKeyScopes([])}
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+
+                      {fieldErrors.scopes && (
+                        <p className="dev-field-err" role="alert">
+                          {fieldErrors.scopes}
+                        </p>
+                      )}
+
                       {groupedScopes.map(({ group, scopes: groupScopes }) => (
                         <div className="dev-scope-group" key={group}>
-                          <div className="dev-scope-group-name">{group.toUpperCase()}</div>
-                          {groupScopes.map((s) => (
-                            <label className="dev-scope" key={s.scope}>
-                              <input
-                                type="checkbox"
-                                checked={keyScopes.includes(s.scope)}
-                                onChange={() => toggleScope(s.scope)}
-                                value={s.scope}
-                              />
-                              <span>
-                                <span className="dev-mono" style={{ fontSize: '0.85rem' }}>
-                                  {s.scope}
+                          <div className="dev-scope-group-name">{group}</div>
+                          {groupScopes.map((s) => {
+                            const writes = s.scope.includes(':write') || s.scope.includes(':provision');
+                            return (
+                              <label className="dev-scope" key={s.scope}>
+                                {/* The checkbox sits on the scope-name row and
+                                    is centred on it; the description lives
+                                    underneath, outside that row. Aligning it to
+                                    the top of the whole block left it floating
+                                    above the name. */}
+                                <span className="dev-scope-head">
+                                  <input
+                                    type="checkbox"
+                                    checked={keyScopes.includes(s.scope)}
+                                    onChange={() => {
+                                      toggleScope(s.scope);
+                                      if (fieldErrors.scopes) {
+                                        setFieldErrors((p) => ({ ...p, scopes: undefined }));
+                                      }
+                                    }}
+                                    value={s.scope}
+                                  />
+                                  <span className="dev-mono dev-scope-name">{s.scope}</span>
+                                  {writes && <span className="dev-chip dev-chip-write">writes</span>}
                                 </span>
-                                <br />
-                                <span style={{ color: 'var(--rp-text-muted)', fontSize: '0.85rem' }}>
-                                  {s.description}
-                                </span>
-                              </span>
-                            </label>
-                          ))}
+                                <span className="dev-scope-desc">{s.description}</span>
+                              </label>
+                            );
+                          })}
                         </div>
                       ))}
                     </div>
@@ -849,18 +1204,24 @@ export default function DeveloperPage() {
                     <button
                       type="button"
                       className="dev-btn"
-                      disabled={busy || !keyName.trim() || keyScopes.length === 0}
+                      disabled={busy || atKeyLimit}
                       onClick={createKey}
                       data-testid="create-key-submit"
                     >
-                      Create key
+                      {busy ? 'Creating…' : 'Create key'}
                     </button>
+                    {atKeyLimit && (
+                      <p className="dev-field-hint">
+                        You are at your plan&apos;s key limit. Revoke one, or raise your limits, to
+                        make another.
+                      </p>
+                    )}
                   </div>
                 )}
 
                 {liveKeys.length === 0 && !showCreate && (
                   <p style={{ color: 'var(--rp-text-muted)', marginBottom: 0 }}>
-                    No keys yet. Make one and follow the{' '}
+                    No keys yet. Create one, then follow the{' '}
                     <a href="/api-docs" style={{ color: 'var(--rp-accent)' }}>
                       quickstart
                     </a>
@@ -924,15 +1285,8 @@ export default function DeveloperPage() {
                           <button
                             type="button"
                             className="dev-btn dev-btn-ghost"
-                            onClick={() => openUsage(row.key.id)}
-                          >
-                            {usageFor === row.key.id ? 'Hide usage' : 'Usage'}
-                          </button>
-                          <button
-                            type="button"
-                            className="dev-btn dev-btn-ghost"
                             disabled={busy}
-                            onClick={() => confirmRotateKey(row.key.id, row.key.name)}
+                            onClick={() => confirmRotateKey(row)}
                           >
                             Rotate
                           </button>
@@ -940,14 +1294,16 @@ export default function DeveloperPage() {
                             type="button"
                             className="dev-btn dev-btn-danger"
                             disabled={busy}
-                            onClick={() => confirmRevokeKey(row.key.id, row.key.name)}
+                            onClick={() => confirmRevokeKey(row)}
                           >
                             Revoke
                           </button>
                         </div>
                       </div>
 
-                      {usageFor === row.key.id && (
+                      {(() => {
+                        const usage = usageByKey[row.key.id];
+                        return (
                         <div style={{ marginTop: '1.25rem' }} data-testid="usage-panel">
                           {!usage && <span style={{ color: 'var(--rp-text-muted)' }}>Loading usage…</span>}
                           {usage && (
@@ -984,43 +1340,61 @@ export default function DeveloperPage() {
                                       marginTop: '0.4rem',
                                     }}
                                   >
+                                    {/* The viewer's own timezone. The limit
+                                        resets at midnight UTC, but telling
+                                        someone "11:59 PM UTC" makes them do the
+                                        arithmetic to find out when that is. */}
                                     Daily limit resets{' '}
                                     {new Date(usage.resetsAt).toLocaleString(undefined, {
-                                      timeZone: 'UTC',
                                       dateStyle: 'medium',
                                       timeStyle: 'short',
-                                    })}{' '}
-                                    UTC
+                                    })}
                                   </div>
                                 )}
                               </div>
 
                               <div style={{ marginTop: '1.1rem' }}>
                                 <div className="dev-stat-label" style={{ marginBottom: '0.4rem' }}>
-                                  REFUSED TODAY
+                                  Failed requests today
                                 </div>
                                 {usage.hasErrorsToday ? (
+                                  <>
                                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                     <span className="dev-chip">
-                                      429 rate limited: {usage.errorsToday.rateLimited}
+                                      Over rate limit (429): {usage.errorsToday.rateLimited}
                                     </span>
                                     <span className="dev-chip">
-                                      401 unauthorized: {usage.errorsToday.unauthorized}
+                                      Invalid or revoked key (401):{' '}
+                                      {usage.errorsToday.unauthorized}
                                     </span>
                                     <span className="dev-chip">
-                                      403 forbidden: {usage.errorsToday.forbidden}
+                                      Missing permission or community access (403):{' '}
+                                      {usage.errorsToday.forbidden}
                                     </span>
                                   </div>
+                                  {/* Accurate rather than reassuring: whether a
+                                      failed call counts depends on how far it
+                                      got. A key we do not recognise is turned
+                                      away before anything is counted; a key we
+                                      do recognise has already been counted by
+                                      the time a permission check refuses it. */}
+                                  <p className="dev-field-hint">
+                                    A request refused with 401 is turned away before it counts
+                                    toward your daily total. Requests refused with 403, or for
+                                    going over your limit, have already been counted.
+                                  </p>
+                                  </>
                                 ) : (
                                   <span style={{ color: 'var(--rp-text-muted)', fontSize: '0.9rem' }}>
-                                    Nothing refused today.
+                                    No failed requests today.
                                   </span>
                                 )}
                               </div>
                             </>
                           )}
                         </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   ))}
                 </div>
