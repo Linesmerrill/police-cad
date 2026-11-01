@@ -1055,6 +1055,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   const { reportActionPath, adminActor, buildActionBody, isObjectId, communityPreviewView } = require("./admin-reports-proxy");
   const financeProxy = require("./finance-proxy");
+  const developerProxy = require("./developer-proxy");
 
   function reportsProxyError(res, err) {
     const status = (err.response && err.response.status) || 500;
@@ -7131,9 +7132,275 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   // Be sure to place all GET requests above this catchall
   // Exclude Next.js internal routes
+  // ---------------------------------------------------------------------------
+  // Developer API (docs/DEVELOPER_API.md in the API repo)
+  //
+  // Thin proxies: the session check, a validated body from developer-proxy.js,
+  // and a forward. The user id comes from the session, never from the browser,
+  // because these calls carry the first-party gateway secret via the axios
+  // interceptor and the API would otherwise accept a forged ?userId=.
+  // ---------------------------------------------------------------------------
+
+  function developerActor(req) {
+    return String((req.user && (req.user._doc?._id ?? req.user._id)) || "");
+  }
+
+  function forwardDeveloperFailure(res, action, error) {
+    const status = error?.response?.status || 502;
+    const reason = developerProxy.apiErrorReason(
+      error?.response?.data,
+      "We could not " + action + " just now"
+    );
+    if (status >= 500) {
+      console.error("[developer] " + action + " failed:", reason);
+      return res.status(502).json({ message: "We could not " + action + " just now. Try again shortly." });
+    }
+    return res.status(status).json({ message: reason });
+  }
+
+  function developerApiBase() {
+    return `${policeCadApiUrl}/api/v1/developer`;
+  }
+
+  app.get("/api/developer/account", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/account?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "load your developer account", error);
+    }
+  });
+
+  app.post("/api/developer/account/enable", apiAuthCheck, async function (req, res) {
+    const built = developerProxy.buildEnableBody(req.body);
+    if (built.error) return res.status(400).json({ message: built.error });
+    try {
+      const response = await axios.post(
+        `${developerApiBase()}/account/enable?userId=${encodeURIComponent(developerActor(req))}`,
+        built.body,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "turn on your developer account", error);
+    }
+  });
+
+  app.post("/api/developer/account/disable", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(
+        `${developerApiBase()}/account/disable?userId=${encodeURIComponent(developerActor(req))}`,
+        {},
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "turn off your developer account", error);
+    }
+  });
+
+  app.get("/api/developer/keys", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/keys?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "load your keys", error);
+    }
+  });
+
+  app.post("/api/developer/keys", apiAuthCheck, async function (req, res) {
+    const built = developerProxy.buildCreateKeyBody(req.body);
+    if (built.error) return res.status(400).json({ message: built.error });
+    try {
+      const response = await axios.post(
+        `${developerApiBase()}/keys?userId=${encodeURIComponent(developerActor(req))}`,
+        built.body,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      // The plaintext key is in this response and this is the only time it
+      // exists outside the API. It is passed straight through to the browser
+      // and deliberately never logged.
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "create that key", error);
+    }
+  });
+
+  app.delete("/api/developer/keys/:keyId", apiAuthCheck, async function (req, res) {
+    const keyId = req.params.keyId;
+    if (!/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That key id is not valid." });
+    }
+    try {
+      const response = await axios.delete(
+        `${developerApiBase()}/keys/${keyId}?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "revoke that key", error);
+    }
+  });
+
+  app.post("/api/developer/keys/:keyId/rotate", apiAuthCheck, async function (req, res) {
+    const keyId = req.params.keyId;
+    if (!/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That key id is not valid." });
+    }
+    try {
+      const response = await axios.post(
+        `${developerApiBase()}/keys/${keyId}/rotate?userId=${encodeURIComponent(developerActor(req))}`,
+        {},
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "rotate that key", error);
+    }
+  });
+
+  app.get("/api/developer/keys/:keyId/usage", apiAuthCheck, async function (req, res) {
+    const keyId = req.params.keyId;
+    if (!/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That key id is not valid." });
+    }
+    const params = new URLSearchParams({ userId: developerActor(req) });
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(req.query.from || ""))) params.set("from", String(req.query.from));
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(req.query.to || ""))) params.set("to", String(req.query.to));
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/keys/${keyId}/usage?${params}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(developerProxy.usageDashboardView(response.data));
+    } catch (error) {
+      forwardDeveloperFailure(res, "load that key's usage", error);
+    }
+  });
+
+  app.post("/api/developer/claim", apiAuthCheck, async function (req, res) {
+    const built = developerProxy.buildClaimBody(req.body);
+    if (built.error) return res.status(400).json({ message: built.error });
+    try {
+      const response = await axios.post(
+        `${developerApiBase()}/claim?userId=${encodeURIComponent(developerActor(req))}`,
+        built.body,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "redeem that code", error);
+    }
+  });
+
+  app.post("/api/developer/claim/discord", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(
+        `${developerApiBase()}/claim/discord?userId=${encodeURIComponent(developerActor(req))}`,
+        {},
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "link your Discord characters", error);
+    }
+  });
+
+  // The community owner's side: who has a key on my community.
+  app.get("/api/developer/community/:communityId/keys", apiAuthCheck, async function (req, res) {
+    const communityId = req.params.communityId;
+    if (!/^[a-f0-9]{24}$/i.test(communityId)) {
+      return res.status(400).json({ message: "That community id is not valid." });
+    }
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/community/${communityId}/keys?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(developerProxy.communityKeysView(response.data));
+    } catch (error) {
+      forwardDeveloperFailure(res, "load this community's keys", error);
+    }
+  });
+
+  app.post("/api/developer/community/:communityId/keys/:keyId/:action", apiAuthCheck, async function (req, res) {
+    const { communityId, keyId, action } = req.params;
+    if (!/^[a-f0-9]{24}$/i.test(communityId) || !/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That id is not valid." });
+    }
+    if (action !== "approve" && action !== "revoke") {
+      return res.status(400).json({ message: "Unknown action." });
+    }
+    try {
+      const response = await axios.post(
+        `${developerApiBase()}/community/${communityId}/keys/${keyId}/${action}?userId=${encodeURIComponent(developerActor(req))}`,
+        {},
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, action === "approve" ? "approve that key" : "revoke that key", error);
+    }
+  });
+
+  // The community-side key page. EJS, next to the other community settings
+  // pages, and gated on the same permission the settings card checks.
+  app.get("/community/:hash/api-keys", authCheck, async function (req, res) {
+    const communityId = req.params.hash;
+    if (!/^[a-f0-9]{24}$/i.test(communityId)) {
+      return res.status(400).render("page-not-found", { user: req.user });
+    }
+
+    let community = null;
+    try {
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/community/${communityId}`, {
+        headers: { ...config.headers },
+        timeout: 10000,
+      });
+      community = response.data?.community ? response.data : response.data;
+    } catch (error) {
+      return res.status(502).render("community-api-keys", {
+        user: req.user,
+        communityId,
+        communityName: "",
+        loadError: "We could not load this community just now. Try again shortly.",
+        canManage: false,
+        buildVersion: app.locals.buildVersion,
+      });
+    }
+
+    const details = community?.community || {};
+    const canManage = userCanManageCommunity(req, communityId, "manage community settings");
+
+    res.render("community-api-keys", {
+      user: req.user,
+      communityId,
+      communityName: details.name || "",
+      loadError: null,
+      canManage,
+      buildVersion: app.locals.buildVersion,
+    });
+  });
+
+  // The developer's own pages are Next.js; they need an Express guard before
+  // the catchall or /developer would be reachable while signed out and the
+  // page would fetch itself a 401.
+  app.get("/developer", authCheck, function (req, res) {
+    return handle(req, res);
+  });
+  app.get("/developer/claim", authCheck, function (req, res) {
+    return handle(req, res);
+  });
+
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators') || req.path.startsWith('/feature-requests') || req.path === '/pricing' || req.path === '/community-pricing' || req.path === '/manage-subscription' || req.path.startsWith('/subscription/') || req.path.startsWith('/community-promotion/') || req.path === '/penal-code') {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || req.path === '/api-docs' || req.path === '/developer' || req.path === '/developer/claim' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators') || req.path.startsWith('/feature-requests') || req.path === '/pricing' || req.path === '/community-pricing' || req.path === '/manage-subscription' || req.path.startsWith('/subscription/') || req.path.startsWith('/community-promotion/') || req.path === '/penal-code') {
       return handle(req, res);
     }
     res.render("page-not-found");
