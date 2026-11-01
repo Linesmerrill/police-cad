@@ -36,6 +36,7 @@ export default function CommunityPicker({
   error,
   exclude = [],
   label = 'Community',
+  failed,
 }: {
   communities: CommunityOption[] | null;
   value: string;
@@ -47,6 +48,8 @@ export default function CommunityPicker({
   /** Communities the key already has, so they are not offered twice. */
   exclude?: string[];
   label?: string;
+  /** The list could not be loaded. Different from "you are in none". */
+  failed?: boolean;
 }) {
   const loading = communities === null;
   const offered = (communities || []).filter((c) => !exclude.includes(c.id));
@@ -61,6 +64,25 @@ export default function CommunityPicker({
         <select className="dc-select" id={id} disabled aria-busy="true">
           <option>Loading your communities…</option>
         </select>
+      </>
+    );
+  }
+
+  // A failed load used to render exactly like an empty one, which told the
+  // user something false: that they are in no communities. Say what actually
+  // happened, and leave the server-side check to decide the rest.
+  if (failed) {
+    return (
+      <>
+        <label className="dc-label" htmlFor={id}>
+          {label}
+        </label>
+        <select className="dc-select is-bad" id={id} disabled>
+          <option>Could not load your communities</option>
+        </select>
+        <p className="dc-hint">
+          Reload the page to try again. This is a problem on our side, not with your account.
+        </p>
       </>
     );
   }

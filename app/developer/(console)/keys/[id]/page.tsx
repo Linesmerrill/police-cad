@@ -58,6 +58,7 @@ export default function KeyDetailPage({ params }: { params: { id: string } }) {
   const [detail, setDetail] = useState<KeyDetail | null>(null);
   const [usage, setUsage] = useState<KeyUsage | null>(null);
   const [communities, setCommunities] = useState<CommunityOption[] | null>(null);
+  const [communitiesFailed, setCommunitiesFailed] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
@@ -93,7 +94,12 @@ export default function KeyDetailPage({ params }: { params: { id: string } }) {
     developerApi
       .communities()
       .then((data) => setCommunities(data.data || []))
-      .catch(() => setCommunities([]));
+      .catch(() => {
+        // Not the same as being in no communities, and it must not read as
+        // though it were.
+        setCommunities([]);
+        setCommunitiesFailed(true);
+      });
   }, [keyId, load]);
 
   const grants = detail ? liveGrants(detail.communities) : [];
@@ -574,6 +580,7 @@ export default function KeyDetailPage({ params }: { params: { id: string } }) {
               value={addCommunity}
               onChange={setAddCommunity}
               exclude={grants.map((g) => g.grant.communityId)}
+              failed={communitiesFailed}
               id="dc-add-community"
               label="Community"
             />

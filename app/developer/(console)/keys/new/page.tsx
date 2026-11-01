@@ -40,6 +40,7 @@ export default function NewKeyPage() {
   const [scopes, setScopes] = useState<string[]>([]);
   const [community, setCommunity] = useState('');
   const [communities, setCommunities] = useState<CommunityOption[] | null>(null);
+  const [communitiesFailed, setCommunitiesFailed] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; scopes?: string; community?: string }>({});
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<CreatedKey | null>(null);
@@ -49,10 +50,13 @@ export default function NewKeyPage() {
     try {
       const data = await developerApi.communities();
       setCommunities(data.data || []);
+      setCommunitiesFailed(false);
     } catch {
-      // An empty list renders the picker's empty state, which is a better
-      // failure than a form that will not open.
+      // Recorded rather than swallowed. An empty list and a failed load look
+      // identical on screen otherwise, and the empty one says something about
+      // the user's account that is not true.
       setCommunities([]);
+      setCommunitiesFailed(true);
     }
   }, []);
 
@@ -225,6 +229,7 @@ export default function NewKeyPage() {
               value={community}
               onChange={onCommunityChange}
               allowNone
+              failed={communitiesFailed}
               id="dc-community"
               label="Which community may this key act in"
               error={errors.community}

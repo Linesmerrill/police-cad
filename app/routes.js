@@ -7322,6 +7322,23 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // The communities this user belongs to, for the key form's picker.
+  //
+  // This proxy was missing: the API endpoint existed and the page called it,
+  // but nothing here forwarded it, so every request 404'd through to Next and
+  // the picker rendered as though the user were in no communities at all.
+  app.get("/api/developer/communities", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/communities?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "load your communities", error);
+    }
+  });
+
   app.post("/api/developer/account/enable", apiAuthCheck, async function (req, res) {
     const built = developerProxy.buildEnableBody(req.body);
     if (built.error) return res.status(400).json({ message: built.error });
