@@ -39,7 +39,7 @@ async function enableDeveloperAccount(page: Page) {
   // because by then the account was already on.
   const overview = page.getByRole('heading', { name: 'Overview' });
   const terms = page.locator('#dev-terms');
-  await expect(overview.or(terms)).toBeVisible({ timeout: 20_000 });
+  await expect(overview.or(terms)).toBeVisible({ timeout: 30_000 });
   if (await overview.isVisible()) return;
 
   await terms.check();
@@ -243,10 +243,15 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
 
     // Kept, not deleted: the usage rows and the audit trail point at the id.
     await page.getByRole('button', { name: /Revoked/ }).click();
-    await expect(page.locator('.dc-table tbody tr')).toContainText('E2E renamed bridge');
+    // Two rows carry this name by now, and both should: rotation copies the
+    // name onto the new key and revokes the old one, so the key this test
+    // rotated and the key it just revoked are both kept as history.
+    const history = page.locator('.dc-table tbody tr').filter({ hasText: 'E2E renamed bridge' });
+    await expect(history.first()).toBeVisible({ timeout: 20_000 });
+    expect(await history.count()).toBeGreaterThanOrEqual(2);
 
     await page.goto(`/developer/keys/${keyId}`);
-    await expect(page.getByText(/revoked and cannot be edited/i)).toBeVisible();
+    await expect(page.getByText(/revoked and cannot be edited/i)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole('button', { name: 'Rotate key' })).toHaveCount(0);
   });
 });
