@@ -150,7 +150,24 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
 
   test('changing permissions does not issue a new secret', async ({ page }) => {
     await page.goto(`/developer/keys/${keyId}`);
-    await page.getByRole('button', { name: 'Read only', exact: true }).click();
+
+    // Pick whichever preset is not already the key's state, so this is a real
+    // change on a first run and on a retry alike. The Save button only renders
+    // when the selection differs from what is stored, so a retry that found the
+    // key already read-only had nothing to click and timed out waiting for a
+    // notice that was never going to come.
+    //
+    // Dispatch rather than Everything as the alternative, deliberately: the
+    // next test asserts the key reaches nothing and cannot create a community,
+    // which needs it to hold no :provision scope. Both of these presets
+    // exclude provisioning; Everything would not.
+    const readOnly = page.getByRole('button', { name: 'Read only', exact: true });
+    const alreadyReadOnly = (await readOnly.getAttribute('aria-pressed')) === 'true';
+    await (alreadyReadOnly
+      ? page.getByRole('button', { name: 'Dispatch', exact: true })
+      : readOnly
+    ).click();
+
     await page.getByRole('button', { name: 'Save permissions' }).click();
     await expect(page.getByText(/Permissions saved/)).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('.dc-secret')).toHaveCount(0);
