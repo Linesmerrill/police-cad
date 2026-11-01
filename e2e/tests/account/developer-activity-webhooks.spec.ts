@@ -12,6 +12,7 @@
  * developer-api.spec.ts already uses.
  */
 import { test, expect, Page, Route } from '@playwright/test';
+import { headingReady, shootBothWidths } from '../../helpers/shots';
 
 const KEY_ID = 'aaaaaaaaaaaaaaaaaaaaaaa1';
 const HOOK_ID = 'ffffffffffffffffffffff01';
@@ -142,6 +143,13 @@ test.describe('A key’s request history', () => {
 
     // The route template, not a path with a community id in it.
     await expect(page.getByText('/communities/{communityId}/reports/drafts')).toBeVisible();
+
+    await shootBothWidths(
+      page,
+      test.info(),
+      'console key page, activity populated',
+      headingReady(page, 'Recent requests')
+    );
   });
 
   test('the page says what the feed does not hold, and for how long', async ({ page }) => {
@@ -158,6 +166,15 @@ test.describe('A key’s request history', () => {
     await expect(page.getByText(/hold no request or response bodies/i)).toBeVisible();
     await expect(page.getByText(/Kept for 30 days/)).toBeVisible();
     await expect(page.getByText(/X-Request-Id/)).toBeVisible();
+
+    // Both panels empty, which is what a new key looks like and the state
+    // easiest to get wrong.
+    await shootBothWidths(
+      page,
+      test.info(),
+      'console key page, activity and webhooks empty',
+      headingReady(page, 'Recent requests')
+    );
   });
 
   test('the filter asks the API for that outcome', async ({ page }) => {
@@ -352,6 +369,13 @@ test.describe('Webhooks', () => {
     await expect(page.getByText('call.created')).toBeVisible();
     await expect(page.getByText('404')).toBeVisible();
     await expect(page.getByText('endpoint answered 404')).toBeVisible();
+
+    await shootBothWidths(
+      page,
+      test.info(),
+      'console key page, webhook with its attempt log open',
+      headingReady(page, 'Webhooks')
+    );
   });
 
   test('a revoked key is offered no webhooks at all', async ({ page }) => {
