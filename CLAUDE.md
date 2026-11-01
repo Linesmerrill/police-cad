@@ -8,6 +8,44 @@
 - MongoDB via Mongoose, Passport.js auth
 - Socket.IO for real-time features
 
+## Deploys: a merge to `main` is a release
+
+**Merging to `main` deploys to Heroku immediately. Merged means live.**
+
+Back-to-back merges mean back-to-back deploys, and each deploy disrupts live
+API calls for customers who are mid-session. One feature spread over five PRs
+merged into `main` is five disruptions, not one.
+
+### Never target `main` directly — use one integration branch per workstream
+
+1. Pick **one integration branch** for the workstream, e.g. `feature/developer-api-website`.
+2. Every PR in that workstream targets the **integration branch**, never `main`.
+3. Merrill merges those PRs into the integration branch and tests the branch as a whole.
+4. **One** PR takes the integration branch into `main`, so the feature deploys once.
+
+Only the integration branch gets a `-> main` PR. Several PRs from one
+workstream open against `main` is a mistake to fix by retargeting them, not a
+reason to merge them one at a time.
+
+Never push to `main` directly, not even for a hotfix.
+
+### Consequence: no CI on the stacked PRs
+
+Both workflows here are gated on `pull_request: branches: [main]`
+(`.github/workflows/e2e-tests.yml`, `codeql-analysis.yml`), so a PR targeting
+an integration branch gets **no checks at all** — no Playwright run, no CodeQL.
+That is expected. Do not retarget a PR to `main` to make CI run.
+
+Verify those PRs locally instead:
+
+```bash
+npx next lint          # tsc --noEmit alone misses ESLint errors that fail `next build`
+npx tsc --noEmit
+```
+
+The integration branch's own `-> main` PR is the CI gate. Do not run the full
+E2E stack locally; let it run in CI on that PR.
+
 ## Running Locally
 
 ```bash
