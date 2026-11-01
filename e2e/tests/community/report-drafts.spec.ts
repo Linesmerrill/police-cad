@@ -11,6 +11,7 @@
  * pattern developer-api.spec.ts and invite-codes.spec.ts already use.
  */
 import { test, expect, Page, Route } from '@playwright/test';
+import { shootBothWidths } from '../../helpers/shots';
 import { TEST_COMMUNITY_ID } from '../../helpers/seed';
 
 const COMMUNITY_ID = TEST_COMMUNITY_ID.toHexString();
@@ -90,6 +91,12 @@ test.describe('Report draft review', () => {
     // Charges priced from the community's own penal code.
     await expect(page.getByText(/Reckless Driving/)).toBeVisible();
     await expect(page.getByText(/Priced from this community/)).toBeVisible();
+
+    // The shot that matters most: the two halves side by side at desktop, and
+    // stacked at phone width, with the AI label in both.
+    await shootBothWidths(page, test.info(), 'report-draft review queue', async () => {
+      await expect(page.getByRole('heading', { name: 'What the server saw' })).toBeVisible();
+    });
   });
 
   test('a human-written narrative is not flagged as AI', async ({ page }) => {
@@ -187,6 +194,10 @@ test.describe('Report draft review', () => {
     await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
 
     await expect(page.getByText(/Nothing is waiting for you/i)).toBeVisible();
+
+    await shootBothWidths(page, test.info(), 'report-draft review queue, empty', async () => {
+      await expect(page.getByText(/Nothing is waiting for you/i)).toBeVisible();
+    });
   });
 
   test('the filter strip narrows the queue by status', async ({ page }) => {
@@ -257,6 +268,10 @@ test.describe('Removing a key\'s records', () => {
     // can check.
     await expect(page.getByText(/97 civilians/)).toBeVisible();
     await expect(page.getByText(/180 vehicles/)).toBeVisible();
+
+    await shootBothWidths(page, test.info(), 'community API keys, with record cleanup', async () => {
+      await expect(page.getByRole('heading', { name: 'API keys' })).toBeVisible();
+    });
   });
 
   test('the wider cleanup is a separate, differently-worded choice', async ({ page }) => {

@@ -256,6 +256,48 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
     await expect(page.getByText(/Pick a community, or choose "No community"/)).toBeVisible();
   });
 
+  test('the scope presets separate reading from drafting, in plain language', async ({ page }) => {
+    await mockAccount(page, {
+      enabled: true,
+      account: { id: 'dev1', status: 'active', termsAcceptedAt: '2026-10-01T00:00:00Z' },
+      limits: LIMITS,
+      availableScopes: [
+        ...SCOPES,
+        { scope: 'reports:read', description: 'Read the report drafts this key created' },
+        { scope: 'reports:write', description: 'Write report drafts for a person to review and file' },
+        { scope: 'warrants:read', description: "Read the community's warrants" },
+        { scope: 'warrants:write', description: "Request a warrant for the community's reviewer" },
+      ],
+      keyCount: 0,
+      entitlement: { plan: 'free', source: 'website_plan', websitePlan: 'free', lapsed: false },
+      upgradeUrl: '/pricing',
+    });
+    await mockKeys(page, []);
+    await page.route('**/api/developer/communities', (route: Route) => json(route, { data: [] }));
+
+    await page.goto('/developer/keys/new');
+
+    // Two presets, not one. An integration that only reconciles wants a key
+    // that cannot write a thing.
+    await page.getByRole('button', { name: 'Reports, read only' }).click();
+    await expect(page.getByText(/cannot write anything/i)).toBeVisible();
+    await expect(page.getByRole('checkbox').nth(0)).toBeTruthy();
+
+    await page.getByRole('button', { name: 'Reports, draft and request' }).click();
+    // The hint is the plain-language description, and it says the thing that
+    // matters most about both scopes.
+    await expect(page.getByText(/Neither files anything/i)).toBeVisible();
+
+    // And each permission reads as what it lets a key do, not as the API's
+    // own one-liner.
+    await expect(
+      page.getByText('Prepare draft reports for a person here to read and file. It cannot file one')
+    ).toBeVisible();
+    await expect(
+      page.getByText('Ask for a warrant. The request waits for a reviewer, as it does in the CAD')
+    ).toBeVisible();
+  });
+
   test('choosing no community ticks the permission that makes that work', async ({ page }) => {
     // The old form told people to leave the field blank and then refused the
     // result. The copy and the rule have to say the same thing.
