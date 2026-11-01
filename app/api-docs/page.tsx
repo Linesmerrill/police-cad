@@ -227,7 +227,7 @@ export default function ApiDocsPage() {
         .doc-callout-warn { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3); color: #fde68a; }
         .doc-callout-info { background: rgba(56,189,248,0.07); border: 1px solid rgba(56,189,248,0.3); color: #bae6fd; }
         /* Scoped past .doc-body a, which has the same specificity and is
-           declared first — without this the label is accent-on-accent and the
+           declared first, without this the label is accent-on-accent and the
            button reads as an empty block. */
         .doc-body a.doc-cta {
           display: inline-block; padding: 0.7rem 1.3rem; border-radius: 9px;
@@ -305,7 +305,7 @@ Authorization: Bearer lpc_live_...`}</Code>
 
             <h3 className="doc-h3">2. Upsert a player</h3>
             <p>
-              You name players by their <strong>game identifier</strong> — a FiveM license or a
+              You name players by their <strong>game identifier</strong>: a FiveM license or a
               Discord ID. Never by email, and never by an LPC user id.
             </p>
             <Code lang="SHELL">{`curl -X POST .../dev/players \\
@@ -333,7 +333,7 @@ Authorization: Bearer lpc_live_...`}</Code>
             <p>
               Vehicles, firearms and licenses hang off that character by <code>civilianId</code>. If
               the response says <code>pendingApproval</code>, the community vets its characters and
-              a person has to approve it — your key does not skip that, and nor does it skip the
+              a person has to approve it, your key does not skip that, and nor does it skip the
               community&apos;s per-player character cap.
             </p>
 
@@ -480,7 +480,7 @@ set lpc_community_id "your_community_id"`}</Code>
               <li>
                 <strong>Facts stay apart from the narrative.</strong> <code>facts</code> is what you
                 observed; <code>narrative</code> is prose about it. A narrative with no{' '}
-                <code>generated</code> field is <strong>recorded as generated</strong> — send{' '}
+                <code>generated</code> field is <strong>recorded as generated</strong>: send{' '}
                 <code>&quot;generated&quot;: false</code> only when a person typed the text. There
                 is no way to mark a narrative as evidence, and there will not be.
               </li>
@@ -492,7 +492,7 @@ set lpc_community_id "your_community_id"`}</Code>
               <li>
                 <strong><code>reportingOfficer</code> is what gets checked.</strong> Your scope
                 decides whether you may propose a draft at all; whether this draft is allowed is
-                decided by that player&apos;s access — an approved member who is in a department.
+                decided by that player&apos;s access, an approved member who is in a department.
                 Name a <code>templateSlug</code> and the community&apos;s own form gates apply to
                 them too.
               </li>
@@ -510,14 +510,14 @@ set lpc_community_id "your_community_id"`}</Code>
             </p>
             <p>
               <code>POST …/warrants/requests</code> asks for one, and{' '}
-              <strong>a request always lands pending</strong> — whatever the community&apos;s
+              <strong>a request always lands pending</strong>: whatever the community&apos;s
               approval mode says.
             </p>
             <p>
               That is deliberately not what the website does. A community can set auto-approve, and
               most have, so an officer clicking the button in the CAD gets an approved warrant at
               once. That is a convenience for a person who is already in the CAD and can see the
-              result. A game server fires on a trigger, retries, and nobody is watching — so a key
+              result. A game server fires on a trigger, retries, and nobody is watching, so a key
               gets the pending queue the community already has, a person reviews it with the tools
               they already use, and you read the outcome back. <code>judgeNotes</code> comes back on
               a denial, which is the only thing that explains one to your officer.
@@ -533,8 +533,8 @@ set lpc_community_id "your_community_id"`}</Code>
               civilian, vehicle and firearm.
             </p>
             <p>
-              Synthetic records are left out of the searches and rosters players see — including the
-              website&apos;s own name database — unless a caller passes{' '}
+              Synthetic records are left out of the searches and rosters players see, including the
+              website&apos;s own name database, unless a caller passes{' '}
               <code>includeSynthetic=true</code>. So you can populate a city without burying the
               twelve real players behind four hundred NPCs.
             </p>
@@ -548,7 +548,7 @@ set lpc_community_id "your_community_id"`}</Code>
               When a test run is done, clean up with{' '}
               <code>DELETE /communities/{'{communityId}'}/synthetic-records</code>. It only ever
               touches synthetic records your own key created, in the community in the path, and{' '}
-              <code>confirm</code> has to be that community id — so a cleanup aimed at your test
+              <code>confirm</code> has to be that community id, so a cleanup aimed at your test
               community cannot run against a live one because a config value was stale. A community
               owner can also remove everything your key made, from their own settings; that path
               exists for an integration that has stopped answering, so it does not need your
@@ -609,7 +609,7 @@ set lpc_community_id "your_community_id"`}</Code>
               <li>touch money: wallets, balances, transfers, economy payouts</li>
               <li>billing, subscriptions or boosts</li>
               <li>community settings, roles, permissions or deletion</li>
-              <li>assign a role to a member — roles carry permissions; departments and ranks are fine</li>
+              <li>assign a role to a member, roles carry permissions; departments and ranks are fine</li>
               <li>read any community your key is not tied to</li>
               <li>
                 <strong>file a report.</strong> A draft is a proposal; the verb that turns one into
@@ -632,7 +632,7 @@ set lpc_community_id "your_community_id"`}</Code>
             </h2>
             <p>
               Open a ticket in <a href="https://discord.gg/Y9ytW2ZMp4">our Discord</a>. Include your
-              key&apos;s display prefix (<code>lpc_live_a1b2c3d4</code>) — never the key itself —
+              key&apos;s display prefix (<code>lpc_live_a1b2c3d4</code>), never the key itself,
               and the <code>error</code> code you got.
             </p>
             <a className="doc-cta" href="/developer">

@@ -10,8 +10,8 @@
  * the ordinary ones.
  *
  * The visual language is the product's. This is a dispatch console, so: dark
- * surfaces, and a hard rule that anything a machine produced — keys, prefixes,
- * scope names, limits, counts — is set in mono, while anything written for a
+ * surfaces, and a hard rule that anything a machine produced, keys, prefixes,
+ * scope names, limits, counts, is set in mono, while anything written for a
  * person is set in Outfit. That is not decoration. A scope name is a string you
  * paste into code, and setting it in the same face as the sentence around it is
  * how people mistype them.

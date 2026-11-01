@@ -238,7 +238,7 @@
             // Counted per collection rather than as one total: "it removed 412
             // things" is not something anyone can check, and "97 civilians,
             // 180 vehicles" is.
-            var summary = parts.length ? parts.join(', ') : 'nothing — there was nothing to remove';
+            var summary = parts.length ? parts.join(', ') : 'nothing, there was nothing to remove';
             feedback('ok', 'Removed ' + summary + ' for ' + name + '.' +
               (data && data.more ? ' There may be more; run it again.' : ''));
           })

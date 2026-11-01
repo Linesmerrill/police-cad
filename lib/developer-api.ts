@@ -345,7 +345,7 @@ export const developerApi = {
 
   /**
    * Adds a community to an existing key. The response says whether the grant
-   * went live or is waiting on the community's owner — the console never
+   * went live or is waiting on the community's owner, the console never
    * assumes, because the answer depends on permissions it cannot see.
    */
   addKeyCommunity(

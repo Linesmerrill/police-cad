@@ -19,7 +19,7 @@ import type { CommunityOption } from '@/lib/developer-api';
  * string, which means "has not chosen yet".
  *
  * They used to be the same value, so the create form opened already reading as
- * "no community" without the permission that makes that coherent — and then
+ * "no community" without the permission that makes that coherent, and then
  * refused to submit. Making the two states different values is what lets the
  * form tell "you have not picked" from "you picked none".
  */
@@ -31,7 +31,7 @@ export default function CommunityPicker({
   onChange,
   /** Whether "No community" is an option, and what it means here. */
   allowNone,
-  noneLabel = 'No community — this key will create its own',
+  noneLabel = 'No community, this key will create its own',
   id = 'dc-community',
   error,
   exclude = [],
@@ -121,7 +121,7 @@ export default function CommunityPicker({
         {offered.map((community) => (
           <option key={community.id} value={community.id}>
             {community.name}
-            {community.canGrant ? '' : ' — needs the owner to approve'}
+            {community.canGrant ? '' : ', needs the owner to approve'}
           </option>
         ))}
       </select>
