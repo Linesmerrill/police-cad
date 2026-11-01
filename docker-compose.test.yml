@@ -23,6 +23,15 @@ services:
       LOG_LEVEL: warn
       STRIPE_SECRET_KEY: sk_test_placeholder_for_e2e_tests
       ENV: local
+      # The Developer API (e2e/tests/account/developer-console.spec.ts).
+      #
+      # The pepper is required: without it the API refuses to mint keys, which
+      # is correct — a key hashed against an empty secret matches nothing once
+      # a real one is set — but it means the suite would be testing an
+      # unconfigured deployment rather than a working one. A fixed value is
+      # fine here; the database is ephemeral and never leaves the container.
+      DEVELOPER_API_ENABLED: "true"
+      DEV_API_KEY_PEPPER: e2e-developer-api-pepper
       # Admin tokens and passkeys (e2e/tests/account/admin-passkeys.spec.ts).
       JWT_SECRET: e2e-jwt-secret
       WEBAUTHN_RP_ID: localhost

@@ -17,8 +17,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { ApiError, developerApi, isKeyInert, liveGrants, planLabel } from '@/lib/developer-api';
 import type { AccountUsage, KeyRow } from '@/lib/developer-api';
 import { docsHref } from '@/lib/developer-routes';
+import { DEVELOPER_API_AUTH_EXAMPLE } from '@/lib/developer-api-public';
 import ConsoleLink from '@/components/developer/ConsoleLink';
 import { useConsole } from '@/components/developer/ConsoleProvider';
+import NotSwitchedOnNotice from '@/components/developer/NotSwitchedOnNotice';
 import UsageChart from '@/components/developer/UsageChart';
 import {
   Card,
@@ -67,6 +69,9 @@ export default function OverviewPage() {
   );
   const inert = live.filter((row) => isKeyInert(row.key, row.communities));
   const atLimit = live.length >= account.limits.keysPerDeveloper;
+  // Treated as available unless the API explicitly says otherwise, so an older
+  // API that does not send the field behaves exactly as it did before.
+  const canIssue = account.keyIssuanceAvailable !== false;
 
   return (
     <>
@@ -82,14 +87,19 @@ export default function OverviewPage() {
           </>
         }
         actions={
-          <ConsoleLink
-            className={`dc-btn ${atLimit ? '' : 'dc-btn-primary'}`}
-            
-            aria-disabled={atLimit ? 'true' : undefined} to={'/keys/new'}>
-            New key
-          </ConsoleLink>
+          canIssue ? (
+            <ConsoleLink
+              className={`dc-btn ${atLimit ? '' : 'dc-btn-primary'}`}
+              aria-disabled={atLimit ? 'true' : undefined}
+              to="/keys/new"
+            >
+              New key
+            </ConsoleLink>
+          ) : null
         }
       />
+
+      {canIssue ? null : <NotSwitchedOnNotice />}
 
       <Notice notice={notice} onDismiss={dismiss} />
 
@@ -281,7 +291,7 @@ export default function OverviewPage() {
 
       <Card title="Getting started">
         <p className="dc-note" style={{ marginTop: 0 }}>
-          Send your key as the <code className="dc-mono">X-Developer-Key</code> header on every
+          Send your key as <code className="dc-mono">{DEVELOPER_API_AUTH_EXAMPLE} &lt;key&gt;</code> on every
           request. The reference lists every endpoint, what each permission unlocks, and the errors
           you should expect.
         </p>

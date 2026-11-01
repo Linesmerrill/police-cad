@@ -13,6 +13,7 @@
  */
 
 import { useState } from 'react';
+import { DEVELOPER_API_BASE_URL } from '@/lib/developer-api-public';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -54,7 +55,7 @@ function Code({ children, lang }: { children: string; lang?: string }) {
 }
 
 const FIVEM_LUA = `-- server.lua
-local LPC_BASE      = "https://api.linespolice-cad.com/api/v1/dev"
+local LPC_BASE      = "${DEVELOPER_API_BASE_URL}/api/v1/dev"
 local LPC_KEY       = GetConvar("lpc_api_key", "")        -- set (not setr) in server.cfg
 local LPC_COMMUNITY = GetConvar("lpc_community_id", "")
 
@@ -268,7 +269,7 @@ export default function ApiDocsPage() {
               Keys are scoped to one community, and you pick exactly what each one may do. Base URL
               and auth:
             </p>
-            <Code lang="HTTP">{`https://api.linespolice-cad.com/api/v1/dev
+            <Code lang="HTTP">{`${DEVELOPER_API_BASE_URL}/api/v1/dev
 Authorization: Bearer lpc_live_...`}</Code>
             <div className="doc-callout doc-callout-warn">
               Send the key in <code>Authorization</code>, not <code>X-API-Key</code>. That header is
@@ -290,7 +291,7 @@ Authorization: Bearer lpc_live_...`}</Code>
               Owned by your LPC account and counted against your plan, exactly like one made on the
               website. It starts private.
             </p>
-            <Code lang="SHELL">{`curl -X POST https://api.linespolice-cad.com/api/v1/dev/communities \\
+            <Code lang="SHELL">{`curl -X POST ${DEVELOPER_API_BASE_URL}/api/v1/dev/communities \\
   -H "Authorization: Bearer $LPC_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"name":"Grapeseed RP"}'`}</Code>
