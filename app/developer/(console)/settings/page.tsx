@@ -13,7 +13,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ApiError, developerApi, planLabel } from '@/lib/developer-api';
 import type { KeyRow } from '@/lib/developer-api';
-import { consoleHref, docsHref, mainSiteHref } from '@/lib/developer-routes';
+import { docsHref, mainSiteHref } from '@/lib/developer-routes';
+import ConsoleLink from '@/components/developer/ConsoleLink';
 import { useConsole } from '@/components/developer/ConsoleProvider';
 import {
   Card,
@@ -236,9 +237,9 @@ export default function SettingsPage() {
               off.
             </p>
           </div>
-          <a className="dc-btn" href={consoleHref('/keys')}>
+          <ConsoleLink className="dc-btn" to={'/keys'}>
             Manage keys
-          </a>
+          </ConsoleLink>
         </div>
       </Card>
 

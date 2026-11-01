@@ -14,6 +14,10 @@
  */
 
 import { usePathname } from 'next/navigation';
+// Imported here rather than inlined in the shell, so the rules are in the
+// build's CSS and reach the browser as a <link> in the initial HTML. See the
+// file's own header for what went wrong when they did not.
+import './console.css';
 import ConsoleProvider from '@/components/developer/ConsoleProvider';
 import type { ConsoleSection } from '@/components/developer/ConsoleShell';
 

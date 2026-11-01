@@ -15,7 +15,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ApiError, developerApi, planLabel } from '@/lib/developer-api';
 import type { AccountUsage } from '@/lib/developer-api';
-import { consoleHref } from '@/lib/developer-routes';
+import { docsHref } from '@/lib/developer-routes';
+import ConsoleLink from '@/components/developer/ConsoleLink';
 import { useConsole } from '@/components/developer/ConsoleProvider';
 import UsageChart from '@/components/developer/UsageChart';
 import {
@@ -107,12 +108,16 @@ export default function UsagePage() {
               tone="accent"
             />
             <StatTile
-              label={`Requests, last ${usage.days} days`}
+              label={`Requests (${usage.days} days)`}
               value={num(usage.totalRequests)}
-              sub={`busiest day ${num(usage.peakDay)}`}
+              sub={
+                usage.peakDay > 0
+                  ? `Busiest day ${num(usage.peakDay)}`
+                  : 'No requests in this range'
+              }
             />
             <StatTile
-              label="This month"
+              label="Requests this month"
               value={num(usage.requestsThisMonth)}
               sub="Calendar month, UTC"
             />
@@ -125,7 +130,7 @@ export default function UsagePage() {
           </div>
 
           <Card title={`Requests a day, last ${usage.days} days`}>
-            <UsageChart series={usage.series} dailyLimit={usage.dailyLimit} height={200} />
+            <UsageChart series={usage.series} dailyLimit={usage.dailyLimit} height={200} docsHref={docsHref()} />
             {/* Which failures count, traced in the API rather than asserted.
                 401s are refused before anything is recorded; the others are
                 refused after, so they do count against the daily total. */}
@@ -161,9 +166,9 @@ export default function UsagePage() {
                     return (
                       <tr key={key.keyId}>
                         <td data-label="Key">
-                          <a className="dc-key-name" href={consoleHref(`/keys/${key.keyId}`)}>
+                          <ConsoleLink className="dc-key-name" to={`/keys/${key.keyId}`}>
                             {key.name}
-                          </a>
+                          </ConsoleLink>
                         </td>
                         <td data-label="Status">
                           {key.status === 'revoked' ? (

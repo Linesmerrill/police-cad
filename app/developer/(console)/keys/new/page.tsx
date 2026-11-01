@@ -20,6 +20,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ApiError, developerApi } from '@/lib/developer-api';
 import type { CommunityOption, CreatedKey } from '@/lib/developer-api';
 import { consoleHref } from '@/lib/developer-routes';
+import ConsoleLink from '@/components/developer/ConsoleLink';
 import { useConsole } from '@/components/developer/ConsoleProvider';
 import CommunityPicker, { NO_COMMUNITY } from '@/components/developer/CommunityPicker';
 import ScopePicker from '@/components/developer/ScopePicker';
@@ -156,12 +157,12 @@ export default function NewKeyPage() {
             permissions and communities.
           </p>
           <div className="dc-actions" style={{ marginTop: '0.9rem' }}>
-            <a className="dc-btn dc-btn-primary" href={consoleHref(`/keys/${created.key.id}`)}>
+            <ConsoleLink className="dc-btn dc-btn-primary" to={`/keys/${created.key.id}`}>
               Open this key
-            </a>
-            <a className="dc-btn dc-btn-ghost" href={consoleHref('/keys')}>
+            </ConsoleLink>
+            <ConsoleLink className="dc-btn dc-btn-ghost" to={'/keys'}>
               All keys
-            </a>
+            </ConsoleLink>
           </div>
         </Card>
       </>
@@ -170,9 +171,9 @@ export default function NewKeyPage() {
 
   return (
     <>
-      <a className="dc-crumb" href={consoleHref('/keys')}>
+      <ConsoleLink className="dc-crumb" to={'/keys'}>
         ← All keys
-      </a>
+      </ConsoleLink>
       <PageHead
         title="New key"
         lede="You will see the secret once, when the key is made. We store a hash of it and nothing else."
@@ -257,9 +258,9 @@ export default function NewKeyPage() {
           <button type="submit" className="dc-btn dc-btn-primary" disabled={busy}>
             {busy ? 'Creating…' : 'Create key'}
           </button>
-          <a className="dc-btn dc-btn-ghost" href={consoleHref('/keys')}>
+          <ConsoleLink className="dc-btn dc-btn-ghost" to={'/keys'}>
             Cancel
-          </a>
+          </ConsoleLink>
         </div>
       </form>
     </>
