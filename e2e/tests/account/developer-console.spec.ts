@@ -34,7 +34,7 @@ async function enableDeveloperAccount(page: Page) {
   if (await page.getByRole('heading', { name: 'Overview' }).isVisible().catch(() => false)) return;
 
   await page.locator('#dev-terms').check();
-  await page.getByRole('button', { name: 'Turn on developer account' }).click();
+  await page.getByRole('button', { name: 'Turn on developer access' }).click();
   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible({ timeout: 15_000 });
 }
 
@@ -140,7 +140,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
     await page.goto(`/developer/keys/${keyId}`);
     await page.getByRole('button', { name: 'Remove' }).first().click();
     await page.getByRole('button', { name: 'Remove community' }).click();
-    await expect(page.getByText(/removed/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('.dc-notice-body')).toContainText(/removed/i, { timeout: 15_000 });
 
     await page.reload();
     // With nothing to act on and no provisioning, the console says so.
@@ -151,7 +151,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
     await page.goto(`/developer/keys/${keyId}`);
     await page.locator('#dc-add-community').selectOption(COMMUNITY_ID);
     await page.getByRole('button', { name: 'Add community' }).click();
-    await expect(page.getByText(/added|approve/i).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('.dc-notice-body')).toContainText(/added|approve/i, { timeout: 15_000 });
 
     await page.reload();
     await expect(page.locator('.dc-table')).toContainText('test community');

@@ -173,11 +173,11 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
     await mockAccount(page, DISABLED_ACCOUNT);
     await page.goto('/developer');
 
-    await expect(page.getByRole('heading', { name: 'Turn on your developer account' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Turn on developer access' })).toBeVisible();
 
     // The button stays disabled until the Developer Terms are accepted: a
     // developer can create accounts for players who never saw them.
-    const enable = page.getByRole('button', { name: 'Turn on developer account' });
+    const enable = page.getByRole('button', { name: 'Turn on developer access' });
     await expect(enable).toBeDisabled();
 
     await page.locator('#dev-terms').check();
@@ -192,9 +192,13 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
     await page.goto('/developer');
 
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
-    await expect(page.getByText('You are on Free')).toBeVisible();
-    await expect(page.getByText('60 requests a minute')).toBeVisible();
-    await expect(page.getByText('10,000 a day')).toBeVisible();
+    // Scoped to the lede, where the label and the numbers are one sentence, so
+    // the assertion cannot be satisfied by those words turning up separately
+    // somewhere else on the page.
+    const lede = page.locator('.dc-lede').first();
+    await expect(lede).toContainText('You are on Free');
+    await expect(lede).toContainText('60 requests a minute');
+    await expect(lede).toContainText('10,000 a day');
   });
 
   test('the key list shows a key, its communities and its permissions', async ({ page }) => {
@@ -330,8 +334,9 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
     await mockConsole(page, { account: ENABLED_ACCOUNT, keys: ONE_KEY, usage: BUSY_USAGE });
     await page.goto('/developer/usage');
 
-    await expect(page.getByText('2,500')).toBeVisible();
-    await expect(page.getByText('of 10,000', { exact: false })).toBeVisible();
+    const today = page.locator('.dc-stat', { hasText: 'Requests today' });
+    await expect(today).toContainText('2,500');
+    await expect(today).toContainText('of 10,000');
     await expect(page.locator('.dc-table')).toContainText('My FiveM server');
   });
 
