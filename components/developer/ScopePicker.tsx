@@ -47,14 +47,14 @@ export const SCOPE_PRESETS: Preset[] = [
     // person", wants a key that cannot write a thing, and the shortest way to
     // give it one is a preset that does not include the write scopes at all.
     id: 'reports-read',
-    label: 'Reports, read only',
+    label: 'Read reports',
     hint: 'Read back drafts and look up warrants. This key cannot write anything.',
     match: (scope) =>
       scope === 'reports:read' || scope === 'warrants:read' || scope === 'community:read',
   },
   {
     id: 'reports-write',
-    label: 'Reports, draft and request',
+    label: 'Draft reports',
     hint:
       'Prepare draft reports and ask for warrants. Neither files anything: a person ' +
       'here reviews a draft before it becomes a report, and a warrant request waits ' +

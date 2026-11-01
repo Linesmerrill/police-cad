@@ -233,7 +233,7 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
     await page.goto('/developer/keys/new');
     await page.locator('#dc-key-name').fill('New key');
     await page.locator('#dc-community').selectOption(COMMUNITY_ID);
-    await page.getByRole('button', { name: 'Read only' }).click();
+    await page.getByRole('button', { name: 'Read only', exact: true }).click();
     await page.getByRole('button', { name: 'Create key' }).click();
 
     const reveal = page.locator('.dc-secret');
@@ -261,8 +261,15 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
       enabled: true,
       account: { id: 'dev1', status: 'active', termsAcceptedAt: '2026-10-01T00:00:00Z' },
       limits: LIMITS,
+      // Two more read scopes than the shared SCOPES list, on purpose. With
+      // only community:read, reports:read and warrants:read available, the
+      // "Read only" preset and "Read reports" would select exactly the same
+      // set, and the highlight would land on whichever is listed first. A real
+      // plan has other read scopes, so the fixture has them too.
       availableScopes: [
         ...SCOPES,
+        { scope: 'units:read', description: 'See who is on duty' },
+        { scope: 'civilians:read', description: 'Look up civilians by name' },
         { scope: 'reports:read', description: 'Read the report drafts this key created' },
         { scope: 'reports:write', description: 'Write report drafts for a person to review and file' },
         { scope: 'warrants:read', description: "Read the community's warrants" },
@@ -279,11 +286,11 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
 
     // Two presets, not one. An integration that only reconciles wants a key
     // that cannot write a thing.
-    await page.getByRole('button', { name: 'Reports, read only' }).click();
+    await page.getByRole('button', { name: 'Read reports' }).click();
     await expect(page.getByText(/cannot write anything/i)).toBeVisible();
     await expect(page.getByRole('checkbox').nth(0)).toBeTruthy();
 
-    await page.getByRole('button', { name: 'Reports, draft and request' }).click();
+    await page.getByRole('button', { name: 'Draft reports' }).click();
     // The hint is the plain-language description, and it says the thing that
     // matters most about both scopes.
     await expect(page.getByText(/Neither files anything/i)).toBeVisible();

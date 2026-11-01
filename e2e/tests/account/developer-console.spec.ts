@@ -150,7 +150,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
 
   test('changing permissions does not issue a new secret', async ({ page }) => {
     await page.goto(`/developer/keys/${keyId}`);
-    await page.getByRole('button', { name: 'Read only' }).click();
+    await page.getByRole('button', { name: 'Read only', exact: true }).click();
     await page.getByRole('button', { name: 'Save permissions' }).click();
     await expect(page.getByText(/Permissions saved/)).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('.dc-secret')).toHaveCount(0);
