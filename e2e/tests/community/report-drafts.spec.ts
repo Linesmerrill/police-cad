@@ -292,7 +292,10 @@ test.describe('Removing a key\'s records', () => {
 
     await page.locator('#ddm-overlay').getByRole('button', { name: 'Everything it made' }).click();
     await expect.poll(() => scope).toBe('all');
-    await expect(page.getByText(/nothing — there was nothing to remove/i)).toBeVisible();
+    // Matches the copy rather than quoting it: the punctuation between those
+    // two clauses changed once already when em dashes came out, and an
+    // assertion that breaks on punctuation is one that fails for no reason.
+    await expect(page.getByText(/nothing to remove/i)).toBeVisible();
   });
 
   test('the key page points at the review queue', async ({ page }) => {
