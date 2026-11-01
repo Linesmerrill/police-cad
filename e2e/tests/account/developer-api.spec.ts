@@ -167,7 +167,9 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
     });
 
     await page.goto('/developer');
-    await page.getByRole('button', { name: 'Revoke' }).click();
+    // Scoped to the key's own row: "Turn off and revoke all keys" further down
+    // the page matches a bare "Revoke" too.
+    await page.getByTestId('key-row').getByRole('button', { name: 'Revoke' }).click();
 
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByRole('dialog')).toContainText('stops working immediately');
@@ -220,12 +222,17 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
 
     // Typed lowercase and without dashes, as a player reads it off a screen.
     await page.getByTestId('claim-code-input').fill('k7m2qx9p4t');
+    await expect(page.getByTestId('claim-code-input')).toHaveValue('K7M2-QX9P-4T');
     await page.getByTestId('claim-submit').click();
 
     await expect(page.getByTestId('claim-success')).toBeVisible();
     await expect(page.getByTestId('claim-success')).toContainText('2 characters');
     await expect(page.getByTestId('claim-success')).toContainText('3 vehicles');
-    expect(sentCode).toBe('K7M2QX9P4T');
+    // The page upper-cases and groups as the player types; stripping the
+    // dashes is the proxy's job, covered in test/developer-proxy.test.js. What
+    // matters here is that a lowercase, dash-free entry reaches the server as a
+    // well-formed code at all.
+    expect(sentCode).toBe('K7M2-QX9P-4T');
   });
 
   test('a bad claim code says so without claiming anything', async ({ page }) => {
@@ -292,7 +299,9 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
     await expect(page.getByText('Approve this key?')).toBeVisible();
     expect(approved).toBe(false);
 
-    await page.getByRole('button', { name: /^Approve$/ }).last().click();
+    // Confirm inside the overlay. Its button carries the same label as the row
+    // button behind it, and the overlay intercepts clicks aimed at the page.
+    await page.locator('#ddm-overlay').getByRole('button', { name: 'Approve' }).click();
     await expect.poll(() => approved).toBe(true);
   });
 });
