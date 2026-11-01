@@ -219,8 +219,15 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   test('usage counts the account, and names the key that spent it', async ({ page }) => {
     await page.goto('/developer/usage');
     await expect(page.getByRole('heading', { name: 'Usage' })).toBeVisible();
-    // Zero traffic is still a chart with a baseline, not a blank box.
-    await expect(page.locator('svg[role="img"]')).toBeVisible();
+
+    // This account has made no API calls, so the chart should say so rather
+    // than drawing an empty box with an axis under it. A chart of nothing
+    // reads as broken; this is the state most new developers see first.
+    await expect(page.getByText('No requests yet')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('link', { name: /API reference/ }).first()).toBeVisible();
+    // And nothing claims a busiest day when there has not been one.
+    await expect(page.locator('.dc-main')).not.toContainText(/busiest day 0/i);
+
     await expect(page.locator('.dc-table')).toContainText('E2E renamed bridge');
 
     await page.getByRole('button', { name: 'Last 7 days' }).click();
