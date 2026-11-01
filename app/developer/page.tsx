@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import DeveloperLanding from '@/components/DeveloperLanding';
 
 type Scope = { scope: string; description: string };
 
@@ -33,11 +34,34 @@ type AccountResponse = {
     keysPerDeveloper: number;
     accountsPerKeyDay: number;
     communitiesPerKeyDay: number;
-    communitiesPerKey: number;
   };
   availableScopes: Scope[];
   keyCount: number;
-  upgradeAvailable: boolean;
+  // Published by the API from the same values the middleware enforces and the
+  // same tier list /pricing renders, so this page cannot drift from either.
+  tiers?: {
+    plan: string;
+    limits: {
+      requestsPerMinute: number;
+      requestsPerDay: number;
+      keysPerDeveloper: number;
+      accountsPerKeyDay: number;
+      communitiesPerKeyDay: number;
+    };
+  }[];
+  communityPlans?: { plan: string; cap: number; unlimited: boolean }[];
+  websiteTiers?: {
+    name: string;
+    key: string;
+    monthlyPrice: number;
+    annualPrice: number;
+    onSale?: boolean;
+    originalMonthlyPrice?: number;
+  }[];
+  upgradeUrl?: string;
+  entitlement?: { plan: string; source: string; websitePlan: string; lapsed: boolean };
+  communities?: { plan: string; owned: number; cap: number; unlimited: boolean };
+  termsReacceptRequired?: boolean;
 };
 
 type Grant = {
@@ -117,6 +141,14 @@ async function postJson(url: string, body?: unknown) {
 
 export default function DeveloperPage() {
   const [account, setAccount] = useState<AccountResponse | null>(null);
+  // The signed-in account, so the landing page can show which account developer
+  // access attaches to. That was the most common confusion with the old page:
+  // people thought it created a second account.
+  const [sessionUser, setSessionUser] = useState<{
+    username?: string;
+    email?: string;
+    profilePicture?: string;
+  } | null>(null);
   const [keys, setKeys] = useState<KeyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -171,6 +203,21 @@ export default function DeveloperPage() {
       setLoading(false);
     }
   }, [loadAccount, loadKeys]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/user/current', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data && data.user) setSessionUser(data.user);
+      })
+      .catch(() => {
+        // The card falls back to "Your account". Not worth an error for.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     refresh();
@@ -422,6 +469,182 @@ export default function DeveloperPage() {
         .dev-dialog h3 { margin: 0 0 0.6rem; font-size: 1.1rem; font-weight: 700; }
         .dev-dialog p { margin: 0 0 1.25rem; color: var(--rp-text-muted); line-height: 1.6; font-size: 0.93rem; }
         .dev-dialog-actions { display: flex; gap: 0.6rem; justify-content: flex-end; flex-wrap: wrap; }
+        /* ---- the landing page ---- */
+
+        .dl-hero { padding: 1rem 0 0.5rem; }
+        .dl-title {
+          font-size: clamp(2rem, 5.5vw, 3.25rem);
+          font-weight: 800; letter-spacing: -0.03em; line-height: 1.04;
+          margin: 0 0 0.75rem; max-width: 20ch;
+        }
+        .dl-lede {
+          color: var(--rp-text-muted); font-size: clamp(1rem, 1.9vw, 1.1875rem);
+          line-height: 1.55; margin: 0 0 1.75rem; max-width: 48ch;
+        }
+        .dl-cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+        .dl-btn {
+          display: inline-flex; align-items: center; justify-content: center;
+          padding: 0.7rem 1.25rem; border-radius: 10px; border: 1px solid transparent;
+          background: var(--rp-accent); color: #04121c; font-weight: 700;
+          font-size: 0.9375rem; text-decoration: none; cursor: pointer;
+          font-family: inherit; transition: filter 150ms ease, background 150ms ease;
+        }
+        .dl-btn:hover { filter: brightness(1.08); }
+        .dl-btn:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
+        .dl-btn-ghost {
+          background: transparent; color: var(--rp-text); border-color: var(--rp-glass-border);
+        }
+        .dl-btn-ghost:hover { background: var(--rp-glass); filter: none; }
+        /* globals.css strips the outline from every a and button, so focus has
+           to be put back or the page is unusable by keyboard. */
+        .dl-btn:focus-visible,
+        .dl-inline-link:focus-visible,
+        .dl-terms input:focus-visible { outline: 2px solid var(--rp-accent); outline-offset: 2px; }
+        .dl-inline-link { color: var(--rp-accent); text-decoration: underline; text-underline-offset: 2px; }
+
+        /* Which account. Flat and quiet: a statement of fact, not a card
+           competing with the hero. */
+        .dl-account {
+          display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem;
+          padding: 0.875rem 1rem; margin: 1.75rem 0 2.5rem;
+          border: 1px solid var(--rp-glass-border); border-left: 2px solid var(--rp-accent);
+          border-radius: 10px; background: var(--rp-glass);
+        }
+        .dl-account-id { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+        .dl-avatar {
+          width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto;
+          object-fit: cover; background: rgba(255, 255, 255, 0.08);
+        }
+        .dl-avatar-fallback {
+          display: grid; place-items: center; font-weight: 700; font-size: 1rem;
+          color: var(--rp-accent); border: 1px solid var(--rp-glass-border);
+        }
+        .dl-account-text { display: flex; flex-direction: column; min-width: 0; }
+        .dl-account-name { font-size: 0.9375rem; }
+        .dl-account-email { font-size: 0.8125rem; color: var(--rp-text-dim); }
+        .dl-account-note { margin: 0; font-size: 0.875rem; color: var(--rp-text-muted); line-height: 1.5; }
+
+        .dl-section { margin: 0 0 3rem; }
+        .dl-h2 { font-size: 1.375rem; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 0.5rem; }
+        .dl-section-note {
+          color: var(--rp-text-muted); font-size: 0.9375rem; line-height: 1.6;
+          margin: 0.5rem 0 1.25rem; max-width: 62ch;
+        }
+
+        .dl-build-grid {
+          display: grid; gap: 1rem; margin-top: 1.25rem;
+          grid-template-columns: 1fr;
+        }
+        /* Two columns, not auto-fit: four cards across three tracks leaves one
+           orphaned on its own row at a different width. */
+        @media (min-width: 640px) {
+          .dl-build-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .dl-build-card {
+          background: var(--rp-surface); border: 1px solid var(--rp-glass-border);
+          border-radius: var(--rp-radius); padding: 1.125rem;
+        }
+        .dl-diagram-wrap {
+          background: rgba(0, 0, 0, 0.28); border-radius: 8px;
+          padding: 0.75rem; margin-bottom: 0.875rem;
+        }
+        /* Capped and centred: left to fill a two-column card the diagram
+           out-shouts the words it is supposed to introduce. */
+        .dl-diagram { width: 100%; max-width: 250px; height: auto; display: block; margin: 0 auto; }
+        .dl-diagram-tag {
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size: 8px; fill: var(--rp-text-muted);
+        }
+        .dl-diagram-tag-dim { fill: var(--rp-text-dim); }
+        .dl-build-title { font-size: 1rem; font-weight: 700; margin: 0 0 0.4rem; }
+        .dl-build-body { margin: 0; font-size: 0.875rem; line-height: 1.6; color: var(--rp-text-muted); }
+
+        .dl-why { list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; gap: 0.875rem; }
+        .dl-why-item { display: flex; gap: 0.75rem; align-items: flex-start; }
+        .dl-why-mark {
+          width: 6px; height: 6px; border-radius: 50%; background: var(--rp-accent);
+          flex: 0 0 auto; margin-top: 0.5rem;
+        }
+        .dl-why-title { display: block; font-size: 0.9375rem; }
+        .dl-why-body {
+          display: block; font-size: 0.875rem; line-height: 1.55;
+          color: var(--rp-text-muted); max-width: 64ch;
+        }
+
+        /* The table is wider than a phone, so it scrolls. A fade on the right
+           edge is what tells someone there is more, instead of the columns just
+           appearing to be cut off. */
+        .dl-table-wrap { position: relative; }
+        .dl-table-wrap::after {
+          content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 42px;
+          pointer-events: none;
+          background: linear-gradient(to right, rgba(8, 9, 12, 0), rgba(8, 9, 12, 0.92));
+        }
+        .dl-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        @media (min-width: 760px) {
+          .dl-table-wrap::after { display: none; }
+        }
+        .dl-table { width: 100%; border-collapse: collapse; min-width: 560px; font-size: 0.875rem; }
+        .dl-table th, .dl-table td {
+          padding: 0.7rem 0.75rem; text-align: left;
+          border-bottom: 1px solid var(--rp-glass-border);
+        }
+        .dl-table thead th { vertical-align: bottom; }
+        .dl-table tbody th { font-weight: 500; color: var(--rp-text-muted); white-space: nowrap; }
+        .dl-table td { color: var(--rp-text); white-space: nowrap; }
+        .dl-col-plan { display: block; font-weight: 700; font-size: 0.9375rem; }
+        .dl-col-price { display: block; font-size: 0.75rem; color: var(--rp-text-dim); }
+        .dl-col-current { background: rgba(56, 189, 248, 0.06); }
+        .dl-cell-current { background: rgba(56, 189, 248, 0.045); }
+        .dl-col-badge {
+          display: inline-block; margin-top: 0.3rem; padding: 0.1rem 0.4rem;
+          border-radius: 999px; font-size: 0.6875rem; font-weight: 600;
+          color: var(--rp-accent); background: rgba(56, 189, 248, 0.12);
+        }
+        .dl-row-note { display: block; font-weight: 400; font-size: 0.75rem; color: var(--rp-text-dim); }
+        .dl-row-split th, .dl-row-split td { border-top: 1px solid var(--rp-glass-border); }
+
+        .dl-steps { list-style: none; margin: 1.25rem 0 1.5rem; padding: 0; display: grid; gap: 1rem; }
+        .dl-step { display: flex; gap: 0.875rem; align-items: flex-start; }
+        .dl-step-n {
+          display: grid; place-items: center; flex: 0 0 auto;
+          width: 26px; height: 26px; border-radius: 7px;
+          background: rgba(56, 189, 248, 0.12); color: var(--rp-accent);
+          font-size: 0.8125rem; font-weight: 700;
+        }
+        .dl-step-title { display: block; font-size: 0.9375rem; }
+        .dl-step-body { display: block; font-size: 0.875rem; line-height: 1.55; color: var(--rp-text-muted); }
+        .dl-code {
+          margin: 0; padding: 1rem; border-radius: 10px; overflow-x: auto;
+          background: rgba(0, 0, 0, 0.42); border: 1px solid var(--rp-glass-border);
+          font-size: 0.8125rem; line-height: 1.65; color: var(--rp-text);
+        }
+
+        .dl-enable {
+          background: var(--rp-surface); border: 1px solid var(--rp-glass-border);
+          border-radius: var(--rp-radius); padding: 1.5rem; margin-bottom: 2rem;
+          scroll-margin-top: 1.5rem;
+        }
+        .dl-fields { display: grid; gap: 1rem; margin-top: 1.25rem; }
+        .dl-terms {
+          display: flex; gap: 0.6rem; align-items: flex-start;
+          font-size: 0.875rem; line-height: 1.55; color: var(--rp-text-muted); cursor: pointer;
+        }
+        .dl-terms input { margin-top: 0.2rem; flex: 0 0 auto; }
+        .dl-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .dl-sr-only {
+          position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+          overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+        }
+
+        @media (prefers-reduced-motion: reduce) { .dl-btn { transition: none; } }
+
+        @media (max-width: 560px) {
+          .dl-account { align-items: flex-start; flex-direction: column; }
+          .dl-enable { padding: 1.125rem; }
+          .dl-cta-row .dl-btn { flex: 1 1 100%; }
+        }
+
         @media (max-width: 640px) {
           .dev-shell { padding: 1.5rem 1rem 4rem; }
           .dev-h1 { font-size: 1.6rem; }
@@ -431,16 +654,10 @@ export default function DeveloperPage() {
       <div className="dev-page">
         <Navbar />
         <main className="dev-shell">
-          <h1 className="dev-h1">Developer API</h1>
-          <p className="dev-sub">
-            Build against Lines Police CAD with a key scoped to one community. Push live game
-            activity in, read the CAD back out, and let your players find everything they made
-            in-game on the website and in the app.{' '}
-            <a href="/api-docs" style={{ color: 'var(--rp-accent)' }}>
-              Read the docs
-            </a>
-            .
-          </p>
+          {/* The h1 lives in DeveloperLanding for the landing state, which needs
+              it as part of the hero. Once developer access is on, this page is a
+              dashboard and gets a plain title. */}
+          {!loading && account?.enabled && <h1 className="dev-h1">Developer API</h1>}
 
           {error && <div className="dev-notice dev-notice-err">{error}</div>}
           {notice && <div className="dev-notice dev-notice-ok">{notice}</div>}
@@ -483,68 +700,18 @@ export default function DeveloperPage() {
           {loading && <div className="dev-card">Loading…</div>}
 
           {!loading && account && !account.enabled && (
-            <div className="dev-card">
-              <h2 className="dev-h2">Turn on your developer account</h2>
-              <p style={{ color: 'var(--rp-text-muted)', marginTop: 0, lineHeight: 1.6 }}>
-                Free, and you can turn it off whenever you like. Turning it off revokes every key
-                you hold.
-              </p>
-
-              <div style={{ display: 'grid', gap: '1rem', marginTop: '1.25rem' }}>
-                <div>
-                  <label className="dev-label" htmlFor="dev-app-name">
-                    What are you building? (optional)
-                  </label>
-                  <input
-                    id="dev-app-name"
-                    className="dev-input"
-                    value={appName}
-                    onChange={(e) => setAppName(e.target.value)}
-                    placeholder="My FiveM server"
-                    maxLength={80}
-                  />
-                </div>
-                <div>
-                  <label className="dev-label" htmlFor="dev-app-url">
-                    Project link (optional)
-                  </label>
-                  <input
-                    id="dev-app-url"
-                    className="dev-input"
-                    value={appUrl}
-                    onChange={(e) => setAppUrl(e.target.value)}
-                    placeholder="https://"
-                    maxLength={200}
-                  />
-                </div>
-                <label className="dev-scope" htmlFor="dev-terms" style={{ paddingLeft: 0 }}>
-                  <input
-                    id="dev-terms"
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
-                  />
-                  <span style={{ fontSize: '0.92rem', lineHeight: 1.5 }}>
-                    I accept the{' '}
-                    <a href="/terms-and-conditions" style={{ color: 'var(--rp-accent)' }}>
-                      Developer Terms
-                    </a>
-                    . I understand a key can create accounts for my players, and that I am
-                    responsible for how my integration uses them.
-                  </span>
-                </label>
-                <div>
-                  <button
-                    type="button"
-                    className="dev-btn"
-                    disabled={!acceptTerms || busy}
-                    onClick={enableAccount}
-                  >
-                    Turn on developer account
-                  </button>
-                </div>
-              </div>
-            </div>
+            <DeveloperLanding
+              data={account}
+              user={sessionUser}
+              appName={appName}
+              appUrl={appUrl}
+              acceptTerms={acceptTerms}
+              busy={busy}
+              onAppName={setAppName}
+              onAppURL={setAppUrl}
+              onAcceptTerms={setAcceptTerms}
+              onEnable={enableAccount}
+            />
           )}
 
           {!loading && account?.enabled && (
@@ -569,9 +736,12 @@ export default function DeveloperPage() {
                       {account.limits.keysPerDeveloper} keys.
                     </p>
                   </div>
-                  {account.upgradeAvailable ? (
-                    <a className="dev-btn" href="/pricing">
-                      Upgrade for higher limits
+                  {/* There is no Developer API product to buy: limits follow the
+                      website subscription, so the only upgrade path is the plan
+                      page. Shown unless they are already on the top plan. */}
+                  {account.entitlement?.plan !== 'premium_plus' ? (
+                    <a className="dev-btn" href={account.upgradeUrl || '/community-pricing'}>
+                      Raise your limits
                     </a>
                   ) : null}
                 </div>
