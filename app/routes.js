@@ -7322,6 +7322,23 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // The communities this user belongs to, for the key form's picker.
+  //
+  // This proxy was missing: the API endpoint existed and the page called it,
+  // but nothing here forwarded it, so every request 404'd through to Next and
+  // the picker rendered as though the user were in no communities at all.
+  app.get("/api/developer/communities", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/communities?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "load your communities", error);
+    }
+  });
+
   app.post("/api/developer/account/enable", apiAuthCheck, async function (req, res) {
     const built = developerProxy.buildEnableBody(req.body);
     if (built.error) return res.status(400).json({ message: built.error });
@@ -7432,6 +7449,105 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // One key in full, for the key page. Filtering the list in the browser would
+  // render a link to a key revoked on another device as an empty page rather
+  // than saying so.
+  app.get("/api/developer/keys/:keyId", apiAuthCheck, async function (req, res) {
+    const keyId = req.params.keyId;
+    if (!/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That key id is not valid." });
+    }
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/keys/${keyId}?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "load that key", error);
+    }
+  });
+
+  // Editing a key in place. The secret does not change, which is the point:
+  // widening or narrowing a key should not mean redeploying whatever holds it.
+  app.patch("/api/developer/keys/:keyId", apiAuthCheck, async function (req, res) {
+    const keyId = req.params.keyId;
+    if (!/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That key id is not valid." });
+    }
+    const built = developerProxy.buildUpdateKeyBody(req.body);
+    if (built.error) return res.status(400).json({ message: built.error });
+    try {
+      const response = await axios.patch(
+        `${developerApiBase()}/keys/${keyId}?userId=${encodeURIComponent(developerActor(req))}`,
+        built.body,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "save that key", error);
+    }
+  });
+
+  // One key, several communities. The API decides whether the grant is live or
+  // waiting on an owner; this route never assumes.
+  app.post("/api/developer/keys/:keyId/communities", apiAuthCheck, async function (req, res) {
+    const keyId = req.params.keyId;
+    if (!/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That key id is not valid." });
+    }
+    const built = developerProxy.buildAddCommunityBody(req.body);
+    if (built.error) return res.status(400).json({ message: built.error });
+    try {
+      const response = await axios.post(
+        `${developerApiBase()}/keys/${keyId}/communities?userId=${encodeURIComponent(developerActor(req))}`,
+        built.body,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "add that community", error);
+    }
+  });
+
+  app.delete("/api/developer/keys/:keyId/communities/:communityId", apiAuthCheck, async function (req, res) {
+    const keyId = req.params.keyId;
+    const communityId = req.params.communityId;
+    if (!/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That key id is not valid." });
+    }
+    if (!/^[a-f0-9]{24}$/i.test(communityId)) {
+      return res.status(400).json({ message: "That community id is not valid." });
+    }
+    try {
+      const response = await axios.delete(
+        `${developerApiBase()}/keys/${keyId}/communities/${communityId}` +
+          `?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "remove that community", error);
+    }
+  });
+
+  // The whole account's traffic, for the usage charts. Summed by the API, not
+  // by adding up one request per key in the browser.
+  app.get("/api/developer/usage", apiAuthCheck, async function (req, res) {
+    const params = new URLSearchParams({ userId: developerActor(req) });
+    const days = String(req.query.days || "");
+    if (days === "7" || days === "30" || days === "90") params.set("days", days);
+    try {
+      const response = await axios.get(`${developerApiBase()}/usage?${params}`, {
+        headers: { ...config.headers },
+        timeout: 15000,
+      });
+      res.status(response.status).json(developerProxy.accountUsageView(response.data));
+    } catch (error) {
+      forwardDeveloperFailure(res, "load your usage", error);
+    }
+  });
+
   app.post("/api/developer/claim", apiAuthCheck, async function (req, res) {
     const built = developerProxy.buildClaimBody(req.body);
     if (built.error) return res.status(400).json({ message: built.error });
@@ -7539,16 +7655,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // The developer's own pages are Next.js; they need an Express guard before
   // the catchall or /developer would be reachable while signed out and the
   // page would fetch itself a 401.
-  app.get("/developer", authCheck, function (req, res) {
-    return handle(req, res);
-  });
-  app.get("/developer/claim", authCheck, function (req, res) {
+  // The whole console is signed-in-only. One pattern rather than a line per
+  // page: a route added to the Next app and forgotten here would be reachable
+  // while signed out and would fetch itself a 401, which renders as an empty
+  // page rather than as a login prompt.
+  app.get(/^\/developer(?:\/.*)?$/, authCheck, function (req, res) {
     return handle(req, res);
   });
 
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || req.path === '/api-docs' || req.path === '/developer' || req.path === '/developer/claim' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators') || req.path.startsWith('/feature-requests') || req.path === '/pricing' || req.path === '/community-pricing' || req.path === '/manage-subscription' || req.path.startsWith('/subscription/') || req.path.startsWith('/community-promotion/') || req.path === '/penal-code') {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || req.path === '/api-docs' || req.path === '/developer' || req.path.startsWith('/developer/') || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators') || req.path.startsWith('/feature-requests') || req.path === '/pricing' || req.path === '/community-pricing' || req.path === '/manage-subscription' || req.path.startsWith('/subscription/') || req.path.startsWith('/community-promotion/') || req.path === '/penal-code') {
       return handle(req, res);
     }
     res.render("page-not-found");

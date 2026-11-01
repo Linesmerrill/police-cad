@@ -85,6 +85,117 @@ function buildCreateKeyBody(input) {
   return { body: body };
 }
 
+// buildUpdateKeyBody validates an edit to an existing key.
+//
+// A partial update: a field that was not sent is left alone. That is what lets
+// the console save a rename without sending the scope list back, and send
+// scopes without being able to blank the name by omitting it. An empty object
+// is an error rather than a no-op, so a bug that sends nothing is visible.
+function buildUpdateKeyBody(input) {
+  var src = input || {};
+  var body = {};
+
+  if (src.name !== undefined) {
+    if (typeof src.name !== "string" || !src.name.trim()) {
+      return { error: "Give the key a name so you can tell it apart later." };
+    }
+    if (src.name.trim().length > 60) return { error: "Key names are 60 characters or fewer." };
+    body.name = src.name.trim();
+  }
+
+  if (src.scopes !== undefined) {
+    if (!Array.isArray(src.scopes) || src.scopes.length === 0) {
+      return { error: "Pick at least one permission." };
+    }
+    var scopes = [];
+    for (var i = 0; i < src.scopes.length; i++) {
+      var scope = src.scopes[i];
+      if (typeof scope !== "string" || !VALID_SCOPES[scope]) {
+        return { error: "Unknown permission: " + String(scope) };
+      }
+      if (scopes.indexOf(scope) === -1) scopes.push(scope);
+    }
+    body.scopes = scopes;
+  }
+
+  if (Object.keys(body).length === 0) {
+    return { error: "Nothing to save." };
+  }
+  return { body: body };
+}
+
+// buildAddCommunityBody validates adding a community to an existing key.
+function buildAddCommunityBody(input) {
+  var src = input || {};
+  if (!isObjectIdLike(src.communityId)) {
+    return { error: "Pick a community." };
+  }
+  return { body: { communityId: src.communityId } };
+}
+
+// accountUsageView shapes the account-wide usage response for the charts.
+//
+// Totals and percentages are computed here, once, rather than in each chart:
+// two components deriving the same percentage is how a page ends up showing
+// 61% in one place and 62% in another.
+function accountUsageView(payload) {
+  var src = payload || {};
+  var limits = src.limits || {};
+  var series = Array.isArray(src.series) ? src.series : [];
+
+  var dailyLimit = numberOr(limits.requestsPerDay, 0);
+  var requestsToday = numberOr(src.requestsToday, 0);
+
+  var normalized = series.map(function (d) {
+    return {
+      day: typeof d.day === "string" ? d.day : "",
+      requests: numberOr(d.requests, 0),
+      rejected: numberOr(d.rejected, 0),
+      rejected401: numberOr(d.rejected401, 0),
+      rejected403: numberOr(d.rejected403, 0),
+      rejected429: numberOr(d.rejected429, 0),
+      accountsMade: numberOr(d.accountsMade, 0),
+    };
+  });
+
+  var totalRequests = normalized.reduce(function (sum, d) {
+    return sum + d.requests;
+  }, 0);
+  var totalRejected = normalized.reduce(function (sum, d) {
+    return sum + d.rejected;
+  }, 0);
+
+  return {
+    plan: typeof src.plan === "string" ? src.plan : "free",
+    days: numberOr(src.days, 30),
+    from: typeof src.from === "string" ? src.from : "",
+    to: typeof src.to === "string" ? src.to : "",
+    series: normalized,
+    keys: (Array.isArray(src.keys) ? src.keys : []).map(function (k) {
+      return {
+        keyId: typeof k.keyId === "string" ? k.keyId : "",
+        name: typeof k.name === "string" ? k.name : "",
+        status: typeof k.status === "string" ? k.status : "",
+        requests: numberOr(k.requests, 0),
+        rejected: numberOr(k.rejected, 0),
+        lastUsedAt: typeof k.lastUsedAt === "string" ? k.lastUsedAt : null,
+      };
+    }),
+    requestsToday: requestsToday,
+    rejectedToday: numberOr(src.rejectedToday, 0),
+    requestsThisMonth: numberOr(src.requestsThisMonth, 0),
+    totalRequests: totalRequests,
+    totalRejected: totalRejected,
+    peakDay: numberOr(src.peakDay, 0),
+    dailyLimit: dailyLimit,
+    minuteLimit: numberOr(limits.requestsPerMinute, 0),
+    // Clamped: going over is possible, since the request that trips the limit
+    // is counted, and a bar past 100% reads as a bug rather than as a cap.
+    dailyPercent: dailyLimit > 0 ? Math.min(100, Math.round((requestsToday / dailyLimit) * 100)) : 0,
+    resetsAt: typeof src.dailyLimitResetsAt === "string" ? src.dailyLimitResetsAt : null,
+  };
+}
+
 // buildEnableBody validates turning a developer account on.
 //
 // Accepting the Developer Terms is required and not defaulted. A developer can
@@ -249,6 +360,9 @@ module.exports = {
   DEVELOPER_SCOPES: DEVELOPER_SCOPES,
   isObjectIdLike: isObjectIdLike,
   buildCreateKeyBody: buildCreateKeyBody,
+  buildUpdateKeyBody: buildUpdateKeyBody,
+  buildAddCommunityBody: buildAddCommunityBody,
+  accountUsageView: accountUsageView,
   buildEnableBody: buildEnableBody,
   normalizeClaimCode: normalizeClaimCode,
   buildClaimBody: buildClaimBody,
