@@ -73,26 +73,21 @@ async function enableDeveloperAccount(page: Page) {
 }
 
 test.describe('Developer console, against the real API', { tag: '@auth' }, () => {
-  test.afterAll(async ({ browser }) => {
-    // Put the account back. Turning developer access off revokes every key,
-    // which is exactly the cleanup this needs.
-    const page = await browser.newPage();
-    try {
-      await page.goto('/developer/settings');
-      const off = page.getByRole('button', { name: 'Turn off access' });
-      // Same race as the helper above: wait for the page to render before
-      // asking what is on it. A cleanup that quietly does nothing leaves the
-      // developer account on for every other spec that shares this user.
-      await off.waitFor({ state: 'visible', timeout: 20_000 }).catch(() => {});
-      if (await off.isVisible().catch(() => false)) {
-        await off.click();
-        await page.getByRole('button', { name: 'Turn off and revoke' }).click();
-        await expect(page.getByText(/Developer access is off/)).toBeVisible({ timeout: 15_000 });
-      }
-    } finally {
-      await page.close();
-    }
-  });
+  // There is deliberately no afterAll turning developer access off.
+  //
+  // It used to, and turning access off revokes every key, which is a cleanup
+  // that reaches outside this file: with two workers these tests can run
+  // beside account/developer-api.spec.ts, and anything that disables the
+  // account mid-run leaves the other file, or a retry of this one, asking the
+  // console for keys that have just been revoked. The console then shows
+  // Settings, and every assertion fails reporting a missing notice on a page
+  // that has no notices.
+  //
+  // Nothing needs the account disabled. The one test that renders the
+  // not-enabled landing page mocks the account response rather than relying on
+  // real state, and developer-console-first-paint.spec.ts only measures icons.
+  // The test database is ephemeral per run, so leaving the account on leaks
+  // nothing into the next one.
 
   test('turning developer access on lands on the console', async ({ page }) => {
     await enableDeveloperAccount(page);
