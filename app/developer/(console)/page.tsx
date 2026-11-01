@@ -16,7 +16,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ApiError, developerApi, isKeyInert, liveGrants, planLabel } from '@/lib/developer-api';
 import type { AccountUsage, KeyRow } from '@/lib/developer-api';
-import { consoleHref, docsHref } from '@/lib/developer-routes';
+import { docsHref } from '@/lib/developer-routes';
+import ConsoleLink from '@/components/developer/ConsoleLink';
 import { useConsole } from '@/components/developer/ConsoleProvider';
 import UsageChart from '@/components/developer/UsageChart';
 import {
@@ -81,13 +82,12 @@ export default function OverviewPage() {
           </>
         }
         actions={
-          <a
+          <ConsoleLink
             className={`dc-btn ${atLimit ? '' : 'dc-btn-primary'}`}
-            href={consoleHref('/keys/new')}
-            aria-disabled={atLimit ? 'true' : undefined}
-          >
+            
+            aria-disabled={atLimit ? 'true' : undefined} to={'/keys/new'}>
             New key
-          </a>
+          </ConsoleLink>
         }
       />
 
@@ -107,7 +107,7 @@ export default function OverviewPage() {
         <div className="dc-notice dc-notice-info" role="status">
           <div className="dc-notice-body">
             The Developer Terms have changed. Your keys keep working;{' '}
-            <a href={consoleHref('/settings')}>read and accept the new version</a> when you have a
+            <ConsoleLink to={'/settings'}>read and accept the new version</ConsoleLink> when you have a
             minute.
           </div>
         </div>
@@ -126,9 +126,15 @@ export default function OverviewPage() {
           tone="accent"
         />
         <StatTile
-          label="Last 30 days"
+          label="Requests (30 days)"
           value={usage ? num(usage.totalRequests) : '—'}
-          sub={usage ? `busiest day ${num(usage.peakDay)}` : 'Loading'}
+          sub={
+            usage
+              ? usage.peakDay > 0
+                ? `Busiest day ${num(usage.peakDay)}`
+                : 'No requests in the last 30 days'
+              : 'Loading'
+          }
         />
         <StatTile
           label="Failed requests today"
@@ -151,12 +157,12 @@ export default function OverviewPage() {
         <Card
           title="Requests a day"
           actions={
-            <a className="dc-btn dc-btn-sm dc-btn-ghost" href={consoleHref('/usage')}>
+            <ConsoleLink className="dc-btn dc-btn-sm dc-btn-ghost" to={'/usage'}>
               See usage
-            </a>
+            </ConsoleLink>
           }
         >
-          <UsageChart series={usage.series} dailyLimit={usage.dailyLimit} height={150} />
+          <UsageChart series={usage.series} dailyLimit={usage.dailyLimit} height={150} docsHref={docsHref()} />
         </Card>
       ) : null}
 
@@ -170,9 +176,9 @@ export default function OverviewPage() {
           <ul style={{ margin: '0.8rem 0 0', paddingLeft: '1.1rem', lineHeight: 1.9 }}>
             {pending.map(({ row, grant }) => (
               <li key={`${row.key.id}-${grant.grant.communityId}`}>
-                <a className="dc-key-name" href={consoleHref(`/keys/${row.key.id}`)}>
+                <ConsoleLink className="dc-key-name" to={`/keys/${row.key.id}`}>
                   {row.key.name}
-                </a>{' '}
+                </ConsoleLink>{' '}
                 <span style={{ color: 'var(--dc-muted)' }}>in {grant.communityName || 'a community'}</span>
               </li>
             ))}
@@ -187,12 +193,12 @@ export default function OverviewPage() {
               <>
                 <strong>{inert[0].key.name}</strong> cannot reach any community and cannot create
                 one, so every call it makes will be refused.{' '}
-                <a href={consoleHref(`/keys/${inert[0].key.id}`)}>Add a community</a>.
+                <ConsoleLink to={`/keys/${inert[0].key.id}`}>Add a community</ConsoleLink>.
               </>
             ) : (
               <>
                 {inert.length} keys cannot reach any community and cannot create one, so their calls
-                will be refused. <a href={consoleHref('/keys')}>Review them</a>.
+                will be refused. <ConsoleLink to={'/keys'}>Review them</ConsoleLink>.
               </>
             )}
           </div>
@@ -206,9 +212,9 @@ export default function OverviewPage() {
           <EmptyState
             title="No keys yet"
             action={
-              <a className="dc-btn dc-btn-primary" href={consoleHref('/keys/new')}>
+              <ConsoleLink className="dc-btn dc-btn-primary" to={'/keys/new'}>
                 Create your first key
-              </a>
+              </ConsoleLink>
             }
           >
             A key is what your bot or game server sends with every request. Create one, pick what it
@@ -220,9 +226,9 @@ export default function OverviewPage() {
           title="Your keys"
           tight
           actions={
-            <a className="dc-btn dc-btn-sm dc-btn-ghost" href={consoleHref('/keys')}>
+            <ConsoleLink className="dc-btn dc-btn-sm dc-btn-ghost" to={'/keys'}>
               Manage keys
-            </a>
+            </ConsoleLink>
           }
         >
           <table className="dc-table">
@@ -231,7 +237,7 @@ export default function OverviewPage() {
                 <th>Key</th>
                 <th>Communities</th>
                 <th>Last used</th>
-                <th className="dc-table-num">Requests, 30d</th>
+                <th className="dc-table-num">Requests (30 days)</th>
               </tr>
             </thead>
             <tbody>
@@ -241,9 +247,9 @@ export default function OverviewPage() {
                 return (
                   <tr key={row.key.id}>
                     <td data-label="Key">
-                      <a className="dc-key-name" href={consoleHref(`/keys/${row.key.id}`)}>
+                      <ConsoleLink className="dc-key-name" to={`/keys/${row.key.id}`}>
                         {row.key.name}
-                      </a>
+                      </ConsoleLink>
                       <span className="dc-key-sub">
                         {row.key.displayPrefix}…{row.key.lastFour}
                       </span>
@@ -262,7 +268,7 @@ export default function OverviewPage() {
                         <StatusDot status="never" />
                       )}
                     </td>
-                    <td className="dc-table-num" data-label="Requests, 30d">
+                    <td className="dc-table-num" data-label="Requests (30 days)">
                       {total ? num(total.requests) : '0'}
                     </td>
                   </tr>
@@ -283,9 +289,9 @@ export default function OverviewPage() {
           <a className="dc-btn" href={docsHref()}>
             API reference
           </a>
-          <a className="dc-btn dc-btn-ghost" href={consoleHref('/keys/new')}>
+          <ConsoleLink className="dc-btn dc-btn-ghost" to={'/keys/new'}>
             Create a key
-          </a>
+          </ConsoleLink>
         </div>
       </Card>
     </>

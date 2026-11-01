@@ -432,7 +432,7 @@ export function SearchInput({
 }) {
   return (
     <div className="dc-search">
-      <svg className="dc-search-icon" viewBox="0 0 16 16" aria-hidden="true">
+      <svg className="dc-search-icon" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
         <path d="M6.5 1a5.5 5.5 0 1 0 3.4 9.8l3.4 3.4 1.1-1.1-3.4-3.4A5.5 5.5 0 0 0 6.5 1zm0 1.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8z" />
       </svg>
       <input

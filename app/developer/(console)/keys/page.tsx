@@ -23,7 +23,7 @@ import {
   liveGrants,
 } from '@/lib/developer-api';
 import type { AccountUsage, KeyRow } from '@/lib/developer-api';
-import { consoleHref } from '@/lib/developer-routes';
+import ConsoleLink from '@/components/developer/ConsoleLink';
 import { useConsole } from '@/components/developer/ConsoleProvider';
 import {
   Card,
@@ -137,9 +137,9 @@ export default function KeysPage() {
               Increase limits
             </a>
           ) : (
-            <a className="dc-btn dc-btn-primary" href={consoleHref('/keys/new')}>
+            <ConsoleLink className="dc-btn dc-btn-primary" to={'/keys/new'}>
               New key
-            </a>
+            </ConsoleLink>
           )
         }
       />
@@ -153,9 +153,9 @@ export default function KeysPage() {
           <EmptyState
             title="No keys yet"
             action={
-              <a className="dc-btn dc-btn-primary" href={consoleHref('/keys/new')}>
+              <ConsoleLink className="dc-btn dc-btn-primary" to={'/keys/new'}>
                 Create your first key
-              </a>
+              </ConsoleLink>
             }
           >
             A key is what your bot or game server sends with every request. You choose what it may
@@ -198,7 +198,8 @@ export default function KeysPage() {
                   <th>Permissions</th>
                   <th>Communities</th>
                   <th>Last used</th>
-                  <th className="dc-table-num">Requests, 30d</th>
+                  <th className="dc-table-num">Requests (30 days)</th>
+                  <th><span className="dc-sr-only">Edit</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -210,11 +211,15 @@ export default function KeysPage() {
                   const inert = isKeyInert(row.key, row.communities);
                   const waiting = isKeyWaiting(row.key, row.communities);
                   return (
-                    <tr key={row.key.id} style={revoked ? { opacity: 0.55 } : undefined}>
+                    <tr
+                      key={row.key.id}
+                      className="dc-row-link"
+                      style={revoked ? { opacity: 0.55 } : undefined}
+                    >
                       <td data-label="Key">
-                        <a className="dc-key-name" href={consoleHref(`/keys/${row.key.id}`)}>
+                        <ConsoleLink className="dc-key-name" to={`/keys/${row.key.id}`}>
                           {row.key.name}
-                        </a>
+                        </ConsoleLink>
                         <span className="dc-key-sub">
                           {row.key.displayPrefix}…{row.key.lastFour}
                           {revoked ? ' · revoked' : ''}
@@ -280,8 +285,23 @@ export default function KeysPage() {
                           </span>
                         )}
                       </td>
-                      <td className="dc-table-num" data-label="Requests, 30d">
+                      <td className="dc-table-num" data-label="Requests (30 days)">
                         {total ? num(total.requests) : '0'}
+                      </td>
+                      {/* The row was already a link through the key's name, but
+                          nothing said so, and the thing people came here to do
+                          is edit a key. This names the action. */}
+                      <td className="dc-row-action">
+                        <ConsoleLink
+                          className="dc-btn dc-btn-sm dc-edit-btn"
+                          to={`/keys/${row.key.id}`}
+                          aria-label={`${revoked ? 'View' : 'Edit'} ${row.key.name}`}
+                        >
+                          {revoked ? 'View' : 'Edit'}
+                          <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+                            <path d="M5.7 2.3 4.3 3.7 8.6 8l-4.3 4.3 1.4 1.4L11.4 8z" />
+                          </svg>
+                        </ConsoleLink>
                       </td>
                     </tr>
                   );
@@ -305,8 +325,9 @@ export default function KeysPage() {
       {counts.all > 0 ? (
         <Card title="What a permission chip means">
           <p className="dc-note" style={{ marginTop: 0 }}>
-            A chip marked in amber is a permission that can change or create data. Open a key to see
-            exactly which ones it has, and to add or remove them without changing the secret.
+            A chip marked in amber is a permission that can change or create data. Click{' '}
+            <strong>Edit</strong> on a key to see exactly which ones it has, and to add or remove
+            them without changing the secret.
           </p>
           <div className="dc-chips" style={{ marginTop: '0.7rem' }}>
             <ScopeChip scope="calls:read" />

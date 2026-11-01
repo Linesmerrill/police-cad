@@ -28,7 +28,8 @@ import {
   planLabel,
 } from '@/lib/developer-api';
 import type { CommunityOption, CreatedKey, KeyDetail, KeyUsage } from '@/lib/developer-api';
-import { consoleHref } from '@/lib/developer-routes';
+import { consoleHref, docsHref } from '@/lib/developer-routes';
+import ConsoleLink from '@/components/developer/ConsoleLink';
 import { useConsole } from '@/components/developer/ConsoleProvider';
 import CommunityPicker from '@/components/developer/CommunityPicker';
 import ScopePicker from '@/components/developer/ScopePicker';
@@ -126,18 +127,18 @@ export default function KeyDetailPage({ params }: { params: { id: string } }) {
   if (notFound) {
     return (
       <>
-        <a className="dc-crumb" href={consoleHref('/keys')}>
+        <ConsoleLink className="dc-crumb" to={'/keys'}>
           ← All keys
-        </a>
+        </ConsoleLink>
         <PageHead title="Key not found" />
         <Card>
           <p className="dc-note" style={{ marginTop: 0 }}>
             That key does not exist, or it belongs to another account. If you revoked it on another
             device, it will still be in your list marked revoked.
           </p>
-          <a className="dc-btn" href={consoleHref('/keys')} style={{ marginTop: '0.9rem' }}>
+          <ConsoleLink className="dc-btn"  style={{ marginTop: '0.9rem' }} to={'/keys'}>
             Back to your keys
-          </a>
+          </ConsoleLink>
         </Card>
       </>
     );
@@ -146,9 +147,9 @@ export default function KeyDetailPage({ params }: { params: { id: string } }) {
   if (!detail) {
     return (
       <>
-        <a className="dc-crumb" href={consoleHref('/keys')}>
+        <ConsoleLink className="dc-crumb" to={'/keys'}>
           ← All keys
-        </a>
+        </ConsoleLink>
         <Card>
           <div className="dc-skeleton" style={{ width: '40%', marginBottom: '0.7rem' }} />
           <div className="dc-skeleton" style={{ width: '70%' }} />
@@ -379,9 +380,9 @@ export default function KeyDetailPage({ params }: { params: { id: string } }) {
 
   return (
     <>
-      <a className="dc-crumb" href={consoleHref('/keys')}>
+      <ConsoleLink className="dc-crumb" to={'/keys'}>
         ← All keys
-      </a>
+      </ConsoleLink>
       <PageHead
         title={detail.key.name}
         lede={
@@ -466,7 +467,7 @@ export default function KeyDetailPage({ params }: { params: { id: string } }) {
             />
           </div>
           <Card title="Requests a day, last 30 days">
-            <UsageChart series={usage.series} dailyLimit={usage.dailyLimit} height={150} />
+            <UsageChart series={usage.series} dailyLimit={usage.dailyLimit} height={150} docsHref={docsHref()} />
           </Card>
         </>
       ) : null}
@@ -516,7 +517,17 @@ export default function KeyDetailPage({ params }: { params: { id: string } }) {
       </Card>
 
       {/* ---- communities ---- */}
-      <Card title="Communities" tight>
+      <Card
+        title="Communities"
+        tight
+        actions={
+          revoked ? null : (
+            <a className="dc-btn dc-btn-sm" href="#dc-add-community">
+              Edit communities
+            </a>
+          )
+        }
+      >
         <div style={{ padding: '1.15rem 1.25rem 0' }}>
           <p className="dc-note" style={{ marginTop: 0 }}>
             This key can act in every community listed here. One key can cover several.
@@ -617,7 +628,16 @@ export default function KeyDetailPage({ params }: { params: { id: string } }) {
       </Card>
 
       {/* ---- permissions ---- */}
-      <Card title="Permissions">
+      <Card
+        title="Permissions"
+        actions={
+          revoked ? null : (
+            <a className="dc-btn dc-btn-sm" href="#dc-scopes">
+              Edit permissions
+            </a>
+          )
+        }
+      >
         {revoked ? (
           <div className="dc-chips">
             {detail.key.scopes.map((scope) => (

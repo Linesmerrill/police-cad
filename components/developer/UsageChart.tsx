@@ -35,10 +35,13 @@ export default function UsageChart({
   series,
   dailyLimit,
   height = 180,
+  docsHref,
 }: {
   series: Point[];
   dailyLimit?: number;
   height?: number;
+  /** Where "make your first call" should go. */
+  docsHref?: string;
 }) {
   const titleId = useId();
   const [hover, setHover] = useState<number | null>(null);
@@ -57,6 +60,10 @@ export default function UsageChart({
     return { peak, ceiling, limitInRange };
   }, [series, dailyLimit]);
 
+  // A chart of nothing is a big empty box with an axis under it, which reads
+  // as broken rather than as new. Say what is missing and what to do about it.
+  const hasTraffic = series.some((day) => day.requests > 0 || day.rejected > 0);
+
   const width = 720;
   const padLeft = 4;
   const padBottom = 18;
@@ -71,6 +78,47 @@ export default function UsageChart({
 
   const limitY = geometry.limitInRange ? y(dailyLimit!) : null;
   const active = hover === null ? null : series[hover];
+
+  if (!hasTraffic) {
+    return (
+      <div className="dc-chart">
+        <style jsx>{`
+          .empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-align: center;
+            padding: 2.25rem 1rem;
+            border: 1px dashed rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+          }
+          .empty strong {
+            color: #e2e8f0;
+            font-weight: 600;
+          }
+          .empty p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 0.875rem;
+            max-width: 42ch;
+            line-height: 1.55;
+          }
+          .empty a {
+            color: #38bdf8;
+          }
+        `}</style>
+        <div className="empty">
+          <strong>No requests yet</strong>
+          <p>
+            Traffic shows up here within a minute of your first call.{' '}
+            {docsHref ? <a href={docsHref}>Make your first call with the API reference.</a> : null}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dc-chart">
@@ -244,9 +292,11 @@ export default function UsageChart({
               <span className="swatch" style={{ background: '#f87171' }} />
               Refused
             </span>
-            <span>
-              Busiest day <strong>{num(geometry.peak)}</strong>
-            </span>
+            {geometry.peak > 0 ? (
+              <span>
+                Busiest day <strong>{num(geometry.peak)}</strong>
+              </span>
+            ) : null}
           </>
         )}
       </div>
