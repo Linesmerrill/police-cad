@@ -20,8 +20,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { ApiError, developerApi } from '@/lib/developer-api';
 import type { CommunityOption, CreatedKey } from '@/lib/developer-api';
 import { consoleHref } from '@/lib/developer-routes';
+import { DEVELOPER_API_AUTH_EXAMPLE } from '@/lib/developer-api-public';
 import ConsoleLink from '@/components/developer/ConsoleLink';
 import { useConsole } from '@/components/developer/ConsoleProvider';
+import NotSwitchedOnNotice from '@/components/developer/NotSwitchedOnNotice';
 import CommunityPicker, { NO_COMMUNITY } from '@/components/developer/CommunityPicker';
 import ScopePicker from '@/components/developer/ScopePicker';
 import {
@@ -70,6 +72,7 @@ export default function NewKeyPage() {
   }, [loadCommunities]);
 
   const atLimit = keyCount !== null && keyCount >= account.limits.keysPerDeveloper;
+  const canIssue = account.keyIssuanceAvailable !== false;
 
   function onCommunityChange(value: string) {
     setCommunity(value);
@@ -152,7 +155,8 @@ export default function NewKeyPage() {
         />
         <Card title="What next">
           <p className="dc-note" style={{ marginTop: 0 }}>
-            Send it as the <code className="dc-mono">X-Developer-Key</code> header on every request.
+            Send it as <code className="dc-mono">{DEVELOPER_API_AUTH_EXAMPLE} &lt;key&gt;</code> on every
+            request.
             If you lose it, rotate the key — that issues a new secret and keeps the key&apos;s
             permissions and communities.
           </p>
@@ -179,7 +183,27 @@ export default function NewKeyPage() {
         lede="You will see the secret once, when the key is made. We store a hash of it and nothing else."
       />
 
-      <Notice notice={notice} onDismiss={dismiss} />
+      {/* The form is not shown at all while the API is unconfigured. Showing
+          it and failing on submit would waste the one decision this page asks
+          for, and the API refuses the write anyway. */}
+      {canIssue ? null : (
+        <>
+          <NotSwitchedOnNotice />
+          <Card>
+            <p className="dc-note" style={{ marginTop: 0 }}>
+              Come back once it is on and this form will work normally. Nothing you do here is
+              lost; no key has been created.
+            </p>
+            <div className="dc-actions" style={{ marginTop: '0.9rem' }}>
+              <ConsoleLink className="dc-btn" to="/keys">
+                Back to your keys
+              </ConsoleLink>
+            </div>
+          </Card>
+        </>
+      )}
+
+      {canIssue ? <Notice notice={notice} onDismiss={dismiss} /> : null}
 
       {atLimit ? (
         <div className="dc-notice dc-notice-warn" role="status">
@@ -191,6 +215,7 @@ export default function NewKeyPage() {
         </div>
       ) : null}
 
+      {canIssue ? (
       <form onSubmit={submit} noValidate>
         <Card title="Name">
           <div className="dc-field" style={{ marginBottom: 0 }}>
@@ -263,6 +288,7 @@ export default function NewKeyPage() {
           </ConsoleLink>
         </div>
       </form>
+      ) : null}
     </>
   );
 }

@@ -70,6 +70,13 @@ export type AccountResponse = {
     onSale?: boolean;
     originalMonthlyPrice?: number;
   }[];
+  /**
+   * False when the API is enabled but not yet configured with its signing
+   * secret. Keys minted in that state would hash against an empty secret and
+   * stop matching the moment it is set, so the console offers no key form
+   * while this is false.
+   */
+  keyIssuanceAvailable?: boolean;
   upgradeUrl?: string;
   entitlement?: Entitlement;
   communities?: { plan: string; owned: number; cap: number; unlimited: boolean };

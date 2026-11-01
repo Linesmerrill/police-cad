@@ -25,6 +25,7 @@ import {
 import type { AccountUsage, KeyRow } from '@/lib/developer-api';
 import ConsoleLink from '@/components/developer/ConsoleLink';
 import { useConsole } from '@/components/developer/ConsoleProvider';
+import NotSwitchedOnNotice from '@/components/developer/NotSwitchedOnNotice';
 import {
   Card,
   EmptyState,
@@ -118,6 +119,7 @@ export default function KeysPage() {
   const paging = usePaging(filtered, PER_PAGE);
   const liveCount = counts.active;
   const atLimit = liveCount >= account.limits.keysPerDeveloper;
+  const canIssue = account.keyIssuanceAvailable !== false;
 
   return (
     <>
@@ -132,7 +134,7 @@ export default function KeysPage() {
           </>
         }
         actions={
-          atLimit ? (
+          !canIssue ? null : atLimit ? (
             <a className="dc-btn" href={account.upgradeUrl || '/pricing'}>
               Increase limits
             </a>
@@ -145,6 +147,8 @@ export default function KeysPage() {
       />
 
       <Notice notice={notice} onDismiss={dismiss} />
+
+      {canIssue ? null : <NotSwitchedOnNotice />}
 
       {keys === null ? (
         <Loading rows={4} label="Loading your keys" />
