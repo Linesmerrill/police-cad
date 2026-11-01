@@ -30,12 +30,21 @@ let secret = '';
 
 async function enableDeveloperAccount(page: Page) {
   await page.goto('/developer');
-  // Already on? Then the console is what renders, not the landing page.
-  if (await page.getByRole('heading', { name: 'Overview' }).isVisible().catch(() => false)) return;
 
-  await page.locator('#dev-terms').check();
+  // /developer renders the console or the landing page, and it cannot know
+  // which until it has fetched the account. Asking which one is showing the
+  // instant the navigation resolves gets "neither", so this waits for either
+  // to arrive first. Reading it too early is what made the first test flaky
+  // and timed the rest out on a checkbox that was never going to appear,
+  // because by then the account was already on.
+  const overview = page.getByRole('heading', { name: 'Overview' });
+  const terms = page.locator('#dev-terms');
+  await expect(overview.or(terms)).toBeVisible({ timeout: 20_000 });
+  if (await overview.isVisible()) return;
+
+  await terms.check();
   await page.getByRole('button', { name: 'Turn on developer access' }).click();
-  await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible({ timeout: 15_000 });
+  await expect(overview).toBeVisible({ timeout: 20_000 });
 }
 
 test.describe('Developer console, against the real API', { tag: '@auth' }, () => {
@@ -46,6 +55,10 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
     try {
       await page.goto('/developer/settings');
       const off = page.getByRole('button', { name: 'Turn off access' });
+      // Same race as the helper above: wait for the page to render before
+      // asking what is on it. A cleanup that quietly does nothing leaves the
+      // developer account on for every other spec that shares this user.
+      await off.waitFor({ state: 'visible', timeout: 20_000 }).catch(() => {});
       if (await off.isVisible().catch(() => false)) {
         await off.click();
         await page.getByRole('button', { name: 'Turn off and revoke' }).click();
@@ -72,7 +85,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   test('the console has no keys to start with', async ({ page }) => {
     await enableDeveloperAccount(page);
     await page.goto('/developer/keys');
-    await expect(page.getByText('No keys yet')).toBeVisible();
+    await expect(page.getByText('No keys yet')).toBeVisible({ timeout: 20_000 });
   });
 
   test('creating a key against a real community returns a real secret', async ({ page }) => {
@@ -81,7 +94,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
 
     await page.locator('#dc-key-name').fill('E2E dispatch bridge');
     // The picker is the real list of communities this user is in, from the API.
-    await expect(page.locator('#dc-community option')).toContainText(['test community']);
+    await expect(page.locator('#dc-community')).toContainText('test community');
     await page.locator('#dc-community').selectOption(COMMUNITY_ID);
     await page.getByRole('button', { name: 'Dispatch' }).click();
     await page.getByRole('button', { name: 'Create key' }).click();
@@ -109,6 +122,10 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
 
   test('renaming a key keeps the same secret', async ({ page }) => {
     await page.goto(`/developer/keys/${keyId}`);
+    // textContent does not wait, so read it only once the key has rendered.
+    await expect(page.getByRole('heading', { name: 'E2E dispatch bridge' })).toBeVisible({
+      timeout: 20_000,
+    });
     const prefixBefore = ((await page.locator('.dc-lede').first().textContent()) || '').split(' · ')[0];
 
     await page.locator('#dc-key-name').fill('E2E renamed bridge');
