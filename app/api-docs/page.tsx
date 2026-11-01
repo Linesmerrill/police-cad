@@ -26,6 +26,10 @@ const SECTIONS = [
   { id: 'reports', label: 'Report drafts' },
   { id: 'warrants', label: 'Warrants' },
   { id: 'npcs', label: 'Simulated characters' },
+  { id: 'changes', label: 'Polling cheaply' },
+  { id: 'webhooks', label: 'Webhooks' },
+  { id: 'attachments', label: 'Attachments' },
+  { id: 'activity', label: 'Debugging' },
   { id: 'errors', label: 'Errors' },
   { id: 'never', label: 'What a key cannot do' },
 ];
@@ -555,6 +559,199 @@ set lpc_community_id "your_community_id"`}</Code>
               cooperation.
             </p>
 
+            <h2 className="doc-h2" id="changes">
+              Polling cheaply
+            </h2>
+            <p>
+              <code>GET /communities/{'{communityId}'}/changes?since=&lt;cursor&gt;</code> returns
+              only what has changed. Without it, finding out whether a call was closed means
+              re-reading every call — on a busy community that is a scan per tick, and it is why
+              polling has a reputation for being expensive.
+            </p>
+            <p>
+              <strong>Call it with no <code>since</code> first.</strong> You get no events and a
+              cursor pointing at now, because replaying a week of history to a client that is about
+              to read current state anyway is not a service. Then poll with that cursor; each
+              response hands you the next one, also in <code>X-LPC-Cursor</code> so a Lua callback
+              need not parse the body.
+            </p>
+            <p>
+              <strong>Pass <code>excludeSelf=true</code></strong> unless you want your own writes
+              back. Close a call, receive your own <code>call.closed</code>, close it again: that is
+              the loop this parameter exists to prevent.
+            </p>
+            <p>
+              The website&apos;s own handlers emit too, so a call a dispatcher closed in the CAD
+              reaches you like one you closed yourself. Events are named after what happened in the
+              product rather than after the endpoint that caused it:
+            </p>
+            <table className="doc-table">
+              <thead>
+                <tr>
+                  <th>EVENT</th>
+                  <th>WHEN</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['call.created / call.updated / call.closed', 'A call appeared, changed, or ended'],
+                  ['call.assigned', 'The units on a call changed — separate, so you need not diff every update'],
+                  ['unit.status_changed', "One unit's ten-code, location or department changed"],
+                  ['record.created', 'A civilian, vehicle, firearm or licence was created'],
+                  ['report_draft.filed / report_draft.rejected', 'A person acted on a draft you wrote'],
+                  ['warrant.requested / warrant.reviewed', 'A warrant was asked for, or decided'],
+                ].map(([event, when]) => (
+                  <tr key={event}>
+                    <td>
+                      <code>{event}</code>
+                    </td>
+                    <td>{when}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p>
+              Events are kept <strong>7 days</strong>, shorter than the activity feed on purpose. A
+              cursor staler than that means you should re-read current state rather than replay a
+              week, so persist it somewhere that survives a restart and treat a long outage as a
+              resync. <code>hasMore</code> tells you to call again; there is no total, because you
+              cannot act on one.
+            </p>
+
+            <h2 className="doc-h2" id="webhooks">
+              Webhooks
+            </h2>
+            <p>
+              Register an endpoint per key in{' '}
+              <a href="/developer">the console</a>. You get a signing secret once, and deliveries
+              carry the <strong>same event shape</strong> the cursor endpoint returns — so moving
+              from polling to webhooks does not mean rewriting your handler, and you can run both
+              while you migrate because the event id is stable and the duplicate is recognisable.
+            </p>
+            <p>
+              <strong>Verify every delivery.</strong> Recompute{' '}
+              <code>HMAC-SHA256(secret, &quot;&lt;t&gt;.&quot; + rawBody)</code> and compare in
+              constant time against the <code>v1</code> value in <code>X-LPC-Signature</code>, then
+              reject anything whose <code>t</code> is more than <strong>300 seconds</strong> old.
+              That last step is what stops a captured delivery being replayable; the signature alone
+              proves nothing about when the request was made.
+            </p>
+            <p>
+              Use the <strong>raw body</strong>, before any JSON parsing. A re-serialised body will
+              not match, and that is the single most common reason a first webhook integration
+              rejects everything.
+            </p>
+            <table className="doc-table">
+              <thead>
+                <tr>
+                  <th>HEADER</th>
+                  <th>WHAT IT IS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['X-LPC-Signature', 't=<unix>,v1=<hex> — verify as above'],
+                  ['X-LPC-Event-Id', 'Stable across retries, so you can recognise a duplicate'],
+                  ['X-LPC-Event-Type', 'The same type as in the body'],
+                  ['X-LPC-Delivery-Id', 'This attempt'],
+                  ['X-LPC-Attempt', 'Which attempt this is'],
+                ].map(([header, what]) => (
+                  <tr key={header}>
+                    <td>
+                      <code>{header}</code>
+                    </td>
+                    <td>{what}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p>
+              <strong>Answer <code>2xx</code> quickly and do your work afterwards.</strong> You have
+              10 seconds. A non-2xx is retried after 10s, 30s, 2m, 5m and 15m; an endpoint that
+              fails 20 deliveries in a row is switched off, with the reason in the console.
+            </p>
+            <p>
+              <strong>Nothing is lost when a delivery fails.</strong> The event is still readable
+              from the cursor endpoint for its 7 days, which is why webhooks are a transport over
+              the event log rather than a second source of truth.
+            </p>
+            <p>A few rules on the endpoint itself, so there are no surprises when you save it:</p>
+            <ul>
+              <li>
+                <strong>https only.</strong> An http endpoint would ship the signature and the body
+                in clear
+              </li>
+              <li>
+                <strong>A public host.</strong> We refuse loopback, private ranges, link-local and
+                the cloud metadata address, checked again immediately before every request
+              </li>
+              <li>
+                <strong>No redirects.</strong> We will not follow one. If your URL needs to change,
+                change it in the console
+              </li>
+              <li>
+                <strong>No credentials in the URL.</strong> The signature is how you authenticate us
+              </li>
+            </ul>
+            <p>
+              Rotating the secret keeps the endpoint and its subscription, so it is not an outage —
+              but the next delivery is signed with the new secret, so update your receiver first.
+            </p>
+
+            <h2 className="doc-h2" id="attachments">
+              Attachments
+            </h2>
+            <p>
+              <code>POST …/reports/drafts/{'{externalId}'}/attachments</code> and{' '}
+              <code>POST …/dispatch/calls/{'{externalId}'}/attachments</code> record{' '}
+              <strong>metadata and a link</strong>. We host no bytes, there is no upload endpoint,
+              and we never fetch the URL — it is a link a person clicks in their own browser.
+            </p>
+            <p>
+              That is the answer rather than a first step. Accepting third-party binaries would mean
+              scanning them, storing them, quotas, a takedown path and a legal position on content
+              we host, and none of that is needed for a reviewer clicking through to the clip your
+              server already recorded.
+            </p>
+            <p>
+              <strong><code>kind</code> is never <code>evidence</code>.</strong> A link you supply
+              points at something we have not seen, on a server we do not control; calling it
+              evidence inside a system that produces jail time would give it a standing it has not
+              earned. Use <code>clip</code>, <code>screenshot</code>, <code>log</code>,{' '}
+              <code>document</code> or <code>other</code>, and let a person decide what it is. The
+              same applies to a generated narrative.
+            </p>
+            <p>
+              Limits: 10 per record, a 1024-character http or https URL with no credentials in it,
+              and a bounded declared size. Idempotent on the URL, so a retry does not give a
+              reviewer two of the same thing. Nothing can be attached once a person has reviewed the
+              draft. Every attach and detach is audited.
+            </p>
+
+            <h2 className="doc-h2" id="activity">
+              When something is not working
+            </h2>
+            <p>
+              Every response carries <code>X-Request-Id</code>. Send <code>X-Correlation-Id</code>{' '}
+              with your own id and we echo it back and record it beside ours, so your logs line up
+              with ours.
+            </p>
+            <p>
+              <code>GET /activity</code> is this key&apos;s own request history, and it{' '}
+              <strong>needs no scope</strong> — a key that is being refused has to be able to find
+              out why, and gating the diagnostic would withhold it from exactly the keys that need
+              it. Each row says which route, which community, what we answered, and on a{' '}
+              <code>missing_scope</code> refusal <strong>which scope was missing</strong>, which is
+              the thing a bare 403 in your own logs does not tell you.
+            </p>
+            <p>
+              Rows are kept <strong>30 days</strong>. They hold no request body, no response body
+              and no header values — only the shape of each exchange, so if you need the contents of
+              a call you made, log it your end. Quote a request id in a{' '}
+              <a href="https://discord.gg/Y9ytW2ZMp4">ticket</a> and we can find exactly that
+              request.
+            </p>
+
             <h2 className="doc-h2" id="errors">
               Errors
             </h2>
@@ -584,6 +781,10 @@ set lpc_community_id "your_community_id"`}</Code>
                   ['template_not_permitted', "The community's form gates exclude that officer"],
                   ['draft_already_reviewed', 'A person has acted on it; write a new draft with a new externalId'],
                   ['confirm_required', 'A cleanup needs confirm set to the community id'],
+                  ['invalid_cursor', 'since must be a cursor from a previous response'],
+                  ['invalid_event_type', 'Read the event list rather than guessing at it'],
+                  ['invalid_attachment', 'Unknown kind, no url, credentials in the url — or kind: "evidence", which does not exist'],
+                  ['attachment_limit_reached', '10 per record'],
                   ['rate_limited', 'Honour Retry-After'],
                   ['provision_cap_reached', 'Daily account or community cap; resets at midnight UTC'],
                 ].map(([code, what]) => (

@@ -7576,6 +7576,141 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // A key's own request history, for the console. The API gates it on the
+  // signed-in developer owning the key, which this route proves by passing the
+  // session user — not by trusting anything the browser sent.
+  app.get("/api/developer/keys/:keyId/activity", apiAuthCheck, async function (req, res) {
+    const keyId = req.params.keyId;
+    if (!/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That key id is not valid." });
+    }
+    const query = new URLSearchParams({ userId: developerActor(req) });
+    ["page", "limit", "outcome"].forEach(function (name) {
+      const value = req.query[name];
+      if (typeof value === "string" && value.trim()) query.set(name, value.trim());
+    });
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/keys/${keyId}/activity?${query.toString()}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "load that key's activity", error);
+    }
+  });
+
+  // Webhook endpoints, per key. The signing secret comes back on create and on
+  // rotate and is forwarded straight through — it is never stored here, and the
+  // console shows it once.
+  app.get("/api/developer/keys/:keyId/webhooks", apiAuthCheck, async function (req, res) {
+    const keyId = req.params.keyId;
+    if (!/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That key id is not valid." });
+    }
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/keys/${keyId}/webhooks?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "load that key's webhooks", error);
+    }
+  });
+
+  app.post("/api/developer/keys/:keyId/webhooks", apiAuthCheck, async function (req, res) {
+    const keyId = req.params.keyId;
+    if (!/^[a-f0-9]{24}$/i.test(keyId)) {
+      return res.status(400).json({ message: "That key id is not valid." });
+    }
+    try {
+      const response = await axios.post(
+        `${developerApiBase()}/keys/${keyId}/webhooks?userId=${encodeURIComponent(developerActor(req))}`,
+        {
+          url: typeof req.body?.url === "string" ? req.body.url : "",
+          events: Array.isArray(req.body?.events) ? req.body.events : [],
+          communities: Array.isArray(req.body?.communities) ? req.body.communities : [],
+        },
+        { headers: { ...config.headers, "Content-Type": "application/json" }, timeout: 15000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "add that webhook", error);
+    }
+  });
+
+  app.patch("/api/developer/keys/:keyId/webhooks/:webhookId", apiAuthCheck, async function (req, res) {
+    const { keyId, webhookId } = req.params;
+    if (!/^[a-f0-9]{24}$/i.test(keyId) || !/^[a-f0-9]{24}$/i.test(webhookId)) {
+      return res.status(400).json({ message: "That id is not valid." });
+    }
+    const body = {};
+    if (typeof req.body?.url === "string") body.url = req.body.url;
+    if (Array.isArray(req.body?.events)) body.events = req.body.events;
+    if (Array.isArray(req.body?.communities)) body.communities = req.body.communities;
+    if (typeof req.body?.enabled === "boolean") body.enabled = req.body.enabled;
+    try {
+      const response = await axios.patch(
+        `${developerApiBase()}/keys/${keyId}/webhooks/${webhookId}?userId=${encodeURIComponent(developerActor(req))}`,
+        body,
+        { headers: { ...config.headers, "Content-Type": "application/json" }, timeout: 15000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "save that webhook", error);
+    }
+  });
+
+  app.post("/api/developer/keys/:keyId/webhooks/:webhookId/rotate", apiAuthCheck, async function (req, res) {
+    const { keyId, webhookId } = req.params;
+    if (!/^[a-f0-9]{24}$/i.test(keyId) || !/^[a-f0-9]{24}$/i.test(webhookId)) {
+      return res.status(400).json({ message: "That id is not valid." });
+    }
+    try {
+      const response = await axios.post(
+        `${developerApiBase()}/keys/${keyId}/webhooks/${webhookId}/rotate?userId=${encodeURIComponent(developerActor(req))}`,
+        {},
+        { headers: { ...config.headers }, timeout: 15000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "rotate that signing secret", error);
+    }
+  });
+
+  app.delete("/api/developer/keys/:keyId/webhooks/:webhookId", apiAuthCheck, async function (req, res) {
+    const { keyId, webhookId } = req.params;
+    if (!/^[a-f0-9]{24}$/i.test(keyId) || !/^[a-f0-9]{24}$/i.test(webhookId)) {
+      return res.status(400).json({ message: "That id is not valid." });
+    }
+    try {
+      const response = await axios.delete(
+        `${developerApiBase()}/keys/${keyId}/webhooks/${webhookId}?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 15000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "delete that webhook", error);
+    }
+  });
+
+  app.get("/api/developer/keys/:keyId/webhooks/:webhookId/deliveries", apiAuthCheck, async function (req, res) {
+    const { keyId, webhookId } = req.params;
+    if (!/^[a-f0-9]{24}$/i.test(keyId) || !/^[a-f0-9]{24}$/i.test(webhookId)) {
+      return res.status(400).json({ message: "That id is not valid." });
+    }
+    try {
+      const response = await axios.get(
+        `${developerApiBase()}/keys/${keyId}/webhooks/${webhookId}/deliveries?userId=${encodeURIComponent(developerActor(req))}`,
+        { headers: { ...config.headers }, timeout: 10000 }
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      forwardDeveloperFailure(res, "load those deliveries", error);
+    }
+  });
+
   // The community owner's side: who has a key on my community.
   app.get("/api/developer/community/:communityId/keys", apiAuthCheck, async function (req, res) {
     const communityId = req.params.communityId;

@@ -116,6 +116,82 @@ export type KeyDetail = {
   availableScopes: Scope[];
 };
 
+/**
+ * One request a key made. Deliberately holds nothing of the request's contents
+ * — the API records the shape of an exchange, not its body, so there is no
+ * field here that could carry a secret even by accident.
+ */
+export type ActivityRow = {
+  requestId: string;
+  correlationId?: string;
+  communityId?: string;
+  method: string;
+  /** The route template, not the path. A path would carry community ids. */
+  route: string;
+  status: number;
+  outcome: 'ok' | 'denied' | 'rate_limited' | 'invalid' | 'error';
+  errorCode?: string;
+  /** Named on a missing_scope refusal, which is what this feed is mostly for. */
+  requiredScope?: string;
+  durationMs: number;
+  at: string;
+};
+
+export type ActivityPage = {
+  data: ActivityRow[];
+  totalCount: number;
+  page: number;
+  limit: number;
+  /** Published so a reader knows how long they have before these rows go. */
+  retentionDays: number;
+};
+
+/** One endpoint events are delivered to. Never carries the signing secret. */
+export type Webhook = {
+  id: string;
+  url: string;
+  /** Empty means every type, which is not the same statement as none. */
+  events: string[];
+  communities: string[];
+  status: 'active' | 'disabled';
+  secretPrefix: string;
+  consecutiveFailures: number;
+  lastStatus?: number;
+  lastError?: string;
+  disabledReason?: string;
+  lastDeliveryAt?: string;
+  secretRotatedAt?: string;
+  createdAt: string;
+  eventsLabel?: string;
+  communitiesLabel?: string;
+};
+
+export type WebhookLimits = {
+  maxPerKey: number;
+  maxAttempts: number;
+  signatureToleranceSeconds: number;
+  disableAfterFailures: number;
+  deliveryRetentionDays: number;
+};
+
+export type WebhookList = {
+  webhooks: Webhook[];
+  limits: WebhookLimits;
+  eventTypes: string[];
+};
+
+/** One attempt to hand an event over. Our status and our error, never theirs. */
+export type WebhookDelivery = {
+  eventId: string;
+  eventType: string;
+  attempt: number;
+  status: number;
+  succeeded: boolean;
+  error?: string;
+  durationMs: number;
+  at: string;
+};
+
 export type CommunityOption = {
   id: string;
   name: string;
@@ -373,6 +449,83 @@ export const developerApi = {
     return call<KeyUsage>(`/api/developer/keys/${encodeURIComponent(keyId)}/usage`, {
       fallback: "Could not load that key's usage",
     });
+  },
+
+  /**
+   * A key's own request history.
+   *
+   * The one place a developer can answer "which of a dozen things went wrong"
+   * without asking us, which is why the API requires no scope for it.
+   */
+  keyActivity(
+    keyId: string,
+    input: { page?: number; outcome?: string } = {}
+  ): Promise<ActivityPage> {
+    const query = new URLSearchParams({ limit: '25' });
+    if (input.page && input.page > 1) query.set('page', String(input.page));
+    if (input.outcome) query.set('outcome', input.outcome);
+    return call<ActivityPage>(
+      `/api/developer/keys/${encodeURIComponent(keyId)}/activity?${query.toString()}`,
+      { fallback: "Could not load that key's activity" }
+    );
+  },
+
+  webhooks(keyId: string): Promise<WebhookList> {
+    return call<WebhookList>(`/api/developer/keys/${encodeURIComponent(keyId)}/webhooks`, {
+      fallback: "Could not load that key's webhooks",
+    });
+  },
+
+  /** Returns the signing secret, once. It cannot be read again. */
+  createWebhook(
+    keyId: string,
+    input: { url: string; events?: string[]; communities?: string[] }
+  ): Promise<{ webhook: Webhook; signingSecret: string }> {
+    return call(`/api/developer/keys/${encodeURIComponent(keyId)}/webhooks`, {
+      method: 'POST',
+      body: json(input),
+      fallback: 'Could not add that webhook',
+    });
+  },
+
+  updateWebhook(
+    keyId: string,
+    webhookId: string,
+    input: { url?: string; events?: string[]; communities?: string[]; enabled?: boolean }
+  ): Promise<{ webhook: Webhook }> {
+    return call(
+      `/api/developer/keys/${encodeURIComponent(keyId)}/webhooks/${encodeURIComponent(webhookId)}`,
+      { method: 'PATCH', body: json(input), fallback: 'Could not save that webhook' }
+    );
+  },
+
+  /**
+   * Issues a new signing secret. The endpoint and its subscription are kept,
+   * so this is not an outage — but the next delivery is signed with the new
+   * secret, so the receiver has to be updated first.
+   */
+  rotateWebhookSecret(keyId: string, webhookId: string): Promise<{ signingSecret: string }> {
+    return call(
+      `/api/developer/keys/${encodeURIComponent(keyId)}/webhooks/${encodeURIComponent(webhookId)}/rotate`,
+      { method: 'POST', fallback: 'Could not rotate that signing secret' }
+    );
+  },
+
+  deleteWebhook(keyId: string, webhookId: string): Promise<{ deleted: boolean }> {
+    return call(
+      `/api/developer/keys/${encodeURIComponent(keyId)}/webhooks/${encodeURIComponent(webhookId)}`,
+      { method: 'DELETE', fallback: 'Could not delete that webhook' }
+    );
+  },
+
+  webhookDeliveries(
+    keyId: string,
+    webhookId: string
+  ): Promise<{ deliveries: WebhookDelivery[]; totalCount: number; retentionDays: number }> {
+    return call(
+      `/api/developer/keys/${encodeURIComponent(keyId)}/webhooks/${encodeURIComponent(webhookId)}/deliveries`,
+      { fallback: 'Could not load those deliveries' }
+    );
   },
 
   usage(days: 7 | 30 | 90 = 30): Promise<AccountUsage> {

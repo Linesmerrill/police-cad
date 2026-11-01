@@ -34,6 +34,8 @@ import { useConsole } from '@/components/developer/ConsoleProvider';
 import CommunityPicker from '@/components/developer/CommunityPicker';
 import ScopePicker from '@/components/developer/ScopePicker';
 import UsageChart from '@/components/developer/UsageChart';
+import KeyActivity from '@/components/developer/KeyActivity';
+import KeyWebhooks from '@/components/developer/KeyWebhooks';
 import {
   Card,
   ConfirmDialog,
@@ -690,6 +692,13 @@ export default function KeyDetailPage({ params }: { params: { id: string } }) {
           </>
         )}
       </Card>
+
+      {/* What this key actually did, and where its events go. Both below the
+          editing cards, because a developer comes here to change something far
+          more often than to debug — but above the danger card, because
+          rotating or revoking is the last thing on the page for a reason. */}
+      {revoked ? null : <KeyWebhooks keyId={keyId} />}
+      <KeyActivity keyId={keyId} />
 
       <Card title="Plan">
         <dl className="dc-defs">

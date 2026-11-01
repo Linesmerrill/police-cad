@@ -298,6 +298,26 @@ const faqData = [
           Second, if you want them gone: open <strong>API keys</strong> from your community menu, find the key, and choose <strong>Remove its records</strong>. &ldquo;Test records only&rdquo; deletes the simulated ones and nothing else. &ldquo;Everything it made&rdquo; also removes characters and vehicles that key created for real players, so only pick that one if you mean it. Either works even after you have withdrawn the key&apos;s access, which is the case it is really there for.</>)
       },
       {
+        question: 'Does my integration have to keep asking, or can you tell it when something changes?',
+        answer: (<>Either. Both read the same list of changes, so you can start with one and move to the other without rewriting anything.
+          <br /><br />
+          <strong>Asking</strong> is one request: you send us a cursor and we return only what has changed since. That is the cheap way to poll — the expensive way is re-reading every call every few seconds, and the cursor exists so you do not have to.
+          <br /><br />
+          <strong>Being told</strong> means registering a URL in the console. We sign every delivery so you can prove it came from us and that it is not a replay of an older one, and the docs show the five lines that verify it. If your endpoint is down we retry on a published schedule and then stop — and nothing is lost, because the change is still there to ask for.
+          <br /><br />
+          Changes from the website count too. If a dispatcher closes a call in the CAD, your integration hears about it the same way as if it had closed the call itself.</>)
+      },
+      {
+        question: 'My integration is getting an error and I cannot tell why. Can I see what you saw?',
+        answer: (<>Yes, and you do not need to ask us.
+          <br /><br />
+          Every response we send carries a request id. Your key&apos;s own history is in <a href="/developer" style={linkStyle}>the console</a> and from the API itself: which endpoint you called, which community, what we answered, and — when the answer was &ldquo;you do not have permission&rdquo; — <strong>exactly which permission was missing</strong>. That last part is the thing a bare 403 in your own logs cannot tell you.
+          <br /><br />
+          It needs no permission of its own, deliberately: a key that is being refused has to be able to find out why.
+          <br /><br />
+          We keep 30 days of it, and it holds no request or response bodies — only the shape of each exchange. If you need to see what you actually sent, log that your end.</>)
+      },
+      {
         question: 'Where are the docs, and where do I get help?',
         answer: (<>The <a href="/api-docs" style={linkStyle}>API reference</a> has every endpoint, a quickstart and a working FiveM example. Your keys, your usage and your limits are in <a href="/developer" style={linkStyle}>the developer console</a>.
           <br /><br />
