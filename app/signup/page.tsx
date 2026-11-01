@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SocialSignIn from '@/components/SocialSignIn';
 import Link from 'next/link';
 import { ExclamationTriangleIcon, CheckCircleIcon, UserIcon, EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
 
@@ -373,6 +374,8 @@ function SignupForm() {
               <span>{error}</span>
             </div>
           )}
+
+          <SocialSignIn />
 
           {/* Signup Form */}
           <form onSubmit={handleSubmit}>
