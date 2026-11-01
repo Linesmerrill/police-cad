@@ -92,6 +92,15 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
     await enableDeveloperAccount(page);
     await page.goto('/developer/keys/new');
 
+    // If the API has no DEV_API_KEY_PEPPER the console correctly shows no form
+    // at all, and every assertion below would fail as an unexplained timeout
+    // on a missing field. Say what is actually wrong instead.
+    await expect(
+      page.getByTestId('api-not-switched-on'),
+      'the test API has no DEV_API_KEY_PEPPER, so the console will not offer a key form ' +
+        '(see docker-compose.test.yml)'
+    ).toHaveCount(0);
+
     await page.locator('#dc-key-name').fill('E2E dispatch bridge');
     // The picker is the real list of communities this user is in, from the API.
     await expect(page.locator('#dc-community')).toContainText('test community');
