@@ -202,9 +202,18 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
     expect(rotated).toMatch(/^lpc_live_/);
     expect(rotated).not.toBe(secret);
 
+    // Rotating issues a NEW key and revokes the old one, so the page follows it
+    // and the URL changes under us. Carry the new id forward, or everything
+    // after this is looking at a revoked key.
+    await expect(page).toHaveURL(/\/developer\/keys\/[a-f0-9]{24}/, { timeout: 15_000 });
+    const rotatedId = (page.url().match(/\/keys\/([a-f0-9]{24})/) || [])[1] || '';
+    expect(rotatedId).toHaveLength(24);
+    expect(rotatedId).not.toBe(keyId);
+    keyId = rotatedId;
+
     await page.reload();
     // The communities carried across, which is what the dialog promised.
-    await expect(page.locator('.dc-table')).toContainText('test community');
+    await expect(page.locator('.dc-table')).toContainText('test community', { timeout: 20_000 });
   });
 
   test('usage counts the account, and names the key that spent it', async ({ page }) => {

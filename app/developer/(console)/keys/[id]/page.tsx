@@ -51,7 +51,11 @@ import {
 } from '@/components/developer/primitives';
 
 export default function KeyDetailPage({ params }: { params: { id: string } }) {
-  const keyId = params.id;
+  // Which key this page is showing. It starts as the one in the URL, and moves
+  // when a rotation replaces it: rotating issues a NEW key and revokes the old
+  // one, so staying on the URL's id left the reader looking at a dead key while
+  // being handed the live key's secret.
+  const [keyId, setKeyId] = useState(params.id);
   const { account, reload } = useConsole();
   const { notice, setNotice, say, warn, inform, fail, dismiss } = useNotice();
 
@@ -317,7 +321,16 @@ export default function KeyDetailPage({ params }: { params: { id: string } }) {
       setConfirmation(null);
       setRotated(result);
       setNotice(null);
-      await load();
+      // Follow the key. The secret stays in memory on this page rather than
+      // travelling through a URL, so the address bar is corrected in place
+      // instead of navigating, which would discard the one thing the reader
+      // has to copy before leaving.
+      if (result.key?.id && result.key.id !== keyId) {
+        setKeyId(result.key.id);
+        window.history.replaceState(null, '', consoleHref(`/keys/${result.key.id}`));
+      } else {
+        await load();
+      }
     } catch (e) {
       setConfirmation(null);
       fail(e instanceof ApiError ? e.message : 'Could not rotate that key');
