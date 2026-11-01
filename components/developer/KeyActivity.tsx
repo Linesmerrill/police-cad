@@ -4,7 +4,7 @@
  * What this key called, and what we answered.
  *
  * This screen exists for one conversation. A developer sees a 403 in their own
- * logs, and the useful question — which of a dozen things went wrong — is one
+ * logs, and the useful question, which of a dozen things went wrong, is one
  * they cannot answer from their side. So the row names the route, the
  * community, our own error code, and on a missing-scope refusal **which scope
  * was missing**, which is the single most common answer.
@@ -139,7 +139,7 @@ export default function KeyActivity({ keyId }: { keyId: string }) {
       )}
 
       <p className="dc-note">
-        These rows hold no request or response bodies, no headers and no key material — only the
+        These rows hold no request or response bodies, no headers and no key material, only the
         shape of each exchange. If you need what you sent, log it your end.
       </p>
     </Card>

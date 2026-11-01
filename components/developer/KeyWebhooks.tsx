@@ -5,7 +5,7 @@
  *
  * Two things shape this screen. The first is that the signing secret is shown
  * exactly once, so the panel that shows it has to say what to do with it before
- * anything navigates away — the same rule the key's own secret follows.
+ * anything navigates away, the same rule the key's own secret follows.
  *
  * The second is that "my webhook is not receiving anything" is the question
  * every webhook integration eventually asks, and it has a small set of answers:
@@ -128,7 +128,7 @@ export default function KeyWebhooks({ keyId }: { keyId: string }) {
           compare against the <code className="dc-mono">v1</code> value in{' '}
           <code className="dc-mono">X-LPC-Signature</code>, then reject anything whose{' '}
           <code className="dc-mono">t</code> is more than{' '}
-          {list?.limits.signatureToleranceSeconds || 300} seconds old — that last step is what stops
+          {list?.limits.signatureToleranceSeconds || 300} seconds old, that last step is what stops
           a captured delivery being replayable. Use the <strong>raw body</strong>, before any JSON
           parsing.
         </p>
@@ -163,7 +163,7 @@ export default function KeyWebhooks({ keyId }: { keyId: string }) {
       ) : hooks.length === 0 ? (
         <EmptyState title="No webhooks">
           Add one below, or keep polling{' '}
-          <code className="dc-mono">/changes</code> — both read the same events.
+          <code className="dc-mono">/changes</code>, both read the same events.
         </EmptyState>
       ) : (
         <div>
@@ -225,7 +225,7 @@ export default function KeyWebhooks({ keyId }: { keyId: string }) {
       <p className="dc-note">
         A delivery that fails is retried, then given up on: an endpoint that fails{' '}
         {list?.limits.disableAfterFailures || 20} in a row is switched off. Nothing is lost either
-        way — the event stays readable from{' '}
+        way, the event stays readable from{' '}
         <code className="dc-mono">/changes</code> for its retention window, so a missed delivery
         means you poll for it rather than never seeing it.
       </p>
@@ -283,9 +283,9 @@ function WebhookRow({
           {hook.lastDeliveryAt ? (
             <div className="dc-dim">
               Last tried {relativeTime(hook.lastDeliveryAt)}
-              {hook.lastStatus ? ` — answered ${hook.lastStatus}` : ''}
+              {hook.lastStatus ? `: answered ${hook.lastStatus}` : ''}
               {hook.consecutiveFailures > 0
-                ? ` — ${hook.consecutiveFailures} failure${hook.consecutiveFailures === 1 ? '' : 's'} in a row`
+                ? `, ${hook.consecutiveFailures} failure${hook.consecutiveFailures === 1 ? '' : 's'} in a row`
                 : ''}
             </div>
           ) : (
@@ -362,7 +362,7 @@ function WebhookRow({
                           delivery.succeeded ? 'dc-pill dc-pill-good' : 'dc-pill dc-pill-bad'
                         }
                       >
-                        {delivery.status || '—'}
+                        {delivery.status || ', '}
                       </span>
                       {delivery.error ? <div className="dc-dim">{delivery.error}</div> : null}
                     </td>

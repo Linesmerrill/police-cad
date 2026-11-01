@@ -565,7 +565,7 @@ set lpc_community_id "your_community_id"`}</Code>
             <p>
               <code>GET /communities/{'{communityId}'}/changes?since=&lt;cursor&gt;</code> returns
               only what has changed. Without it, finding out whether a call was closed means
-              re-reading every call — on a busy community that is a scan per tick, and it is why
+              re-reading every call, on a busy community that is a scan per tick, and it is why
               polling has a reputation for being expensive.
             </p>
             <p>
@@ -595,7 +595,7 @@ set lpc_community_id "your_community_id"`}</Code>
               <tbody>
                 {[
                   ['call.created / call.updated / call.closed', 'A call appeared, changed, or ended'],
-                  ['call.assigned', 'The units on a call changed — separate, so you need not diff every update'],
+                  ['call.assigned', 'The units on a call changed, separate, so you need not diff every update'],
                   ['unit.status_changed', "One unit's ten-code, location or department changed"],
                   ['record.created', 'A civilian, vehicle, firearm or licence was created'],
                   ['report_draft.filed / report_draft.rejected', 'A person acted on a draft you wrote'],
@@ -624,7 +624,7 @@ set lpc_community_id "your_community_id"`}</Code>
             <p>
               Register an endpoint per key in{' '}
               <a href="/developer">the console</a>. You get a signing secret once, and deliveries
-              carry the <strong>same event shape</strong> the cursor endpoint returns — so moving
+              carry the <strong>same event shape</strong> the cursor endpoint returns, so moving
               from polling to webhooks does not mean rewriting your handler, and you can run both
               while you migrate because the event id is stable and the duplicate is recognisable.
             </p>
@@ -650,7 +650,7 @@ set lpc_community_id "your_community_id"`}</Code>
               </thead>
               <tbody>
                 {[
-                  ['X-LPC-Signature', 't=<unix>,v1=<hex> — verify as above'],
+                  ['X-LPC-Signature', 't=<unix>,v1=<hex>, verify as above'],
                   ['X-LPC-Event-Id', 'Stable across retries, so you can recognise a duplicate'],
                   ['X-LPC-Event-Type', 'The same type as in the body'],
                   ['X-LPC-Delivery-Id', 'This attempt'],
@@ -694,7 +694,7 @@ set lpc_community_id "your_community_id"`}</Code>
               </li>
             </ul>
             <p>
-              Rotating the secret keeps the endpoint and its subscription, so it is not an outage —
+              Rotating the secret keeps the endpoint and its subscription, so it is not an outage,
               but the next delivery is signed with the new secret, so update your receiver first.
             </p>
 
@@ -705,7 +705,7 @@ set lpc_community_id "your_community_id"`}</Code>
               <code>POST …/reports/drafts/{'{externalId}'}/attachments</code> and{' '}
               <code>POST …/dispatch/calls/{'{externalId}'}/attachments</code> record{' '}
               <strong>metadata and a link</strong>. We host no bytes, there is no upload endpoint,
-              and we never fetch the URL — it is a link a person clicks in their own browser.
+              and we never fetch the URL, it is a link a person clicks in their own browser.
             </p>
             <p>
               That is the answer rather than a first step. Accepting third-party binaries would mean
@@ -738,7 +738,7 @@ set lpc_community_id "your_community_id"`}</Code>
             </p>
             <p>
               <code>GET /activity</code> is this key&apos;s own request history, and it{' '}
-              <strong>needs no scope</strong> — a key that is being refused has to be able to find
+              <strong>needs no scope</strong>: a key that is being refused has to be able to find
               out why, and gating the diagnostic would withhold it from exactly the keys that need
               it. Each row says which route, which community, what we answered, and on a{' '}
               <code>missing_scope</code> refusal <strong>which scope was missing</strong>, which is
@@ -746,7 +746,7 @@ set lpc_community_id "your_community_id"`}</Code>
             </p>
             <p>
               Rows are kept <strong>30 days</strong>. They hold no request body, no response body
-              and no header values — only the shape of each exchange, so if you need the contents of
+              and no header values, only the shape of each exchange, so if you need the contents of
               a call you made, log it your end. Quote a request id in a{' '}
               <a href="https://discord.gg/Y9ytW2ZMp4">ticket</a> and we can find exactly that
               request.
@@ -783,7 +783,7 @@ set lpc_community_id "your_community_id"`}</Code>
                   ['confirm_required', 'A cleanup needs confirm set to the community id'],
                   ['invalid_cursor', 'since must be a cursor from a previous response'],
                   ['invalid_event_type', 'Read the event list rather than guessing at it'],
-                  ['invalid_attachment', 'Unknown kind, no url, credentials in the url — or kind: "evidence", which does not exist'],
+                  ['invalid_attachment', 'Unknown kind, no url, credentials in the url, or kind: "evidence", which does not exist'],
                   ['attachment_limit_reached', '10 per record'],
                   ['rate_limited', 'Honour Retry-After'],
                   ['provision_cap_reached', 'Daily account or community cap; resets at midnight UTC'],

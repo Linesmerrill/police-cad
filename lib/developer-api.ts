@@ -118,7 +118,7 @@ export type KeyDetail = {
 
 /**
  * One request a key made. Deliberately holds nothing of the request's contents
- * — the API records the shape of an exchange, not its body, so there is no
+ *, the API records the shape of an exchange, not its body, so there is no
  * field here that could carry a secret even by accident.
  */
 export type ActivityRow = {
@@ -501,7 +501,7 @@ export const developerApi = {
 
   /**
    * Issues a new signing secret. The endpoint and its subscription are kept,
-   * so this is not an outage — but the next delivery is signed with the new
+   * so this is not an outage, but the next delivery is signed with the new
    * secret, so the receiver has to be updated first.
    */
   rotateWebhookSecret(keyId: string, webhookId: string): Promise<{ signingSecret: string }> {
