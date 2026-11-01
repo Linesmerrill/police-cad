@@ -26,6 +26,31 @@ test.describe.configure({ mode: 'serial', timeout: 60_000 });
 
 /** The key this spec makes, carried between steps. */
 let keyId = '';
+
+/**
+ * Opens this group's key.
+ *
+ * Prefers the id the creation test captured, and falls back to the first key in
+ * the list when that variable is empty. It is empty more often than it looks:
+ * these tests are one serial group sharing module state, and a retry restarts
+ * the worker, which resets it. Navigating to `/developer/keys/` then lands on
+ * Settings, where every assertion in the test fails for a reason that has
+ * nothing to do with what it was checking.
+ *
+ * The list comes from the database, so it survives whatever the runner does
+ * with workers, and clicking through it is how a person reaches this page
+ * anyway.
+ */
+async function openThisGroupsKey(page: Page) {
+  if (keyId) {
+    await page.goto(`/developer/keys/${keyId}`);
+    return;
+  }
+  await page.goto('/developer/keys');
+  await page.locator('.dc-key-name').first().click();
+  await expect(page).toHaveURL(/\/developer\/keys\/[a-f0-9]{24}/);
+  keyId = (page.url().match(/\/keys\/([a-f0-9]{24})/) || [])[1] || '';
+}
 let secret = '';
 
 async function enableDeveloperAccount(page: Page) {
@@ -130,7 +155,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('renaming a key keeps the same secret', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     // textContent does not wait, so read it only once the key has rendered.
     await expect(page.getByRole('heading', { name: 'E2E dispatch bridge' })).toBeVisible({
       timeout: 20_000,
@@ -149,7 +174,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('changing permissions does not issue a new secret', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
 
     // Pick whichever preset is not already the key's state, so this is a real
     // change on a first run and on a retry alike. The Save button only renders
@@ -180,7 +205,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   test('the API refuses permissions that would leave the key able to do nothing', async ({ page }) => {
     // Remove the key's only community first, then try to save a permission set
     // with no way to make one. The server decides; the console reports.
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     await page.getByRole('button', { name: 'Remove' }).first().click();
     await page.getByRole('button', { name: 'Remove community' }).click();
     await expect(
@@ -193,7 +218,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('adding a community back makes the key usable again', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     await page.locator('#dc-add-community').selectOption(COMMUNITY_ID);
     await page.getByRole('button', { name: 'Add community' }).click();
     await expect(
@@ -206,7 +231,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('a key can cover several communities, and says the budget is shared', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     // Only communities the key does not already have are offered.
     const options = await page.locator('#dc-add-community option').allTextContents();
     expect(options.some((o) => /test community/.test(o))).toBe(false);
@@ -215,7 +240,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('rotating issues a new secret and keeps the access', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     await page.getByRole('button', { name: 'Rotate key' }).click();
 
     const dialog = page.getByRole('dialog');
@@ -268,7 +293,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('revoking a key stops it, and it stays in the list as history', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     await page.getByRole('button', { name: 'Revoke key' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Revoke key' }).click();
 
@@ -283,7 +308,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
     await expect(history.first()).toBeVisible({ timeout: 20_000 });
     expect(await history.count()).toBeGreaterThanOrEqual(2);
 
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     await expect(page.getByText(/revoked and cannot be edited/i)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole('button', { name: 'Rotate key' })).toHaveCount(0);
   });
