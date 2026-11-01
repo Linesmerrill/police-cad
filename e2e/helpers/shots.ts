@@ -2,52 +2,40 @@
  * Screenshots attached to the Playwright HTML report.
  *
  * Attached rather than written to a loose folder because the report is what CI
- * uploads, so an attachment is something a reviewer can actually open from the
- * run without cloning anything. Every shot is taken at both widths: a console
- * table with four columns and a route template in one of them is always wider
- * than a phone, so the phone shot is the one that shows whether it degrades
- * properly rather than overflowing the page.
+ * uploads, so an attachment is something a reviewer can open from the run
+ * without cloning anything.
+ *
+ * Deliberately cheap. The first version of this took a full-page shot at two
+ * widths inside six existing tests, resizing the viewport mid-test to do it.
+ * Twelve full-page renders plus the relayouts was enough extra load on a CI
+ * runner to push unrelated timing-sensitive tests into retries, and in a suite
+ * with serial, stateful groups a retry is not free: the group re-runs against a
+ * database the first attempt already wrote to.
+ *
+ * So: one viewport-sized shot per call, the width set by the test's own
+ * `test.use({ viewport })` rather than by resizing, and only on the handful of
+ * screens worth a picture.
  */
-import { expect, Page, TestInfo } from '@playwright/test';
+import { Page, TestInfo } from '@playwright/test';
 
-export const DESKTOP = { width: 1440, height: 900 };
 export const PHONE = { width: 390, height: 844 };
 
 /**
- * Takes the same shot at both widths and attaches both.
+ * Attaches one screenshot of the current page at its current viewport.
  *
- * `ready` is awaited after each resize, because a resize re-runs the layout and
- * a shot taken before the content settles is a picture of a skeleton. Pass the
- * one element that proves the panel has rendered.
+ * `fullPage` is off by default because it forces a re-render of the whole
+ * document; pass it only for a shot that has to show what is below the fold.
  */
-export async function shootBothWidths(
+export async function shoot(
   page: Page,
   testInfo: TestInfo,
   name: string,
-  ready?: () => Promise<void>
+  options: { fullPage?: boolean } = {}
 ) {
-  for (const [label, size] of [
-    ['desktop', DESKTOP],
-    ['phone', PHONE],
-  ] as const) {
-    await page.setViewportSize(size);
-    if (ready) await ready();
-    // A full-page shot rather than the viewport, so the footer (or its
-    // absence) and everything below the fold is in the picture.
-    const png = await page.screenshot({ fullPage: true });
-    await testInfo.attach(`${name} (${label} ${size.width}px)`, {
-      body: png,
-      contentType: 'image/png',
-    });
-  }
-  // Leave the page at desktop so a following assertion is not reading a
-  // phone layout it did not ask for.
-  await page.setViewportSize(DESKTOP);
-}
-
-/** Waits for a heading to be on screen, as the readiness signal for a shot. */
-export function headingReady(page: Page, name: string | RegExp) {
-  return async () => {
-    await expect(page.getByRole('heading', { name })).toBeVisible();
-  };
+  const size = page.viewportSize();
+  const label = size ? `${name} (${size.width}px)` : name;
+  await testInfo.attach(label, {
+    body: await page.screenshot({ fullPage: options.fullPage === true }),
+    contentType: 'image/png',
+  });
 }
