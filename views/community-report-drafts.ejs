@@ -106,6 +106,32 @@
     }
     .gen-flag i { margin-top: 0.15rem; }
 
+    .notice-info { background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.35); color: #bae6fd; }
+
+    /* Attachments. Deliberately not styled like evidence: a plain list under
+       the account of events, with the integration that supplied the links
+       named above it. */
+    .atts {
+      margin-top: 1rem; padding-top: 0.9rem;
+      border-top: 1px solid var(--rp-glass-border);
+    }
+    .atts h3 {
+      margin: 0 0 0.4rem; font-size: 0.78rem; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--rp-text-dim); font-weight: 700;
+    }
+    .att-note { margin: 0 0 0.6rem; font-size: 0.83rem; line-height: 1.55; color: var(--rp-text-muted); }
+    .att-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+    .att {
+      display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap;
+      font-size: 0.89rem;
+    }
+    .att-kind {
+      flex: none; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.74rem;
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      color: var(--rp-text-dim); text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .att a { color: var(--rp-accent); word-break: break-word; }
+
     .charge { display:inline-block; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.78rem;
       background: rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); color:#fecaca;
       margin: 0 0.3rem 0.3rem 0; }
@@ -153,13 +179,23 @@
       </div>
     <% } else { %>
       <div id="feedback"></div>
-      <div class="filters" role="group" aria-label="Filter drafts">
-        <button type="button" class="filter is-on" data-status="draft">Waiting</button>
-        <button type="button" class="filter" data-status="submitted">Filed</button>
-        <button type="button" class="filter" data-status="rejected">Sent back</button>
-        <button type="button" class="filter" data-status="withdrawn">Withdrawn</button>
-        <button type="button" class="filter" data-status="all">All</button>
-      </div>
+      <% if (focusDraftId) { %>
+        <div class="notice notice-info" id="focusNotice">
+          Showing one draft, from a link. <a href="/community/<%= communityId %>/report-drafts">See all report drafts</a>
+        </div>
+      <% } %>
+      <% if (!focusDraftId) { %>
+        <%# Not rendered rather than hidden: .filters sets display:flex, and an
+            author rule beats the UA stylesheet's [hidden] { display: none }, so
+            the attribute alone left the strip on screen. %>
+        <div class="filters" role="group" aria-label="Filter drafts">
+          <button type="button" class="filter is-on" data-status="draft">Waiting</button>
+          <button type="button" class="filter" data-status="submitted">Filed</button>
+          <button type="button" class="filter" data-status="rejected">Sent back</button>
+          <button type="button" class="filter" data-status="withdrawn">Withdrawn</button>
+          <button type="button" class="filter" data-status="all">All</button>
+        </div>
+      <% } %>
       <div class="card">
         <div id="drafts"><p class="empty">Loading&hellip;</p></div>
         <div class="pager" id="pager" hidden>
@@ -175,6 +211,7 @@
   <script>
     (function () {
       var COMMUNITY_ID = <%- JSON.stringify(communityId) %>;
+      var FOCUS_DRAFT_ID = <%- JSON.stringify(focusDraftId || '') %>;
       var draftsEl = document.getElementById('drafts');
       var feedbackEl = document.getElementById('feedback');
       var pagerEl = document.getElementById('pager');
@@ -278,6 +315,56 @@
         return '<div class="half"><h3>Narrative</h3>' + flag + body + '</div>';
       }
 
+      // What a filed draft turned into, when that record has a page of its own.
+      //
+      // Form submissions do: /reports/<id> renders one. Arrest reports do not,
+      // they are only reachable through the modal on the police and dispatch
+      // dashboards, keyed by the civilian, so there is no honest URL to offer
+      // and this says what was filed instead of linking somewhere that 404s.
+      function filedRecordLink(draft) {
+        if (!draft.filedRecordId) return '';
+        if (draft.filedRecordKind === 'formSubmission') {
+          return '<a class="btn btn-ghost" href="/reports/' + encodeURIComponent(draft.filedRecordId) +
+            '?view=1">Open the filed report</a>';
+        }
+        if (draft.filedRecordKind === 'arrestReport') {
+          return '<span class="muted">Filed as an arrest report. Open it from the arrest on the ' +
+            'civilian&rsquo;s record.</span>';
+        }
+        return '';
+      }
+
+      function attachmentRow(attachment) {
+        var kind = escapeHtml(attachment.kind || 'other');
+        var label = attachment.label ? escapeHtml(attachment.label) : 'Untitled';
+        var size = attachment.sizeBytes
+          ? ' &middot; ' + Math.max(1, Math.round(attachment.sizeBytes / 1024)) + ' KB'
+          : '';
+        var type = attachment.contentType ? ' &middot; ' + escapeHtml(attachment.contentType) : '';
+        // rel=noopener and the link text is the label, never the raw URL: the
+        // URL comes from an integration, so it is shown as a destination the
+        // reviewer chooses to follow, not as page content.
+        return '<li class="att">' +
+          '<span class="att-kind">' + kind + '</span>' +
+          '<a href="' + escapeHtml(attachment.url || '#') + '" target="_blank" rel="noopener noreferrer">' +
+            label + '</a>' +
+          '<span class="dim">' + type + size + '</span>' +
+        '</li>';
+      }
+
+      function attachmentsBlock(draft, keyName) {
+        var list = draft.attachments || [];
+        if (list.length === 0) return '';
+        var who = keyName ? escapeHtml(keyName) : 'an integration';
+        return '<div class="atts">' +
+          '<h3>Attached <span class="dim">(' + list.length + ')</span></h3>' +
+          '<p class="att-note">Added by <strong>' + who + '</strong>. ' +
+            'Links an integration supplied, not evidence, and nobody here has checked them. ' +
+            'They open in a new tab.</p>' +
+          '<ul class="att-list">' + list.map(attachmentRow).join('') + '</ul>' +
+        '</div>';
+      }
+
       function render(payload) {
         var rows = (payload && payload.data) || [];
         totalCount = (payload && payload.totalCount) || 0;
@@ -316,6 +403,10 @@
               (draft.reviewNotes ? '. “' + escapeHtml(draft.reviewNotes) + '”' : '') +
               '</div>';
           }
+          var filedLink = filedRecordLink(draft);
+          if (filedLink) {
+            reviewed += '<div style="margin-top:0.6rem;">' + filedLink + '</div>';
+          }
 
           return '<div class="draft">' +
             '<div class="draft-head">' +
@@ -335,6 +426,7 @@
               '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' + actions + '</div>' +
             '</div>' +
             '<div class="halves">' + factsHalf(draft) + narrativeHalf(draft) + '</div>' +
+            attachmentsBlock(draft, row.writtenByKeyName) +
           '</div>';
         }).join('');
 
@@ -345,7 +437,37 @@
         document.getElementById('next').disabled = page >= pages;
       }
 
+      // One draft, when the page was opened from a reviewLink. Going through
+      // the per-draft endpoint rather than hunting for it in the list means the
+      // link works whatever its status is and whatever page it would land on.
+      function loadOne() {
+        draftsEl.innerHTML = '<p class="empty">Loading&hellip;</p>';
+        pagerEl.hidden = true;
+        fetch('/api/developer/community/' + COMMUNITY_ID + '/report-drafts/' + FOCUS_DRAFT_ID,
+          { credentials: 'include' })
+          .then(function (response) {
+            return response.json().then(function (data) {
+              if (!response.ok) {
+                throw new Error(data && data.message ? data.message : 'Could not load that draft');
+              }
+              return data;
+            });
+          })
+          .then(function (data) {
+            // This endpoint answers {draft: <review row>}, and the review row
+            // is itself {draft, writtenByKeyName}, so the row render wants the
+            // inner one. Shaped as a one-row list so there is one code path.
+            render({ data: [data.draft], totalCount: 1 });
+          })
+          .catch(function (error) {
+            draftsEl.innerHTML = '<p class="empty">That draft is not here. It may have been ' +
+              'withdrawn, or it belongs to another community.</p>';
+            feedback('err', error.message || 'Could not load that draft');
+          });
+      }
+
       function load() {
+        if (FOCUS_DRAFT_ID) return loadOne();
         draftsEl.innerHTML = '<p class="empty">Loading&hellip;</p>';
         var query = '?status=' + encodeURIComponent(status) +
           '&page=' + page + '&limit=' + limit;
@@ -383,9 +505,18 @@
           })
           .then(function (data) {
             if (action === 'file') {
-              feedback('ok', data && data.filed === false
+              var base = data && data.filed === false
                 ? 'That report was already filed.'
-                : 'Filed. It is now a real report in this community.');
+                : 'Filed. It is now a real report in this community.';
+              var record = (data && data.record) || {};
+              if (record.id && record.kind === 'formSubmission') {
+                // feedback() escapes, so the link is written straight in here.
+                feedbackEl.innerHTML = '<div class="notice notice-ok">' + escapeHtml(base) +
+                  ' <a href="/reports/' + encodeURIComponent(record.id) + '?view=1">Open it</a></div>';
+                feedbackEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              } else {
+                feedback('ok', base);
+              }
             } else {
               feedback('ok', 'Sent back. The integration can read your reason.');
             }
@@ -396,7 +527,8 @@
           });
       }
 
-      document.querySelector('.filters').addEventListener('click', function (event) {
+      var filtersEl = document.querySelector('.filters');
+      if (filtersEl) filtersEl.addEventListener('click', function (event) {
         var button = event.target.closest('.filter');
         if (!button) return;
         document.querySelectorAll('.filter').forEach(function (el) { el.classList.remove('is-on'); });
