@@ -517,7 +517,7 @@
             // problem.
             draftsEl.innerHTML = error.statusCode >= 500
               ? '<p class="empty">We could not load this draft just now. ' +
-                '<a href="/community/' + encodeURIComponent(COMMUNITY_ID) +
+                '<a href="/community/' + encodeURIComponent(COMMUNITY_HASH) +
                 '/report-drafts/' + encodeURIComponent(FOCUS_DRAFT_ID) + '">Try again</a>.</p>'
               : '<p class="empty">That draft is not here. It may have been ' +
                 'withdrawn, or it belongs to another community.</p>';

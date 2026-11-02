@@ -210,6 +210,11 @@ test.describe('Report draft review', () => {
     await page.goto(`/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`);
 
     await expect(page.locator('#drafts')).toContainText(/could not load this draft just now/i);
+    // The retry link is a real URL on this site, not the raw ObjectId.
+    await expect(page.locator('#drafts').getByRole('link', { name: 'Try again' })).toHaveAttribute(
+      'href',
+      `/community/${COMMUNITY_HASH}/report-drafts/${DRAFT_ID}`
+    );
     await expect(page.locator('#drafts')).not.toContainText(/withdrawn/i);
     await expect(page.locator('#feedback .notice-err')).toContainText(/error 503/);
   });
