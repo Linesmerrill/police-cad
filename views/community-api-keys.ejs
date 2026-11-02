@@ -201,14 +201,14 @@
         fetch('/api/developer/community/' + COMMUNITY_ID + '/keys', { credentials: 'include' })
           .then(function (response) {
             return response.json().then(function (data) {
-              if (!response.ok) throw new Error(data && data.message ? data.message : 'Could not load keys');
+              if (!response.ok) throw new Error(data && data.message ? data.message : 'That didn\u2019t work. Try again.');
               return data;
             });
           })
           .then(render)
           .catch(function (error) {
             keysEl.innerHTML = '';
-            feedback('err', error.message || 'Could not load keys');
+            feedback('err', error.message || 'That didn\u2019t work. Try again.');
           });
       }
 
