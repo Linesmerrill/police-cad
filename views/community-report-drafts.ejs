@@ -164,9 +164,8 @@
 
     <h1>Report drafts</h1>
     <p class="lede">
-      Reports an integration prepared for <strong><%= communityName || 'this community' %></strong>
-      from what it saw in the game. Nothing here has been filed. Read one, and either file it as a
-      real report or send it back with a reason.
+      Reports prepared by an integration for <strong><%= communityName || 'this community' %></strong>.
+      Nothing is filed yet.
       <a href="/api-docs">What writes these?</a>
     </p>
 
@@ -174,14 +173,13 @@
       <div class="notice notice-err"><%= loadError %></div>
     <% } else if (!canReview) { %>
       <div class="notice notice-warn">
-        You need the <strong>manage records</strong> permission to review report drafts.
-        Ask an admin or the owner.
+        You need the <strong>manage records</strong> permission to see these.
       </div>
     <% } else { %>
       <div id="feedback"></div>
       <% if (focusDraftId) { %>
         <div class="notice notice-info" id="focusNotice">
-          Showing one draft, from a link. <a href="/community/<%= communityHash %>/report-drafts">See all report drafts</a>
+          Showing one draft. <a href="/community/<%= communityHash %>/report-drafts">See all report drafts</a>
         </div>
       <% } %>
       <% if (!focusDraftId) { %>
@@ -352,7 +350,7 @@
         return '<div class="half"><h3>What the server saw</h3><dl style="margin:0;">' + rows + '</dl>' +
           (charges
             ? '<div style="margin-top:0.75rem;"><h3>Charges</h3>' + charges +
-              '<p class="dim" style="margin:0.35rem 0 0;">Priced from this community’s penal code.</p></div>'
+              '<p class="dim" style="margin:0.35rem 0 0;">Priced from your penal code.</p></div>'
             : '') +
           '</div>';
       }
@@ -364,8 +362,7 @@
           flag = '<div class="gen-flag"><i class="fa fa-robot"></i><span>' +
             '<strong>Written by AI' +
             (narrative.generatedBy ? ' (' + escapeHtml(narrative.generatedBy) + ')' : '') +
-            '.</strong> Read it against the facts beside it before you file anything. ' +
-            'This is an account of events, not evidence.</span></div>';
+            '.</strong> Check it against the facts.</span></div>';
         }
         var body = narrative.text
           ? '<p class="narrative">' + escapeHtml(narrative.text) + '</p>'
@@ -386,8 +383,7 @@
             '?view=1&c=' + encodeURIComponent(COMMUNITY_HASH) + '">Open the filed report</a>';
         }
         if (draft.filedRecordKind === 'arrestReport') {
-          return '<span class="muted">Filed as an arrest report. Open it from the arrest on the ' +
-            'civilian&rsquo;s record.</span>';
+          return '<span class="muted">Filed as an arrest report.</span>';
         }
         return '';
       }
@@ -416,9 +412,7 @@
         var who = keyName ? escapeHtml(keyName) : 'an integration';
         return '<div class="atts">' +
           '<h3>Attached <span class="dim">(' + list.length + ')</span></h3>' +
-          '<p class="att-note">Added by <strong>' + who + '</strong>. ' +
-            'Links an integration supplied, not evidence, and nobody here has checked them. ' +
-            'They open in a new tab.</p>' +
+          '<p class="att-note">Added by <strong>' + who + '</strong>. Not checked.</p>' +
           '<ul class="att-list">' + list.map(attachmentRow).join('') + '</ul>' +
         '</div>';
       }
@@ -429,7 +423,7 @@
 
         if (rows.length === 0) {
           draftsEl.innerHTML = '<p class="empty">' + (status === 'draft'
-            ? 'Nothing is waiting for you. Drafts show up here when an integration prepares one.'
+            ? 'No drafts waiting.'
             : 'No drafts with that status.') + '</p>';
           pagerEl.hidden = true;
           return;
@@ -519,8 +513,7 @@
               ? '<p class="empty">We could not load this draft just now. ' +
                 '<a href="/community/' + encodeURIComponent(COMMUNITY_HASH) +
                 '/report-drafts/' + encodeURIComponent(FOCUS_DRAFT_ID) + '">Try again</a>.</p>'
-              : '<p class="empty">That draft is not here. It may have been ' +
-                'withdrawn, or it belongs to another community.</p>';
+              : '<p class="empty">That draft is not available.</p>';
             feedback('err', error.message || 'Could not load that draft');
           });
       }
@@ -536,7 +529,7 @@
           .then(render)
           .catch(function (error) {
             draftsEl.innerHTML = '';
-            feedback('err', error.message || 'Could not load drafts');
+            feedback('err', error.message || 'Could not load drafts.');
           });
       }
 
@@ -551,8 +544,8 @@
           .then(function (data) {
             if (action === 'file') {
               var base = data && data.filed === false
-                ? 'That report was already filed.'
-                : 'Filed. It is now a real report in this community.';
+                ? 'Already filed.'
+                : 'Filed.';
               var record = (data && data.record) || {};
               if (record.id && record.kind === 'formSubmission') {
                 // feedback() escapes, so the link is written straight in here.
@@ -564,12 +557,12 @@
                 feedback('ok', base);
               }
             } else {
-              feedback('ok', 'Sent back. The integration can read your reason.');
+              feedback('ok', 'Sent back.');
             }
             load();
           })
           .catch(function (error) {
-            feedback('err', error.message || 'That did not work');
+            feedback('err', error.message || 'Something went wrong.');
           });
       }
 
@@ -599,16 +592,13 @@
         var kind = button.getAttribute('data-kind') || 'incident';
 
         if (action === 'file') {
-          // Filing is the irreversible half. The copy names the one thing that
-          // changes, and says plainly that it becomes a real record.
+          // Filing is the irreversible half, so it asks first. ddModal, never a
+          // native confirm.
           window.ddModal({
             type: 'warning',
             icon: 'fa-file-signature',
             title: 'File this report?',
-            message: 'It becomes a <strong>real ' + escapeHtml(kind) + ' report</strong> in this ' +
-              'community, with whatever that carries.',
-            detail: 'You are the person filing it. If the narrative was written by AI, make sure ' +
-              'it matches the facts beside it first.',
+            message: 'It becomes a <strong>real ' + escapeHtml(kind) + ' report</strong>.',
             confirmText: 'File it',
             onConfirm: function () { act('file', draftId, ''); },
           });
@@ -631,18 +621,18 @@
           type: 'danger',
           icon: 'fa-rotate-left',
           title: 'Send this back?',
-          message: 'Nothing is filed, and the <strong>officer sees your reason</strong> in the game.',
+          message: 'Nothing is filed. <strong>The officer sees your reason.</strong>',
           detail: '<label for="rejectNotes" style="display:block;margin-bottom:0.4rem;' +
-            'font-size:0.85rem;color:#94a3b8;">Why are you sending it back?</label>' +
+            'font-size:0.85rem;color:#94a3b8;">Reason</label>' +
             '<textarea id="rejectNotes" rows="3" maxlength="2000" ' +
             'style="width:100%;background:rgba(255,255,255,0.05);color:#e2e8f0;' +
             'border:1px solid ' + border + ';border-radius:8px;padding:0.6rem;' +
             'font-family:inherit;font-size:0.9rem;" ' +
-            'placeholder="The narrative does not match the clip.">' +
+            'placeholder="Why are you sending it back?">' +
             escapeHtml(typed) + '</textarea>' +
             (invalid
               ? '<span style="display:block;color:#f87171;font-size:0.8rem;margin-top:0.35rem;">' +
-                'A reason is required. The officer only sees this.</span>'
+                'Add a reason.</span>'
               : ''),
           confirmText: 'Send back',
           onConfirm: function () {

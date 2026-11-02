@@ -91,8 +91,8 @@ test.describe('Report draft review', () => {
     await mockQueue(page, [generatedArrestDraft()]);
     await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
 
-    // The page says nothing has been filed, before anything else.
-    await expect(page.getByText(/Nothing here has been filed/i)).toBeVisible();
+    // The page says nothing is filed, before anything else.
+    await expect(page.getByText(/Nothing is filed yet/i)).toBeVisible();
 
     // Both halves, under headings that say which is which. This separation is
     // the whole point: a reviewer has to be able to weigh what the server saw
@@ -104,7 +104,7 @@ test.describe('Report draft review', () => {
 
     // The one thing that must not be missed.
     await expect(page.getByText(/Written by AI \(sixpd-llm\)/)).toBeVisible();
-    await expect(page.getByText(/not evidence/i)).toBeVisible();
+    await expect(page.getByText(/Check it against the facts/i)).toBeVisible();
 
     // And who wrote it, which is a reviewer's first question.
     await expect(page.getByText(/SixPD dispatch bridge/)).toBeVisible();
@@ -112,7 +112,7 @@ test.describe('Report draft review', () => {
 
     // Charges priced from the community's own penal code.
     await expect(page.getByText(/Reckless Driving/)).toBeVisible();
-    await expect(page.getByText(/Priced from this community/)).toBeVisible();
+    await expect(page.getByText(/Priced from your penal code/)).toBeVisible();
   });
 
   test('a human-written narrative is not flagged as AI', async ({ page }) => {
@@ -146,7 +146,7 @@ test.describe('Report draft review', () => {
 
     await page.locator('#ddm-overlay').getByRole('button', { name: 'File it' }).click();
     await expect.poll(() => filed).toBe(true);
-    await expect(page.getByText(/now a real report in this community/i)).toBeVisible();
+    await expect(page.locator('#feedback')).toContainText('Filed.');
   });
 
   /**
@@ -235,7 +235,7 @@ test.describe('Report draft review', () => {
     // Confirming with the field empty re-opens the same question with the
     // field flagged, rather than closing and leaving a toast behind.
     await page.locator('#ddm-overlay').getByRole('button', { name: 'Send back' }).click();
-    await expect(page.getByText(/A reason is required/i)).toBeVisible();
+    await expect(page.getByText(/Add a reason/i)).toBeVisible();
     expect(rejectedWith).toBeNull();
 
     await page.locator('#rejectNotes').fill('The narrative does not match the clip.');
@@ -279,7 +279,7 @@ test.describe('Report draft review', () => {
     await mockQueue(page, [], 0);
     await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
 
-    await expect(page.getByText(/Nothing is waiting for you/i)).toBeVisible();
+    await expect(page.getByText(/No drafts waiting/i)).toBeVisible();
   });
 
   test('the filter strip narrows the queue by status', async ({ page }) => {
@@ -424,7 +424,7 @@ test.describe('Screenshots: report drafts at desktop width', () => {
   test('the empty queue', async ({ page }, testInfo) => {
     await mockQueue(page, [], 0);
     await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
-    await expect(page.getByText(/Nothing is waiting for you/i)).toBeVisible();
+    await expect(page.getByText(/No drafts waiting/i)).toBeVisible();
     await shoot(page, testInfo, 'report-draft review queue, empty');
   });
 });
@@ -532,7 +532,7 @@ test.describe('Report draft deep links, attachments and the filed record', () =>
     );
     await page.goto(`/community/${COMMUNITY_HASH}/report-drafts/${DRAFT_ID}`);
 
-    await expect(page.getByText(/That draft is not here/i)).toBeVisible();
+    await expect(page.getByText(/That draft is not available/i)).toBeVisible();
   });
 
   test('a malformed draft id is not found rather than rendered', async ({ page }) => {
@@ -584,7 +584,7 @@ test.describe('Report draft deep links, attachments and the filed record', () =>
 
     // Attribution, and the one thing this must never be called.
     await expect(atts.getByText(/Added by/)).toContainText('SixPD dispatch bridge');
-    await expect(atts.getByText(/not evidence/i)).toBeVisible();
+    await expect(atts.getByText(/Not checked/i)).toBeVisible();
     await expect(atts).not.toContainText(/^Evidence$/);
   });
 
