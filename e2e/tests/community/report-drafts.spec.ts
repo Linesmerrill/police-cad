@@ -609,12 +609,20 @@ test.describe('Community URLs on the Developer API pages', () => {
     await mockNoKeys(page);
     await mockQueue(page, []);
     await page.goto(`/community/${COMMUNITY_HASH}`);
+    // The cards live inside the settings modal, which record-deletion-setting
+    // opens the same way.
+    await page.evaluate(() =>
+      (window as unknown as { openSettingsModal: () => void }).openSettingsModal()
+    );
 
     await page.locator('#apiKeysSettingsCard').click();
     await expect(page).toHaveURL(new RegExp(`/community/${COMMUNITY_HASH}/api-keys$`));
     await expect(page.getByRole('heading', { name: 'API keys' })).toBeVisible();
 
     await page.goto(`/community/${COMMUNITY_HASH}`);
+    await page.evaluate(() =>
+      (window as unknown as { openSettingsModal: () => void }).openSettingsModal()
+    );
     await page.locator('#reportDraftsSettingsCard').click();
     await expect(page).toHaveURL(new RegExp(`/community/${COMMUNITY_HASH}/report-drafts$`));
   });

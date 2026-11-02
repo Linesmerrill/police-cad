@@ -461,7 +461,7 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
 
     await page.getByRole('button', { name: 'Approve' }).click();
     // ddModal, not a native confirm.
-    await expect(page.getByText(/^Approve /)).toBeVisible();
+    await expect(page.locator('#ddm-overlay')).toContainText('Approve Waiting mod?');
     expect(approved).toBe(false);
 
     // Confirm inside the overlay. Its button carries the same label as the row

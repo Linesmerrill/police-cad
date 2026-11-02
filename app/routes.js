@@ -543,6 +543,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         boosterUsername,
         query: req.query,
         hash,
+        // Built from the id the API answered with, not from req.params.hash.
+        // Same string, but it is the community we just loaded rather than a
+        // path segment echoed back into the page.
+        communityHash: encodeId(String(community._id)),
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),
         reportReasons: communityReport.REPORT_REASONS,
