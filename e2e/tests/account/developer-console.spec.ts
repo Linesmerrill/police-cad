@@ -216,6 +216,42 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
     await expect(page.locator('.dc-chip, input[type=checkbox]:checked')).not.toHaveCount(0);
   });
 
+  // The regression test for the bug this pair of PRs shipped: `reports:*` and
+  // `warrants:*` were tickable in the console but the website's own proxy
+  // rejected them on save, so no key could ever hold one. A unit test now
+  // compares the proxy's allowlist against the console's label table; this one
+  // goes through the real proxy to the real API, which is where it broke.
+  test('the report and warrant permissions can actually be saved', async ({ page }) => {
+    await openThisGroupsKey(page);
+    await expect(page.locator('input[type=checkbox]:checked').first()).toBeVisible({
+      timeout: 20_000,
+    });
+
+    // Read-only on both, so the key gains nothing that files or issues
+    // anything, and still holds no :provision scope for the next test.
+    for (const scope of ['reports:read', 'warrants:read']) {
+      const box = page.locator('label.row', { hasText: scope }).locator('input[type=checkbox]');
+      await expect(box, `${scope} should be offered in the console`).toHaveCount(1);
+      if (!(await box.isChecked())) await box.click();
+    }
+
+    await page.getByRole('button', { name: 'Save permissions' }).click();
+    await expect(page.locator('.dc-notice-body')).toContainText(/Permissions saved/, {
+      timeout: 15_000,
+    });
+
+    // What the API stored, not what the page remembers.
+    await page.reload();
+    await expect(page.locator('input[type=checkbox]:checked').first()).toBeVisible({
+      timeout: 20_000,
+    });
+    for (const scope of ['reports:read', 'warrants:read']) {
+      await expect(
+        page.locator('label.row', { hasText: scope }).locator('input[type=checkbox]')
+      ).toBeChecked();
+    }
+  });
+
   test('the API refuses permissions that would leave the key able to do nothing', async ({ page }) => {
     // Remove the key's only community first, then try to save a permission set
     // with no way to make one. The server decides; the console reports.

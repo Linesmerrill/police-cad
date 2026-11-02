@@ -61,6 +61,15 @@ jobs:
         env:
           NEXT_PUBLIC_POLICE_CAD_API_URL: http://localhost:8081
 
+      # The unit suite ran nowhere in CI, which is how a scope the console
+      # offered but the proxy rejected reached production. It is 286 tests in
+      # well under a second, and it needs no services, so it runs first: a
+      # failure here is a real failure and there is no reason to spend eight
+      # minutes of Playwright to find out.
+      - name: Unit tests
+        working-directory: police-cad
+        run: npm test
+
       - name: Install Playwright browsers
         working-directory: police-cad
         run: npx playwright install --with-deps chromium

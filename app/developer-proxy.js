@@ -31,6 +31,10 @@ var DEVELOPER_SCOPES = [
   { scope: "communities:provision", description: "Create communities owned by you", group: "Provisioning" },
   { scope: "members:read", description: "Read the community's member roster", group: "Members" },
   { scope: "members:write", description: "Invite, approve, promote and remove members", group: "Members" },
+  { scope: "reports:read", description: "Read the report drafts this key created", group: "Reports" },
+  { scope: "reports:write", description: "Write report drafts for a person to review and file", group: "Reports" },
+  { scope: "warrants:read", description: "Read the community's warrants", group: "Reports" },
+  { scope: "warrants:write", description: "Request a warrant for the community's reviewer", group: "Reports" },
 ];
 
 var VALID_SCOPES = DEVELOPER_SCOPES.reduce(function (acc, s) {
