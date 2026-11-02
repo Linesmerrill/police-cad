@@ -184,13 +184,18 @@
           Showing one draft, from a link. <a href="/community/<%= communityId %>/report-drafts">See all report drafts</a>
         </div>
       <% } %>
-      <div class="filters" role="group" aria-label="Filter drafts"<% if (focusDraftId) { %> hidden<% } %>>
-        <button type="button" class="filter is-on" data-status="draft">Waiting</button>
-        <button type="button" class="filter" data-status="submitted">Filed</button>
-        <button type="button" class="filter" data-status="rejected">Sent back</button>
-        <button type="button" class="filter" data-status="withdrawn">Withdrawn</button>
-        <button type="button" class="filter" data-status="all">All</button>
-      </div>
+      <% if (!focusDraftId) { %>
+        <%# Not rendered rather than hidden: .filters sets display:flex, and an
+            author rule beats the UA stylesheet's [hidden] { display: none }, so
+            the attribute alone left the strip on screen. %>
+        <div class="filters" role="group" aria-label="Filter drafts">
+          <button type="button" class="filter is-on" data-status="draft">Waiting</button>
+          <button type="button" class="filter" data-status="submitted">Filed</button>
+          <button type="button" class="filter" data-status="rejected">Sent back</button>
+          <button type="button" class="filter" data-status="withdrawn">Withdrawn</button>
+          <button type="button" class="filter" data-status="all">All</button>
+        </div>
+      <% } %>
       <div class="card">
         <div id="drafts"><p class="empty">Loading&hellip;</p></div>
         <div class="pager" id="pager" hidden>
@@ -522,7 +527,8 @@
           });
       }
 
-      document.querySelector('.filters').addEventListener('click', function (event) {
+      var filtersEl = document.querySelector('.filters');
+      if (filtersEl) filtersEl.addEventListener('click', function (event) {
         var button = event.target.closest('.filter');
         if (!button) return;
         document.querySelectorAll('.filter').forEach(function (el) { el.classList.remove('is-on'); });

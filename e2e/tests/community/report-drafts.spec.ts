@@ -447,8 +447,10 @@ test.describe('Report draft deep links, attachments and the filed record', () =>
     );
     await expect(page.locator('.draft .mono')).toContainText('sixpd-incident-42');
     await expect(page.getByRole('link', { name: /See all report drafts/i })).toBeVisible();
-    // The filters belong to the list, not to one draft.
-    await expect(page.locator('.filters')).toBeHidden();
+    // The filters belong to the list, not to one draft. Asserting absence
+    // rather than hidden on purpose: .filters sets display:flex, so the hidden
+    // attribute alone left it on screen, which is what this caught.
+    await expect(page.locator('.filters')).toHaveCount(0);
   });
 
   test('a draft id that is not there says so instead of looking empty', async ({ page }) => {
