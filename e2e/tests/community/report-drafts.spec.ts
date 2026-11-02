@@ -320,7 +320,13 @@ test.describe('Developer API docs: the phase-3 surfaces', () => {
     await expect(page.getByRole('heading', { name: 'Report drafts' })).toBeVisible();
     await expect(page.getByText(/It does not file a report/)).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Warrants', exact: true })).toBeVisible();
-    await expect(page.getByText(/a request always lands pending/i)).toBeVisible();
+    // A request follows the community's own approval mode now, so what the
+    // docs have to be plain about is the thing that did not change: a key asks
+    // and never decides.
+    await expect(
+      page.getByText(/the community.{0,3}s own approval mode decides it/i)
+    ).toBeVisible();
+    await expect(page.getByText(/no approve, deny or review route for a key/i)).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Simulated characters' })).toBeVisible();
     await expect(page.getByText(/includeSynthetic=true/).first()).toBeVisible();
   });
@@ -431,9 +437,15 @@ test.describe('Report draft deep links, attachments and the filed record', () =>
     await page.goto(`/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`);
 
     await expect(page.getByRole('heading', { name: 'Report drafts' })).toBeVisible();
-    await expect(page.getByText(/Vehicle failed to stop/)).toBeVisible();
     // One draft, and a way back to the rest.
     await expect(page.locator('.draft')).toHaveCount(1);
+    // The narrative, which appears once. The summary would not do: the page
+    // shows it as the card's title and again as a fact row, so matching on it
+    // is two elements.
+    await expect(page.locator('.draft .narrative')).toContainText(
+      'The driver accelerated away from the stop'
+    );
+    await expect(page.locator('.draft .mono')).toContainText('sixpd-incident-42');
     await expect(page.getByRole('link', { name: /See all report drafts/i })).toBeVisible();
     // The filters belong to the list, not to one draft.
     await expect(page.locator('.filters')).toBeHidden();
