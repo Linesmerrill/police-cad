@@ -181,22 +181,26 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   test('changing permissions does not issue a new secret', async ({ page }) => {
     await openThisGroupsKey(page);
 
-    // Pick whichever preset is not already the key's state, so this is a real
-    // change on a first run and on a retry alike. The Save button only renders
-    // when the selection differs from what is stored, so a retry that found the
-    // key already read-only had nothing to click and timed out waiting for a
-    // notice that was never going to come.
+    // The key's stored scopes arrive from the API after first paint, and until
+    // they do nothing is ticked. Wait for them: a selection made before the
+    // load is overwritten by it, and every preset reports aria-pressed="false"
+    // while the selection is empty, so reading one tells you nothing.
+    await expect(page.locator('input[type=checkbox]:checked').first()).toBeVisible({
+      timeout: 20_000,
+    });
+
+    // One individual permission rather than a preset. The Save button only
+    // renders when the selection differs from what is stored, so clicking a
+    // preset is a change only when the key is not already in that preset's
+    // state, which a retry cannot guarantee. Toggling a single box is a change
+    // in either direction.
     //
-    // Dispatch rather than Everything as the alternative, deliberately: the
-    // next test asserts the key reaches nothing and cannot create a community,
-    // which needs it to hold no :provision scope. Both of these presets
-    // exclude provisioning; Everything would not.
-    const readOnly = page.getByRole('button', { name: 'Read only', exact: true });
-    const alreadyReadOnly = (await readOnly.getAttribute('aria-pressed')) === 'true';
-    await (alreadyReadOnly
-      ? page.getByRole('button', { name: 'Dispatch', exact: true })
-      : readOnly
-    ).click();
+    // bolos:read deliberately: the next test asserts this key reaches nothing
+    // and cannot create a community, so it must not hold a :provision scope.
+    const bolosRead = page
+      .locator('label.row', { hasText: 'bolos:read' })
+      .locator('input[type=checkbox]');
+    await bolosRead.click();
 
     await page.getByRole('button', { name: 'Save permissions' }).click();
     // On the notice element rather than on the text, so a failure prints what
