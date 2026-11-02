@@ -347,6 +347,35 @@ describe("developer-proxy", function () {
       });
     });
 
+    // The bug this test exists for: `reports:*` and `warrants:*` were added to
+    // the API and to the console's own label table, but not here. The page
+    // renders the API's live list, so the four appeared as tickable rows, and
+    // then this file's allowlist refused them on save with "Unknown
+    // permission". Nothing caught it, because every check on this list only
+    // ever looked at this list.
+    //
+    // So compare the two hand-maintained mirrors against each other. Read the
+    // TypeScript as text rather than importing it: mocha runs plain JS here,
+    // and the point is only to read the keys of a literal.
+    it("covers every scope the console has a group for", function () {
+      const fs = require("fs");
+      const path = require("path");
+      const src = fs.readFileSync(path.join(__dirname, "..", "lib", "developer-api.ts"), "utf8");
+      const block = src.match(/SCOPE_GROUPS[^=]*=\s*\{([\s\S]*?)\n\};/);
+      assert.ok(block, "could not find SCOPE_GROUPS in lib/developer-api.ts");
+
+      const grouped = (block[1].match(/'([a-z]+:[a-z]+)'/g) || []).map((q) => q.slice(1, -1));
+      assert.ok(grouped.length > 10, "SCOPE_GROUPS parsed as suspiciously short");
+
+      const allowed = new Set(DEVELOPER_SCOPES.map((e) => e.scope));
+      const missing = grouped.filter((scope) => !allowed.has(scope));
+      assert.deepStrictEqual(
+        missing,
+        [],
+        "these scopes are offered by the console but rejected by the proxy: " + missing.join(", ")
+      );
+    });
+
     // Not a matter of scopes: these are not on the developer surface at all.
     it("offers nothing for money, auth, billing or admin", function () {
       DEVELOPER_SCOPES.forEach(function (entry) {
