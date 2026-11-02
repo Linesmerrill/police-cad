@@ -386,4 +386,17 @@ test.describe('Screenshots: the community API keys screen', () => {
     await expect(page.getByText('Remove its records?')).toBeVisible();
     await shoot(page, testInfo, 'community API keys, cleanup dialog');
   });
+
+  // Phone width is its own test rather than a resize inside the ones above:
+  // resizing mid-test re-lays out the page and was what made the suite flaky.
+  test.describe('at phone width', () => {
+    test.use({ viewport: PHONE });
+
+    test('the keys section and its cleanup button', async ({ page }, testInfo) => {
+      await mockOneRevokedKey(page);
+      await page.goto(`/community/${COMMUNITY_ID}/api-keys`);
+      await expect(page.getByRole('button', { name: 'Remove its records' })).toBeVisible();
+      await shoot(page, testInfo, 'community API keys', { fullPage: true });
+    });
+  });
 });
