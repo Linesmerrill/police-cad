@@ -144,6 +144,71 @@ test.describe('Report draft review', () => {
     await expect(page.getByText(/now a real report in this community/i)).toBeVisible();
   });
 
+  /**
+   * The production failure this spec exists for.
+   *
+   * Filing answered 502 because the API could not file, and what the reviewer
+   * read was "Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON" —
+   * a parse error, twice, with nothing to act on. Our own route does answer
+   * JSON, but a 5xx passes through a proxy and a CDN that may replace the body,
+   * so the page has to cope with a body that is not JSON at all.
+   */
+  test('a failure that answers HTML still reads as a plain message', async ({ page }) => {
+    await mockQueue(page, [generatedArrestDraft()]);
+    await page.route(`**/api/developer/community/${COMMUNITY_ID}/report-drafts/*/file`, (route: Route) =>
+      route.fulfill({
+        status: 502,
+        contentType: 'text/html',
+        body: '<!DOCTYPE html><html><head><title>502 Bad Gateway</title></head><body>nope</body></html>',
+      })
+    );
+
+    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.getByRole('button', { name: 'File this report' }).click();
+    await page.locator('#ddm-overlay').getByRole('button', { name: 'File it' }).click();
+
+    await expect(page.locator('#feedback .notice-err')).toContainText(
+      /server could not answer \(error 502\)/i
+    );
+    await expect(page.locator('#feedback')).toContainText(/Nothing was changed/i);
+    // And nothing resembling a parse error.
+    await expect(page.getByText(/Unexpected token/i)).toHaveCount(0);
+    await expect(page.getByText(/DOCTYPE/)).toHaveCount(0);
+    // The draft is still here to try again on.
+    await expect(page.getByRole('button', { name: 'File this report' })).toBeVisible();
+  });
+
+  test('a JSON failure still shows the reason the API gave', async ({ page }) => {
+    await mockQueue(page, [generatedArrestDraft()]);
+    await page.route(`**/api/developer/community/${COMMUNITY_ID}/report-drafts/*/file`, (route: Route) =>
+      json(route, { message: 'That draft was withdrawn by the integration.' }, 409)
+    );
+
+    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.getByRole('button', { name: 'File this report' }).click();
+    await page.locator('#ddm-overlay').getByRole('button', { name: 'File it' }).click();
+
+    await expect(page.locator('#feedback .notice-err')).toContainText(
+      'That draft was withdrawn by the integration.'
+    );
+  });
+
+  test('a server error loading one draft does not claim the draft is gone', async ({ page }) => {
+    await page.route(
+      `**/api/developer/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`,
+      (route: Route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        return route.fulfill({ status: 503, contentType: 'text/html', body: '<!DOCTYPE html><p>no</p>' });
+      }
+    );
+
+    await page.goto(`/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`);
+
+    await expect(page.locator('#drafts')).toContainText(/could not load this draft just now/i);
+    await expect(page.locator('#drafts')).not.toContainText(/withdrawn/i);
+    await expect(page.locator('#feedback .notice-err')).toContainText(/error 503/);
+  });
+
   test('sending a draft back will not go through without a reason', async ({ page }) => {
     await mockQueue(page, [generatedArrestDraft()]);
 
