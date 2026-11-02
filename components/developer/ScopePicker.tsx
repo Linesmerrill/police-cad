@@ -15,7 +15,7 @@
 
 import { useMemo } from 'react';
 import type { Scope } from '@/lib/developer-api';
-import { groupScopes } from '@/lib/developer-api';
+import { groupScopes, scopeLabel } from '@/lib/developer-api';
 
 export type Preset = {
   id: string;
@@ -40,6 +40,30 @@ export const SCOPE_PRESETS: Preset[] = [
       scope.startsWith('units:') ||
       scope.startsWith('bolos:') ||
       scope === 'community:read',
+  },
+  {
+    // Split from the draft-write preset below on purpose. An integration that
+    // only reconciles, or only answers "is there a warrant out for this
+    // person", wants a key that cannot write a thing, and the shortest way to
+    // give it one is a preset that does not include the write scopes at all.
+    id: 'reports-read',
+    label: 'Read reports',
+    hint: 'Read back drafts and look up warrants. This key cannot write anything.',
+    match: (scope) =>
+      scope === 'reports:read' || scope === 'warrants:read' || scope === 'community:read',
+  },
+  {
+    id: 'reports-write',
+    label: 'Draft reports',
+    hint:
+      'Prepare draft reports and ask for warrants. Neither files anything: a person ' +
+      'here reviews a draft before it becomes a report, and a warrant request waits ' +
+      'for a reviewer.',
+    match: (scope) =>
+      scope.startsWith('reports:') ||
+      scope.startsWith('warrants:') ||
+      scope === 'community:read' ||
+      scope === 'civilians:read',
   },
   {
     id: 'full',
@@ -230,7 +254,7 @@ export default function ScopePicker({
                   />
                   <span className={`name${write ? ' is-write' : ''}`}>{scope.scope}</span>
                 </span>
-                <span className="desc">{scope.description}</span>
+                <span className="desc">{scopeLabel(scope.scope, scope.description)}</span>
               </label>
             );
           })}

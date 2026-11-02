@@ -90,6 +90,10 @@
       ones you recognise, and withdraw any you no longer want.
       <a href="/api-docs">What is a developer key?</a>
     </p>
+    <p class="lede" style="margin-top:-1rem;">
+      Integrations can also prepare <a href="/community/<%= communityId %>/report-drafts">report
+      drafts</a> for someone here to read and file. Nothing they write is filed on its own.
+    </p>
 
     <% if (loadError) { %>
       <div class="notice notice-err"><%= loadError %></div>
@@ -165,6 +169,12 @@
             actions += '<button type="button" class="btn btn-danger" data-action="revoke" data-key="' +
               escapeHtml(row.keyId) + '" data-name="' + escapeHtml(row.keyName) + '">Withdraw access</button>';
           }
+          // Always offered, including for a key whose access is already gone.
+          // That is the case it exists for: an integration that stopped
+          // answering leaves rows behind, and cleaning up after it must not
+          // need its cooperation.
+          actions += '<button type="button" class="btn btn-ghost" data-action="records" data-key="' +
+            escapeHtml(row.keyId) + '" data-name="' + escapeHtml(row.keyName) + '">Remove its records</button>';
 
           html += '<div class="key-row">' +
             '<div class="key-head">' +
@@ -204,6 +214,65 @@
           });
       }
 
+      // Removing a key's records. Two scopes, and the dialog makes the
+      // difference the obvious thing on screen, because one of them deletes
+      // records belonging to real players and the other cannot.
+      function removeRecords(keyId, name, scope) {
+        fetch('/api/developer/community/' + COMMUNITY_ID + '/keys/' + keyId + '/records', {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scope: scope }),
+        })
+          .then(function (response) {
+            return response.json().then(function (data) {
+              if (!response.ok) throw new Error(data && data.message ? data.message : 'That did not work');
+              return data;
+            });
+          })
+          .then(function (data) {
+            var removed = (data && data.removed) || {};
+            var parts = Object.keys(removed).map(function (collection) {
+              return removed[collection] + ' ' + collection;
+            });
+            // Counted per collection rather than as one total: "it removed 412
+            // things" is not something anyone can check, and "97 civilians,
+            // 180 vehicles" is.
+            var summary = parts.length ? parts.join(', ') : 'nothing, there was nothing to remove';
+            feedback('ok', 'Removed ' + summary + ' for ' + name + '.' +
+              (data && data.more ? ' There may be more; run it again.' : ''));
+          })
+          .catch(function (error) {
+            feedback('err', error.message || 'That did not work');
+          });
+      }
+
+      function confirmRemoveRecords(keyId, name) {
+        window.ddModal({
+          type: 'danger',
+          icon: 'fa-eraser',
+          title: 'Remove its records?',
+          message: 'This deletes what <strong>' + escapeHtml(name) + '</strong> created in this ' +
+            'community. It cannot be undone.',
+          detail: 'Choose <strong>test records only</strong> unless you are sure. ' +
+            '<em>Everything</em> also removes characters, vehicles and firearms this key made ' +
+            'for real players, which they would lose.',
+          buttons: [
+            { label: 'Cancel', class: 'ddm-btn-secondary' },
+            {
+              label: 'Test records only',
+              class: 'ddm-btn-primary',
+              onClick: function () { removeRecords(keyId, name, 'synthetic'); },
+            },
+            {
+              label: 'Everything it made',
+              class: 'ddm-btn-danger',
+              onClick: function () { removeRecords(keyId, name, 'all'); },
+            },
+          ],
+        });
+      }
+
       function act(action, keyId, name) {
         fetch('/api/developer/community/' + COMMUNITY_ID + '/keys/' + keyId + '/' + action, {
           method: 'POST',
@@ -237,6 +306,11 @@
         // Both decisions are worth a beat: approving hands a third party write
         // access to the community, and withdrawing breaks a running
         // integration. ddModal, never a native confirm.
+        if (action === 'records') {
+          confirmRemoveRecords(keyId, name);
+          return;
+        }
+
         if (action === 'approve') {
           window.ddModal({
             type: 'warning',

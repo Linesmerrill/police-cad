@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= communityName ? communityName + ' - Report drafts' : 'Report drafts' %> - Lines Police CAD</title>
+  <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* The rp- token set, matching community-api-keys.ejs and the other newer
+       community pages. */
+    :root {
+      --rp-bg: #08090c;
+      --rp-surface: #0e1117;
+      --rp-glass: rgba(255,255,255,0.04);
+      --rp-glass-border: rgba(255,255,255,0.08);
+      --rp-text: #e2e8f0;
+      --rp-text-muted: #94a3b8;
+      --rp-text-dim: #64748b;
+      --rp-accent: #38bdf8;
+      --rp-green: #34d399;
+      --rp-amber: #fbbf24;
+      --rp-red: #f87171;
+      --rp-radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--rp-bg); color: var(--rp-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding-top: 36px;
+      -webkit-text-size-adjust: 100%;
+    }
+    .rp-shell { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+    a { color: var(--rp-accent); text-decoration: none; }
+    .back { display:inline-flex; align-items:center; gap:0.5rem; color: var(--rp-text-muted); font-size:0.9rem; margin-bottom:1.25rem; }
+    h1 { font-size: 1.75rem; font-weight: 800; margin: 0 0 0.4rem; letter-spacing: -0.02em; }
+    .lede { color: var(--rp-text-muted); line-height: 1.7; margin: 0 0 1.5rem; max-width: 68ch; }
+    .card {
+      background: var(--rp-surface); border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius); padding: 1.5rem; margin-bottom: 1.25rem;
+    }
+    .notice { border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 1.25rem; font-size: 0.93rem; line-height: 1.6; }
+    .notice-warn { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.35); color: #fde68a; }
+    .notice-err { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.35); color: #fecaca; }
+    .notice-ok { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.35); color: #a7f3d0; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .dim { color: var(--rp-text-dim); font-size: 0.85rem; }
+    .muted { color: var(--rp-text-muted); font-size: 0.88rem; line-height: 1.6; }
+
+    /* The filter strip scrolls sideways on a narrow screen rather than
+       wrapping into two ragged rows. */
+    .filters {
+      display: flex; gap: 0.4rem; margin-bottom: 1.25rem;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      flex-grow: 0; flex-shrink: 0; max-width: 100%; scrollbar-width: none;
+    }
+    .filters::-webkit-scrollbar { display: none; }
+    .filter {
+      padding: 0.4rem 0.85rem; border-radius: 999px; white-space: nowrap;
+      border: 1px solid var(--rp-glass-border); background: transparent;
+      color: var(--rp-text-muted); font-family: inherit; font-size: 0.85rem; cursor: pointer;
+    }
+    .filter:hover { color: var(--rp-text); border-color: rgba(255,255,255,0.16); }
+    .filter.is-on {
+      background: rgba(56,189,248,0.12); border-color: var(--rp-accent);
+      color: var(--rp-accent); font-weight: 700;
+    }
+
+    .draft { border-top: 1px solid var(--rp-glass-border); padding: 1.25rem 0; }
+    .draft:first-of-type { border-top: 0; }
+    .draft-head { display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; align-items:flex-start; }
+    .badge { display:inline-block; padding:0.18rem 0.6rem; border-radius:999px; font-size:0.75rem; font-weight:700; }
+    .badge-draft { background: rgba(251,191,36,0.15); color: var(--rp-amber); }
+    .badge-submitted { background: rgba(52,211,153,0.15); color: var(--rp-green); }
+    .badge-rejected { background: rgba(248,113,113,0.15); color: var(--rp-red); }
+    .badge-withdrawn { background: rgba(255,255,255,0.07); color: var(--rp-text-dim); }
+    .kind { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rp-text-dim); font-weight: 700; }
+
+    /* The two halves of a draft, side by side where there is room. The point of
+       the layout is that a reviewer can see what the server observed apart from
+       what was written about it. */
+    .halves { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    @media (max-width: 760px) { .halves { grid-template-columns: 1fr; } }
+    .half {
+      background: var(--rp-glass); border: 1px solid var(--rp-glass-border);
+      border-radius: 10px; padding: 0.9rem 1rem;
+    }
+    .half h3 {
+      margin: 0 0 0.6rem; font-size: 0.78rem; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--rp-text-dim); font-weight: 700;
+    }
+    .fact { display: flex; gap: 0.6rem; font-size: 0.89rem; padding: 0.2rem 0; }
+    .fact dt { color: var(--rp-text-dim); min-width: 7.5rem; flex: none; }
+    .fact dd { margin: 0; color: var(--rp-text); word-break: break-word; }
+    .narrative { font-size: 0.92rem; line-height: 1.7; white-space: pre-wrap; margin: 0; }
+
+    /* The generated label. Deliberately loud: a reviewer deciding whether to
+       file something a model wrote should not have to go looking for that fact,
+       and it is the one thing on this page that must not be missed. */
+    .gen-flag {
+      display: flex; gap: 0.6rem; align-items: flex-start;
+      background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.4);
+      border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.75rem;
+      font-size: 0.85rem; line-height: 1.55; color: #fde68a;
+    }
+    .gen-flag i { margin-top: 0.15rem; }
+
+    .charge { display:inline-block; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.78rem;
+      background: rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); color:#fecaca;
+      margin: 0 0.3rem 0.3rem 0; }
+    .btn {
+      display:inline-flex; align-items:center; gap:0.4rem;
+      padding: 0.5rem 0.95rem; border-radius: 8px; cursor: pointer;
+      font-family: inherit; font-size: 0.9rem; font-weight: 700;
+      background: var(--rp-accent); color: #04121c; border: 1px solid transparent;
+    }
+    .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+    .btn:focus-visible, a:focus-visible, .filter:focus-visible { outline: 2px solid var(--rp-accent); outline-offset: 2px; }
+    .btn-ghost { background: var(--rp-glass); color: var(--rp-text); border-color: var(--rp-glass-border); }
+    .btn-danger { background: rgba(248,113,113,0.14); color: var(--rp-red); border-color: rgba(248,113,113,0.35); }
+    .empty { color: var(--rp-text-muted); margin: 0; line-height: 1.7; }
+    .pager { display:flex; gap:0.5rem; align-items:center; justify-content:center; margin-top:1.25rem; }
+    @media (max-width: 600px) {
+      .rp-shell { padding: 1.5rem 1rem 4rem; }
+      h1 { font-size: 1.45rem; }
+      .fact { flex-direction: column; gap: 0.1rem; }
+      .fact dt { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/standalone-utility') %>
+  <%- include('partials/dd-modal') %>
+
+  <div class="rp-shell">
+    <a class="back" href="/community/<%= communityId %>"><i class="fa fa-arrow-left"></i> Back to the community</a>
+
+    <h1>Report drafts</h1>
+    <p class="lede">
+      Reports an integration prepared for <strong><%= communityName || 'this community' %></strong>
+      from what it saw in the game. Nothing here has been filed. Read one, and either file it as a
+      real report or send it back with a reason.
+      <a href="/api-docs">What writes these?</a>
+    </p>
+
+    <% if (loadError) { %>
+      <div class="notice notice-err"><%= loadError %></div>
+    <% } else if (!canReview) { %>
+      <div class="notice notice-warn">
+        You need the <strong>manage records</strong> permission to review report drafts.
+        Ask an admin or the owner.
+      </div>
+    <% } else { %>
+      <div id="feedback"></div>
+      <div class="filters" role="group" aria-label="Filter drafts">
+        <button type="button" class="filter is-on" data-status="draft">Waiting</button>
+        <button type="button" class="filter" data-status="submitted">Filed</button>
+        <button type="button" class="filter" data-status="rejected">Sent back</button>
+        <button type="button" class="filter" data-status="withdrawn">Withdrawn</button>
+        <button type="button" class="filter" data-status="all">All</button>
+      </div>
+      <div class="card">
+        <div id="drafts"><p class="empty">Loading&hellip;</p></div>
+        <div class="pager" id="pager" hidden>
+          <button type="button" class="btn btn-ghost" id="prev">Previous</button>
+          <span class="muted" id="pageLabel"></span>
+          <button type="button" class="btn btn-ghost" id="next">Next</button>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <% if (canReview && !loadError) { %>
+  <script>
+    (function () {
+      var COMMUNITY_ID = <%- JSON.stringify(communityId) %>;
+      var draftsEl = document.getElementById('drafts');
+      var feedbackEl = document.getElementById('feedback');
+      var pagerEl = document.getElementById('pager');
+      var pageLabelEl = document.getElementById('pageLabel');
+      var status = 'draft';
+      var page = 1;
+      var limit = 10;
+      var totalCount = 0;
+
+      function escapeHtml(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      function feedback(kind, message) {
+        feedbackEl.innerHTML = '<div class="notice notice-' + kind + '">' + escapeHtml(message) + '</div>';
+        if (kind === 'ok') {
+          window.setTimeout(function () { feedbackEl.innerHTML = ''; }, 8000);
+        }
+        feedbackEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+
+      function badge(value) {
+        var labels = {
+          draft: 'Waiting for you',
+          submitted: 'Filed',
+          rejected: 'Sent back',
+          withdrawn: 'Withdrawn by the integration',
+        };
+        var cls = labels[value] ? value : 'withdrawn';
+        return '<span class="badge badge-' + cls + '">' +
+          escapeHtml(labels[value] || value) + '</span>';
+      }
+
+      function when(value) {
+        if (!value) return '';
+        var parsed = new Date(value);
+        if (isNaN(parsed.getTime())) return value;
+        return parsed.toLocaleString();
+      }
+
+      function factRow(label, value) {
+        if (!value) return '';
+        return '<div class="fact"><dt>' + escapeHtml(label) + '</dt><dd>' +
+          escapeHtml(value) + '</dd></div>';
+      }
+
+      function factsHalf(draft) {
+        var facts = draft.facts || {};
+        var rows = '';
+        rows += factRow('When', when(facts.occurredAt) || '');
+        rows += factRow('Where', facts.location);
+        rows += factRow('Summary', facts.summary);
+        rows += factRow('Subject', (draft.subject && draft.subject.displayName) || '');
+        if (draft.subject && draft.subject.synthetic) {
+          rows += '<div class="fact"><dt>Subject type</dt><dd>' +
+            'Simulated character (NPC)</dd></div>';
+        }
+        rows += factRow('Vehicles', (facts.vehicles || []).join(', '));
+        rows += factRow('Witnesses', (facts.witnesses || []).join(', '));
+        rows += factRow('Other officers', (facts.officers || []).join(', '));
+        if (facts.forceUsed) {
+          rows += '<div class="fact"><dt>Force used</dt><dd>Yes</dd></div>';
+        }
+        Object.keys(facts.fields || {}).forEach(function (key) {
+          rows += factRow(key, facts.fields[key]);
+        });
+        if (!rows) {
+          rows = '<p class="muted" style="margin:0;">The integration recorded no structured facts.</p>';
+        }
+
+        var charges = (draft.charges || []).map(function (charge) {
+          var bits = [charge.name];
+          if (charge.jailTime && charge.jailTime !== 'N/A') bits.push(charge.jailTime);
+          if (charge.amount) bits.push('$' + charge.amount);
+          return '<span class="charge">' + escapeHtml(bits.join(' · ')) + '</span>';
+        }).join('');
+
+        return '<div class="half"><h3>What the server saw</h3><dl style="margin:0;">' + rows + '</dl>' +
+          (charges
+            ? '<div style="margin-top:0.75rem;"><h3>Charges</h3>' + charges +
+              '<p class="dim" style="margin:0.35rem 0 0;">Priced from this community’s penal code.</p></div>'
+            : '') +
+          '</div>';
+      }
+
+      function narrativeHalf(draft) {
+        var narrative = draft.narrative || {};
+        var flag = '';
+        if (narrative.generated) {
+          flag = '<div class="gen-flag"><i class="fa fa-robot"></i><span>' +
+            '<strong>Written by AI' +
+            (narrative.generatedBy ? ' (' + escapeHtml(narrative.generatedBy) + ')' : '') +
+            '.</strong> Read it against the facts beside it before you file anything. ' +
+            'This is an account of events, not evidence.</span></div>';
+        }
+        var body = narrative.text
+          ? '<p class="narrative">' + escapeHtml(narrative.text) + '</p>'
+          : '<p class="muted" style="margin:0;">No narrative.</p>';
+        return '<div class="half"><h3>Narrative</h3>' + flag + body + '</div>';
+      }
+
+      function render(payload) {
+        var rows = (payload && payload.data) || [];
+        totalCount = (payload && payload.totalCount) || 0;
+
+        if (rows.length === 0) {
+          draftsEl.innerHTML = '<p class="empty">' + (status === 'draft'
+            ? 'Nothing is waiting for you. Drafts show up here when an integration prepares one.'
+            : 'No drafts with that status.') + '</p>';
+          pagerEl.hidden = true;
+          return;
+        }
+
+        draftsEl.innerHTML = rows.map(function (row) {
+          var draft = row.draft || {};
+          var open = draft.status === 'draft';
+          var actions = '';
+          if (open) {
+            actions =
+              '<button type="button" class="btn" data-action="file" data-id="' +
+                escapeHtml(draft.id) + '" data-kind="' + escapeHtml(draft.kind) + '">File this report</button>' +
+              '<button type="button" class="btn btn-danger" data-action="reject" data-id="' +
+                escapeHtml(draft.id) + '">Send back</button>';
+          }
+
+          var provenance = row.writtenByKeyName
+            ? 'Prepared by <strong>' + escapeHtml(row.writtenByKeyName) + '</strong>' +
+              (row.writtenByDeveloper ? ' (' + escapeHtml(row.writtenByDeveloper) + ')' : '')
+            : 'Prepared by an integration';
+
+          var reviewed = '';
+          if (draft.reviewedByName) {
+            reviewed = '<div class="muted" style="margin-top:0.6rem;">' +
+              escapeHtml(draft.status === 'submitted' ? 'Filed by ' : 'Sent back by ') +
+              '<strong>' + escapeHtml(draft.reviewedByName) + '</strong>' +
+              (draft.reviewedAt ? ' on ' + escapeHtml(when(draft.reviewedAt)) : '') +
+              (draft.reviewNotes ? '. “' + escapeHtml(draft.reviewNotes) + '”' : '') +
+              '</div>';
+          }
+
+          return '<div class="draft">' +
+            '<div class="draft-head">' +
+              '<div style="min-width:0;">' +
+                '<div class="kind">' + escapeHtml(draft.kind || 'incident') + ' report</div>' +
+                '<strong>' + escapeHtml(
+                  (draft.facts && draft.facts.summary) || draft.externalId || 'Untitled draft'
+                ) + '</strong> ' + badge(draft.status) +
+                '<div class="muted">' + provenance +
+                  ' · officer ' + escapeHtml(draft.reportingOfficerName || 'unknown') +
+                  (draft.createdAt ? ' · ' + escapeHtml(when(draft.createdAt)) : '') +
+                '</div>' +
+                '<div class="dim mono">' + escapeHtml(draft.source || '') + ' / ' +
+                  escapeHtml(draft.externalId || '') + '</div>' +
+                reviewed +
+              '</div>' +
+              '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' + actions + '</div>' +
+            '</div>' +
+            '<div class="halves">' + factsHalf(draft) + narrativeHalf(draft) + '</div>' +
+          '</div>';
+        }).join('');
+
+        var pages = Math.max(1, Math.ceil(totalCount / limit));
+        pagerEl.hidden = pages <= 1;
+        pageLabelEl.textContent = 'Page ' + page + ' of ' + pages;
+        document.getElementById('prev').disabled = page <= 1;
+        document.getElementById('next').disabled = page >= pages;
+      }
+
+      function load() {
+        draftsEl.innerHTML = '<p class="empty">Loading&hellip;</p>';
+        var query = '?status=' + encodeURIComponent(status) +
+          '&page=' + page + '&limit=' + limit;
+        fetch('/api/developer/community/' + COMMUNITY_ID + '/report-drafts' + query,
+          { credentials: 'include' })
+          .then(function (response) {
+            return response.json().then(function (data) {
+              if (!response.ok) {
+                throw new Error(data && data.message ? data.message : 'Could not load drafts');
+              }
+              return data;
+            });
+          })
+          .then(render)
+          .catch(function (error) {
+            draftsEl.innerHTML = '';
+            feedback('err', error.message || 'Could not load drafts');
+          });
+      }
+
+      function act(action, draftId, notes) {
+        fetch('/api/developer/community/' + COMMUNITY_ID + '/report-drafts/' + draftId + '/' + action, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes: notes || '' }),
+        })
+          .then(function (response) {
+            return response.json().then(function (data) {
+              if (!response.ok) {
+                throw new Error(data && data.message ? data.message : 'That did not work');
+              }
+              return data;
+            });
+          })
+          .then(function (data) {
+            if (action === 'file') {
+              feedback('ok', data && data.filed === false
+                ? 'That report was already filed.'
+                : 'Filed. It is now a real report in this community.');
+            } else {
+              feedback('ok', 'Sent back. The integration can read your reason.');
+            }
+            load();
+          })
+          .catch(function (error) {
+            feedback('err', error.message || 'That did not work');
+          });
+      }
+
+      document.querySelector('.filters').addEventListener('click', function (event) {
+        var button = event.target.closest('.filter');
+        if (!button) return;
+        document.querySelectorAll('.filter').forEach(function (el) { el.classList.remove('is-on'); });
+        button.classList.add('is-on');
+        status = button.getAttribute('data-status');
+        page = 1;
+        load();
+      });
+
+      document.getElementById('prev').addEventListener('click', function () {
+        if (page > 1) { page -= 1; load(); }
+      });
+      document.getElementById('next').addEventListener('click', function () {
+        page += 1; load();
+      });
+
+      draftsEl.addEventListener('click', function (event) {
+        var button = event.target.closest('button[data-action]');
+        if (!button) return;
+        var action = button.getAttribute('data-action');
+        var draftId = button.getAttribute('data-id');
+        var kind = button.getAttribute('data-kind') || 'incident';
+
+        if (action === 'file') {
+          // Filing is the irreversible half. The copy names the one thing that
+          // changes, and says plainly that it becomes a real record.
+          window.ddModal({
+            type: 'warning',
+            icon: 'fa-file-signature',
+            title: 'File this report?',
+            message: 'It becomes a <strong>real ' + escapeHtml(kind) + ' report</strong> in this ' +
+              'community, with whatever that carries.',
+            detail: 'You are the person filing it. If the narrative was written by AI, make sure ' +
+              'it matches the facts beside it first.',
+            confirmText: 'File it',
+            onConfirm: function () { act('file', draftId, ''); },
+          });
+          return;
+        }
+
+        askForReason(draftId, '', false);
+      });
+
+      // Sending back needs a reason, because the integration shows it to the
+      // officer in the game. A prompt() would be the lazy way; this reuses the
+      // modal every other confirmation on the site uses.
+      //
+      // Re-entrant on purpose. An empty reason re-opens the same modal with the
+      // field flagged and whatever was typed still in it, rather than closing
+      // and leaving a toast behind for the reviewer to work out.
+      function askForReason(draftId, typed, invalid) {
+        var border = invalid ? '#f87171' : 'rgba(255,255,255,0.12)';
+        window.ddModal({
+          type: 'danger',
+          icon: 'fa-rotate-left',
+          title: 'Send this back?',
+          message: 'Nothing is filed, and the <strong>officer sees your reason</strong> in the game.',
+          detail: '<label for="rejectNotes" style="display:block;margin-bottom:0.4rem;' +
+            'font-size:0.85rem;color:#94a3b8;">Why are you sending it back?</label>' +
+            '<textarea id="rejectNotes" rows="3" maxlength="2000" ' +
+            'style="width:100%;background:rgba(255,255,255,0.05);color:#e2e8f0;' +
+            'border:1px solid ' + border + ';border-radius:8px;padding:0.6rem;' +
+            'font-family:inherit;font-size:0.9rem;" ' +
+            'placeholder="The narrative does not match the clip.">' +
+            escapeHtml(typed) + '</textarea>' +
+            (invalid
+              ? '<span style="display:block;color:#f87171;font-size:0.8rem;margin-top:0.35rem;">' +
+                'A reason is required. The officer only sees this.</span>'
+              : ''),
+          confirmText: 'Send back',
+          onConfirm: function () {
+            var field = document.getElementById('rejectNotes');
+            var notes = field ? field.value.trim() : '';
+            if (!notes) {
+              askForReason(draftId, '', true);
+              return;
+            }
+            act('reject', draftId, notes);
+          },
+        });
+        var field = document.getElementById('rejectNotes');
+        if (field) field.focus();
+      }
+
+      load();
+    })();
+  </script>
+  <% } %>
+</body>
+</html>

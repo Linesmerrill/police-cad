@@ -88,10 +88,10 @@ const faqData = [
         question: 'How do I upgrade my account to create more communities?',
         answer: (<>You can upgrade your account on the website from the <a href="/pricing" style={linkStyle}>Pricing page</a> or in our mobile app. The subscription tiers are:
           <ul style={{ marginTop: '0.75rem', marginBottom: '0.5rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Free</strong> — Create 1 community</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Base</strong> ($2/month) — Create up to 5 communities</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Premium</strong> ($5/month) — Create up to 10 communities, verified checkmark, 50% fewer ads</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Premium+</strong> ($9.99/month) — Create unlimited communities, verified checkmark, no ads</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Free</strong>: Create 1 community</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Base</strong> ($2/month): Create up to 5 communities</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Premium</strong> ($5/month): Create up to 10 communities, verified checkmark, 50% fewer ads</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Premium+</strong> ($9.99/month): Create unlimited communities, verified checkmark, no ads</li>
           </ul>
         </>)
       },
@@ -115,10 +115,10 @@ const faqData = [
         question: 'How do I promote my community or make it Elite?',
         answer: (<>You can buy a promotion on the website at <a href="/community-pricing" style={linkStyle}>www.linespolice-cad.com/community-pricing</a> or in our mobile app by tapping the &quot;Boost&quot; button on your community&apos;s home page. Any approved member of a community can buy or upgrade a promotion for it, not just the owner or admins. The available tiers are:
           <ul style={{ marginTop: '0.75rem', marginBottom: '0.5rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Basic</strong> — Promotional text in search results</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Standard</strong> — Promotional text + verified community badge</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Premium</strong> — All Standard features + boost on Discover Communities page</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Elite</strong> — All Premium features + featured on Home Page + extended description (200 characters)</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Basic</strong>: Promotional text in search results</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Standard</strong>: Promotional text + verified community badge</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Premium</strong>: All Standard features + boost on Discover Communities page</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Elite</strong>: All Premium features + featured on Home Page + extended description (200 characters)</li>
           </ul>
           Promotions are available in 1-month, 3-month, and 6-month durations with discounts for longer commitments.
         </>)
@@ -138,8 +138,8 @@ const faqData = [
         question: 'Where can I find the mobile app?',
         answer: (<>We have native mobile apps available for both iOS and Android:
           <ul style={{ marginTop: '0.75rem', marginBottom: '0.5rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
-            <li style={{ marginBottom: '0.25rem' }}><strong>iOS</strong> — <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank" rel="noopener noreferrer" style={linkStyle}>Download on the App Store</a></li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Android</strong> — <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" rel="noopener noreferrer" style={linkStyle}>Get it on Google Play</a></li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>iOS</strong>: <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank" rel="noopener noreferrer" style={linkStyle}>Download on the App Store</a></li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Android</strong>: <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" rel="noopener noreferrer" style={linkStyle}>Get it on Google Play</a></li>
           </ul>
           You can also access our web application on any mobile browser - it&apos;s fully responsive and works great on all devices.
         </>)
@@ -230,32 +230,32 @@ const faqData = [
     questions: [
       {
         question: 'What is the LPC Developer API and who is it for?',
-        answer: (<>It lets something you build talk to Lines Police CAD directly. It is aimed at people running a <strong>FiveM or other GTA role-play server</strong>, a <strong>Discord bot</strong>, or a tool of their own. Everything your integration sends shows up live in the CAD on the website — calls, unit status, civilians, vehicles and BOLOs appear on the dashboards exactly as if someone had typed them in. See the <a href="/api-docs" style={linkStyle}>API reference</a>.</>)
+        answer: (<>It lets something you build talk to Lines Police CAD directly. It is aimed at people running a <strong>FiveM or other GTA role-play server</strong>, a <strong>Discord bot</strong>, or a tool of their own. Everything your integration sends shows up live in the CAD on the website, calls, unit status, civilians, vehicles and BOLOs appear on the dashboards exactly as if someone had typed them in. See the <a href="/api-docs" style={linkStyle}>API reference</a>.</>)
       },
       {
         question: 'I am building a FiveM mod. Can I sync it to LPC?',
-        answer: (<>Yes, and it is free to do on the Free plan within its limits. Your server calls the API when something happens in game — a call goes out, a unit changes status, a vehicle is registered — and it appears in the CAD for everyone in that community straight away. The <a href="/api-docs" style={linkStyle}>reference</a> includes a working FiveM resource you can start from. Higher limits come with the paid plans; nothing about syncing itself costs money.</>)
+        answer: (<>Yes, and it is free to do on the Free plan within its limits. Your server calls the API when something happens in game, a call goes out, a unit changes status, a vehicle is registered, and it appears in the CAD for everyone in that community straight away. The <a href="/api-docs" style={linkStyle}>reference</a> includes a working FiveM resource you can start from. Higher limits come with the paid plans; nothing about syncing itself costs money.</>)
       },
       {
         question: 'Can I use an AI coding agent (Claude, ChatGPT, Copilot, Cursor) to build my integration?',
-        answer: (<>Yes, and it is a reasonable way to do it. Point the agent at the <a href="/api-docs" style={linkStyle}>API reference</a> and its quickstart — both list every endpoint, what each permission unlocks and the errors to expect, which is most of what an agent needs.
+        answer: (<>Yes, and it is a reasonable way to do it. Point the agent at the <a href="/api-docs" style={linkStyle}>API reference</a> and its quickstart, both list every endpoint, what each permission unlocks and the errors to expect, which is most of what an agent needs.
           <br /><br />
-          One thing to be firm about, whoever or whatever writes the code: <strong>your key belongs in server-side configuration only, never in client code.</strong> In FiveM that means setting it with <code>set</code> and not <code>setr</code> — a <code>setr</code> convar is replicated to every connected client, which hands your key to anyone who joins. Agents will not necessarily know that, so check it yourself.</>)
+          One thing to be firm about, whoever or whatever writes the code: <strong>your key belongs in server-side configuration only, never in client code.</strong> In FiveM that means setting it with <code>set</code> and not <code>setr</code>, a <code>setr</code> convar is replicated to every connected client, which hands your key to anyone who joins. Agents will not necessarily know that, so check it yourself.</>)
       },
       {
         question: 'How do I get a key?',
         answer: (<>Turn on developer access at <a href="/developer" style={linkStyle}>the developer console</a>, then create a key. You pick what the key may do and which community it may act in.
           <br /><br />
-          The key is <strong>shown once, when you create it</strong>. We store only a hash of it, so we cannot show it to you again — copy it somewhere safe. If you lose it, rotate the key and you get a new one that keeps the same permissions and communities.</>)
+          The key is <strong>shown once, when you create it</strong>. We store only a hash of it, so we cannot show it to you again. Copy it somewhere safe. If you lose it, rotate the key and you get a new one that keeps the same permissions and communities.</>)
       },
       {
         question: 'Is it free? What are the limits?',
         answer: (<>There is nothing separate to buy. Your API limits follow the LPC subscription you already have:
           <ul style={{ marginTop: '0.75rem', marginBottom: '0.5rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Free</strong> — 60 requests a minute, 10,000 a day, up to 2 keys</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Base</strong> — 120 a minute, 25,000 a day, up to 3 keys</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Premium</strong> — 300 a minute, 100,000 a day, up to 5 keys</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Premium Plus</strong> — 600 a minute, 250,000 a day, up to 10 keys</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Free</strong>: 60 requests a minute, 10,000 a day, up to 2 keys</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Base</strong>: 120 a minute, 25,000 a day, up to 3 keys</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Premium</strong>: 300 a minute, 100,000 a day, up to 5 keys</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Premium Plus</strong>: 600 a minute, 250,000 a day, up to 10 keys</li>
           </ul>
           Limits are counted <strong>per key</strong>, not per community, so a key covering three communities shares one allowance across all three. Use separate keys if you want separate budgets. See <a href="/pricing" style={linkStyle}>plans and pricing</a>.</>)
       },
@@ -267,20 +267,41 @@ const faqData = [
       },
       {
         question: 'What can a key do, and what can it never do?',
-        answer: (<>A key can do the things a CAD needs to do, and only those — each one is a permission you tick when you create the key:
+        answer: (<>A key can do the things a CAD needs to do, and only those, each one is a permission you tick when you create the key:
           <ul style={{ marginTop: '0.75rem', marginBottom: '0.75rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Dispatch</strong> — read and write calls, set unit status and location, read and create BOLOs</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Records</strong> — look up and register civilians, vehicles and firearms, and issue licenses</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Members</strong> — read the roster, and invite, approve, promote or remove members</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Player accounts</strong> — create and link player accounts from a game identifier</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Dispatch</strong>: read and write calls, set unit status and location, read and create BOLOs</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Records</strong>: look up and register civilians, vehicles and firearms, and issue licenses</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Members</strong>: read the roster, and invite, approve, promote or remove members</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Player accounts</strong>: create and link player accounts from a game identifier</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Report drafts</strong>: prepare a draft incident, arrest or citation report from what happened in the game, for someone in your community to read and file</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Warrants</strong>: read your community&apos;s warrants, and ask for one</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Simulated characters</strong>: mark the NPCs a server invents, so they stay out of your name database</li>
           </ul>
-          There is <strong>no permission at all</strong> for money or wallets, billing or subscriptions, passwords, email or anything else to do with account security, site administration, or a community&apos;s own settings and roles. Those are not scopes a developer can ask for, so no key can be given them by anyone.</>)
+          There is <strong>no permission at all</strong> for money or wallets, billing or subscriptions, passwords, email or anything else to do with account security, site administration, or a community&apos;s own settings and roles. Those are not scopes a developer can ask for, so no key can be given them by anyone.
+          <br /><br />
+          Two more are worth naming, because they sound like things a key could do and are not. <strong>A key cannot file a report.</strong> It writes a draft, and someone in your community with the <strong>manage records</strong> permission reads it and decides, there is no endpoint on the API that files one. And <strong>a key cannot issue a warrant.</strong> A request it makes always waits for a reviewer, even in a community that has auto-approve switched on for its own officers.</>)
+      },
+      {
+        question: 'An integration wants to write reports for my community. What actually happens?',
+        answer: (<>Nothing gets filed without one of your people saying so.
+          <br /><br />
+          The integration writes a <strong>draft</strong>: what it saw, as a list of plain facts, plus whatever narrative it generated, kept separately. Anyone in your community with the <strong>manage records</strong> permission opens <strong>Report drafts</strong> from the community menu, reads the two halves side by side, and either files it as a real report or sends it back with a reason the officer sees in the game.
+          <br /><br />
+          Three things we do on your behalf while that draft is being written: the <strong>officer it names has to be one of yours</strong>, in a department, and if your community restricts a report form by role or rank then the integration has to clear those gates too. The <strong>charges are priced from your own penal code</strong>, so an integration cannot invent a fine or a jail term. And an AI-written narrative is <strong>labelled as AI-written</strong> on the review screen and in the filed report, it is an account of events, and we never present it as evidence.</>)
+      },
+      {
+        question: 'A server populated my community with NPCs. How do I get rid of them?',
+        answer: (<>Two ways, and you do not need the developer&apos;s help for either.
+          <br /><br />
+          First, you probably do not have to. An integration marks the characters it invents as simulated, and <strong>those are already hidden</strong> from the name database, the rosters and the lookups your officers use. They are only visible if someone deliberately asks for them.
+          <br /><br />
+          Second, if you want them gone: open <strong>API keys</strong> from your community menu, find the key, and choose <strong>Remove its records</strong>. &ldquo;Test records only&rdquo; deletes the simulated ones and nothing else. &ldquo;Everything it made&rdquo; also removes characters and vehicles that key created for real players, so only pick that one if you mean it. Either works even after you have withdrawn the key&apos;s access, which is the case it is really there for.</>)
       },
       {
         question: 'Where are the docs, and where do I get help?',
         answer: (<>The <a href="/api-docs" style={linkStyle}>API reference</a> has every endpoint, a quickstart and a working FiveM example. Your keys, your usage and your limits are in <a href="/developer" style={linkStyle}>the developer console</a>.
           <br /><br />
-          If something is not working, <a href="/contact-us" style={linkStyle}>contact us</a> through Discord. Have your key&apos;s visible prefix ready (the <code>lpc_live_…</code> part the console shows) — never the full key.</>)
+          If something is not working, <a href="/contact-us" style={linkStyle}>contact us</a> through Discord. Have your key&apos;s visible prefix ready (the <code>lpc_live_…</code> part the console shows), never the full key.</>)
       },
     ]
   },
@@ -297,10 +318,10 @@ const faqData = [
         question: 'What are the benefits of joining the Content Creator Program?',
         answer: (<>As a content creator, you&apos;ll receive:
           <ul style={{ marginTop: '0.75rem', marginBottom: '0.5rem', paddingLeft: '1.5rem', listStyleType: 'disc' }}>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Free Base Plan</strong> — A personal Base Plan subscription for your account</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Community Base Plan</strong> — Apply a free Base Plan to one of your communities</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Featured Profile</strong> — Your own profile page in our Content Creators directory</li>
-            <li style={{ marginBottom: '0.25rem' }}><strong>Prestige</strong> — Recognition in our community and Discord</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Free Base Plan</strong>: A personal Base Plan subscription for your account</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Community Base Plan</strong>: Apply a free Base Plan to one of your communities</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Featured Profile</strong>: Your own profile page in our Content Creators directory</li>
+            <li style={{ marginBottom: '0.25rem' }}><strong>Prestige</strong>: Recognition in our community and Discord</li>
           </ul>
         </>)
       },

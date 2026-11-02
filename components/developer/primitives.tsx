@@ -4,9 +4,9 @@
  * The console's small parts, in one place so no page grows its own version.
  *
  * The styles all live in ConsoleShell; these components only decide structure
- * and behaviour. Anything with a rule attached to it — a notice that has to
+ * and behaviour. Anything with a rule attached to it, a notice that has to
  * clear itself, a dialog that has to lock the page behind it, a number that has
- * to be formatted the same way everywhere — is here rather than inline, because
+ * to be formatted the same way everywhere, is here rather than inline, because
  * a rule copied into six pages is a rule that holds in five of them.
  */
 
@@ -249,7 +249,7 @@ export type NoticeState = { kind: NoticeKind; text: string } | null;
  * A notice with a close button, and a success notice that clears itself.
  *
  * A success banner that never goes away stops being a notice and becomes part
- * of the page — the old developer page was still announcing a key created ten
+ * of the page, the old developer page was still announcing a key created ten
  * minutes earlier, and reappeared on every reload. Errors stay until dismissed
  * or replaced by the next action, because the reader may still need to act.
  */
@@ -304,7 +304,7 @@ export type Confirmation = {
  *
  * In-page rather than window.confirm, which we do not ship, and rather than
  * ddModal, which lives in an EJS partial a Next page never loads. Escape
- * closes it, focus moves into it, and the page behind it does not scroll — a
+ * closes it, focus moves into it, and the page behind it does not scroll, a
  * dialog you can scroll away from is one people answer by accident.
  */
 export function ConfirmDialog({

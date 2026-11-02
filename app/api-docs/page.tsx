@@ -23,6 +23,9 @@ const SECTIONS = [
   { id: 'fivem', label: 'FiveM example' },
   { id: 'limits', label: 'Rate limits' },
   { id: 'scopes', label: 'Scopes' },
+  { id: 'reports', label: 'Report drafts' },
+  { id: 'warrants', label: 'Warrants' },
+  { id: 'npcs', label: 'Simulated characters' },
   { id: 'errors', label: 'Errors' },
   { id: 'never', label: 'What a key cannot do' },
 ];
@@ -224,7 +227,7 @@ export default function ApiDocsPage() {
         .doc-callout-warn { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3); color: #fde68a; }
         .doc-callout-info { background: rgba(56,189,248,0.07); border: 1px solid rgba(56,189,248,0.3); color: #bae6fd; }
         /* Scoped past .doc-body a, which has the same specificity and is
-           declared first — without this the label is accent-on-accent and the
+           declared first, without this the label is accent-on-accent and the
            button reads as an empty block. */
         .doc-body a.doc-cta {
           display: inline-block; padding: 0.7rem 1.3rem; border-radius: 9px;
@@ -302,7 +305,7 @@ Authorization: Bearer lpc_live_...`}</Code>
 
             <h3 className="doc-h3">2. Upsert a player</h3>
             <p>
-              You name players by their <strong>game identifier</strong> — a FiveM license or a
+              You name players by their <strong>game identifier</strong>: a FiveM license or a
               Discord ID. Never by email, and never by an LPC user id.
             </p>
             <Code lang="SHELL">{`curl -X POST .../dev/players \\
@@ -330,7 +333,7 @@ Authorization: Bearer lpc_live_...`}</Code>
             <p>
               Vehicles, firearms and licenses hang off that character by <code>civilianId</code>. If
               the response says <code>pendingApproval</code>, the community vets its characters and
-              a person has to approve it — your key does not skip that, and nor does it skip the
+              a person has to approve it, your key does not skip that, and nor does it skip the
               community&apos;s per-player character cap.
             </p>
 
@@ -423,6 +426,14 @@ set lpc_community_id "your_community_id"`}</Code>
                   ['vehicles:read / vehicles:write', 'Look up by plate; register'],
                   ['firearms:read / firearms:write', 'Look up by serial; register'],
                   ['licenses:write', 'Issue licenses'],
+                  [
+                    'reports:read / reports:write',
+                    'Read back your own drafts; prepare new ones. Neither files a report',
+                  ],
+                  [
+                    'warrants:read / warrants:write',
+                    "Read the community's warrants; ask for one. Asking never issues one",
+                  ],
                   ['players:provision', 'Create and link player accounts, issue claim codes'],
                   ['communities:provision', 'Create communities owned by you'],
                   ['members:read / members:write', 'The roster; invite, approve, promote, remove'],
@@ -440,6 +451,108 @@ set lpc_community_id "your_community_id"`}</Code>
               Every membership write names an <strong>acting player</strong>, and we check that
               player&apos;s permissions the same way the website would. A key never grants more than
               the player it acts for.
+            </p>
+
+            <h2 className="doc-h2" id="reports">
+              Report drafts
+            </h2>
+            <p>
+              <code>POST /communities/{'{communityId}'}/reports/drafts</code> writes a draft
+              incident, arrest or citation report from what your server saw.{' '}
+              <strong>It does not file a report.</strong> There is no endpoint here that does: a
+              person with the community&apos;s <code>manage records</code> permission reads the
+              draft on the website and files it there.
+            </p>
+            <p>
+              That is deliberate. An arrest report in a community carries jail time, a fine and a
+              court case. Your server can see a scuffle; it cannot know whether that was an arrest.
+              So treat a <code>201</code> as &ldquo;the draft is in the queue&rdquo;, never as
+              &ldquo;the report exists&rdquo;, and poll{' '}
+              <code>GET …/reports/drafts/{'{externalId}'}</code> to find out what they decided.
+            </p>
+            <ul>
+              <li>
+                <strong>Idempotent</strong> on your own <code>externalId</code>, like a dispatch
+                call. A retry updates the draft rather than adding a second one to somebody&apos;s
+                queue. Once a person has filed or rejected it you get a{' '}
+                <code>409 draft_already_reviewed</code> and their decision is left alone.
+              </li>
+              <li>
+                <strong>Facts stay apart from the narrative.</strong> <code>facts</code> is what you
+                observed; <code>narrative</code> is prose about it. A narrative with no{' '}
+                <code>generated</code> field is <strong>recorded as generated</strong>: send{' '}
+                <code>&quot;generated&quot;: false</code> only when a person typed the text. There
+                is no way to mark a narrative as evidence, and there will not be.
+              </li>
+              <li>
+                <strong>You name charges; the community prices them.</strong> Send the violation
+                names from the community&apos;s own penal code and we fill in the fine and the jail
+                time from it. A name they do not have is refused, so you cannot invent an amount.
+              </li>
+              <li>
+                <strong><code>reportingOfficer</code> is what gets checked.</strong> Your scope
+                decides whether you may propose a draft at all; whether this draft is allowed is
+                decided by that player&apos;s access, an approved member who is in a department.
+                Name a <code>templateSlug</code> and the community&apos;s own form gates apply to
+                them too.
+              </li>
+            </ul>
+
+            <h2 className="doc-h2" id="warrants">
+              Warrants
+            </h2>
+            <p>
+              Read them with <code>GET /communities/{'{communityId}'}/warrants</code>, filterable by{' '}
+              <code>accused</code> and <code>status</code>, so &ldquo;is there a warrant out for
+              this person?&rdquo; is one request. <code>approved</code> and{' '}
+              <code>awaitingReview</code> are spelled out on each one so you do not have to decide
+              whether <code>executed</code> counts.
+            </p>
+            <p>
+              <code>POST …/warrants/requests</code> asks for one, and{' '}
+              <strong>a request always lands pending</strong>: whatever the community&apos;s
+              approval mode says.
+            </p>
+            <p>
+              That is deliberately not what the website does. A community can set auto-approve, and
+              most have, so an officer clicking the button in the CAD gets an approved warrant at
+              once. That is a convenience for a person who is already in the CAD and can see the
+              result. A game server fires on a trigger, retries, and nobody is watching, so a key
+              gets the pending queue the community already has, a person reviews it with the tools
+              they already use, and you read the outcome back. <code>judgeNotes</code> comes back on
+              a denial, which is the only thing that explains one to your officer.
+            </p>
+
+            <h2 className="doc-h2" id="npcs">
+              Simulated characters
+            </h2>
+            <p>
+              Mark an NPC once, when you provision it:{' '}
+              <code>{'{"provider":"fivem","identifier":"…","synthetic":true}'}</code>. Everything
+              that character owns inherits the mark, so you do not have to repeat it on each
+              civilian, vehicle and firearm.
+            </p>
+            <p>
+              Synthetic records are left out of the searches and rosters players see, including the
+              website&apos;s own name database, unless a caller passes{' '}
+              <code>includeSynthetic=true</code>. So you can populate a city without burying the
+              twelve real players behind four hundred NPCs.
+            </p>
+            <p>
+              They count against your key&apos;s daily provisioning cap, so a runaway loop is still
+              bounded. They do not count against a player&apos;s own per-community character cap: an
+              NPC is nobody&apos;s character, and counting it both ways would mean your scenery
+              consuming your players&apos; allowances.
+            </p>
+            <p>
+              When a test run is done, clean up with{' '}
+              <code>DELETE /communities/{'{communityId}'}/synthetic-records</code>. It only ever
+              touches synthetic records your own key created, in the community in the path, and{' '}
+              <code>confirm</code> has to be that community id, so a cleanup aimed at your test
+              community cannot run against a live one because a config value was stale. A community
+              owner can also remove everything your key made, from their own settings; that path
+              exists for an integration that has stopped answering, so it does not need your
+              cooperation.
             </p>
 
             <h2 className="doc-h2" id="errors">
@@ -466,6 +579,11 @@ set lpc_community_id "your_community_id"`}</Code>
                   ['player_not_found', 'Upsert the player first'],
                   ['already_claimed', 'The player owns their account; they sign in normally'],
                   ['ten_code_not_found', 'Read ids from /ten-codes rather than hardcoding'],
+                  ['charge_not_in_penal_code', "Read the community's penal code and send the names it lists"],
+                  ['reporting_officer_has_no_department', 'Put the officer in a department first'],
+                  ['template_not_permitted', "The community's form gates exclude that officer"],
+                  ['draft_already_reviewed', 'A person has acted on it; write a new draft with a new externalId'],
+                  ['confirm_required', 'A cleanup needs confirm set to the community id'],
                   ['rate_limited', 'Honour Retry-After'],
                   ['provision_cap_reached', 'Daily account or community cap; resets at midnight UTC'],
                 ].map(([code, what]) => (
@@ -491,8 +609,18 @@ set lpc_community_id "your_community_id"`}</Code>
               <li>touch money: wallets, balances, transfers, economy payouts</li>
               <li>billing, subscriptions or boosts</li>
               <li>community settings, roles, permissions or deletion</li>
-              <li>assign a role to a member — roles carry permissions; departments and ranks are fine</li>
+              <li>assign a role to a member, roles carry permissions; departments and ranks are fine</li>
               <li>read any community your key is not tied to</li>
+              <li>
+                <strong>file a report.</strong> A draft is a proposal; the verb that turns one into
+                an arrest, citation or incident record is on the website, behind the
+                community&apos;s own permission. There is no <code>reports:file</code> scope and
+                there will not be one
+              </li>
+              <li>
+                <strong>issue a warrant.</strong> A request lands pending for the community&apos;s
+                own reviewer, whatever its approval mode says
+              </li>
             </ul>
             <p>
               A community owner can withdraw your key&apos;s access at any time from their own
@@ -504,7 +632,7 @@ set lpc_community_id "your_community_id"`}</Code>
             </h2>
             <p>
               Open a ticket in <a href="https://discord.gg/Y9ytW2ZMp4">our Discord</a>. Include your
-              key&apos;s display prefix (<code>lpc_live_a1b2c3d4</code>) — never the key itself —
+              key&apos;s display prefix (<code>lpc_live_a1b2c3d4</code>), never the key itself,
               and the <code>error</code> code you got.
             </p>
             <a className="doc-cta" href="/developer">

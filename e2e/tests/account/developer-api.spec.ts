@@ -233,7 +233,7 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
     await page.goto('/developer/keys/new');
     await page.locator('#dc-key-name').fill('New key');
     await page.locator('#dc-community').selectOption(COMMUNITY_ID);
-    await page.getByRole('button', { name: 'Read only' }).click();
+    await page.getByRole('button', { name: 'Read only', exact: true }).click();
     await page.getByRole('button', { name: 'Create key' }).click();
 
     const reveal = page.locator('.dc-secret');

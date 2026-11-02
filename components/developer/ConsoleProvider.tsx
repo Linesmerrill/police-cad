@@ -10,11 +10,11 @@
  *
  * It also decides which of the three states the console is in:
  *
- *   loading     — a skeleton, not a spinner over an empty page
- *   not enabled — the public landing page with its sign-up form, on /developer
+ *   loading    , a skeleton, not a spinner over an empty page
+ *   not enabled, the public landing page with its sign-up form, on /developer
  *                 only; the other pages send you there, because "Usage" for an
  *                 account that has none is a page about nothing
- *   enabled     — the console frame around the page
+ *   enabled    , the console frame around the page
  */
 
 import {
@@ -144,7 +144,7 @@ export default function ConsoleProvider({
   }
 
   // Not enabled yet: the public landing page, with the sign-up form on it. No
-  // console frame — there is nothing to navigate between.
+  // console frame, there is nothing to navigate between.
   if (!account.enabled) {
     return (
       <div className="dev-page" style={{ background: '#08090c', minHeight: '100vh' }}>

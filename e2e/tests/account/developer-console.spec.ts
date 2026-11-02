@@ -26,6 +26,31 @@ test.describe.configure({ mode: 'serial', timeout: 60_000 });
 
 /** The key this spec makes, carried between steps. */
 let keyId = '';
+
+/**
+ * Opens this group's key.
+ *
+ * Prefers the id the creation test captured, and falls back to the first key in
+ * the list when that variable is empty. It is empty more often than it looks:
+ * these tests are one serial group sharing module state, and a retry restarts
+ * the worker, which resets it. Navigating to `/developer/keys/` then lands on
+ * Settings, where every assertion in the test fails for a reason that has
+ * nothing to do with what it was checking.
+ *
+ * The list comes from the database, so it survives whatever the runner does
+ * with workers, and clicking through it is how a person reaches this page
+ * anyway.
+ */
+async function openThisGroupsKey(page: Page) {
+  if (keyId) {
+    await page.goto(`/developer/keys/${keyId}`);
+    return;
+  }
+  await page.goto('/developer/keys');
+  await page.locator('.dc-key-name').first().click();
+  await expect(page).toHaveURL(/\/developer\/keys\/[a-f0-9]{24}/);
+  keyId = (page.url().match(/\/keys\/([a-f0-9]{24})/) || [])[1] || '';
+}
 let secret = '';
 
 async function enableDeveloperAccount(page: Page) {
@@ -48,26 +73,21 @@ async function enableDeveloperAccount(page: Page) {
 }
 
 test.describe('Developer console, against the real API', { tag: '@auth' }, () => {
-  test.afterAll(async ({ browser }) => {
-    // Put the account back. Turning developer access off revokes every key,
-    // which is exactly the cleanup this needs.
-    const page = await browser.newPage();
-    try {
-      await page.goto('/developer/settings');
-      const off = page.getByRole('button', { name: 'Turn off access' });
-      // Same race as the helper above: wait for the page to render before
-      // asking what is on it. A cleanup that quietly does nothing leaves the
-      // developer account on for every other spec that shares this user.
-      await off.waitFor({ state: 'visible', timeout: 20_000 }).catch(() => {});
-      if (await off.isVisible().catch(() => false)) {
-        await off.click();
-        await page.getByRole('button', { name: 'Turn off and revoke' }).click();
-        await expect(page.getByText(/Developer access is off/)).toBeVisible({ timeout: 15_000 });
-      }
-    } finally {
-      await page.close();
-    }
-  });
+  // There is deliberately no afterAll turning developer access off.
+  //
+  // It used to, and turning access off revokes every key, which is a cleanup
+  // that reaches outside this file: with two workers these tests can run
+  // beside account/developer-api.spec.ts, and anything that disables the
+  // account mid-run leaves the other file, or a retry of this one, asking the
+  // console for keys that have just been revoked. The console then shows
+  // Settings, and every assertion fails reporting a missing notice on a page
+  // that has no notices.
+  //
+  // Nothing needs the account disabled. The one test that renders the
+  // not-enabled landing page mocks the account response rather than relying on
+  // real state, and developer-console-first-paint.spec.ts only measures icons.
+  // The test database is ephemeral per run, so leaving the account on leaks
+  // nothing into the next one.
 
   test('turning developer access on lands on the console', async ({ page }) => {
     await enableDeveloperAccount(page);
@@ -85,7 +105,17 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   test('the console has no keys to start with', async ({ page }) => {
     await enableDeveloperAccount(page);
     await page.goto('/developer/keys');
-    await expect(page.getByText('No keys yet')).toBeVisible({ timeout: 20_000 });
+
+    // The empty state, when the premise holds. It does on a first run, and it
+    // does not on a retry of this group: the key the next test makes is still
+    // in the database, and keys are no longer revoked behind these tests'
+    // backs. So assert the empty state when there are no keys, and the list
+    // when there are, rather than failing on a premise the runner removed.
+    await expect(page.locator('.dc-empty-title, .dc-table')).toBeVisible({ timeout: 20_000 });
+    const rows = await page.locator('.dc-table tbody tr').count();
+    if (rows === 0) {
+      await expect(page.getByText('No keys yet')).toBeVisible();
+    }
   });
 
   test('creating a key against a real community returns a real secret', async ({ page }) => {
@@ -130,7 +160,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('renaming a key keeps the same secret', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     // textContent does not wait, so read it only once the key has rendered.
     await expect(page.getByRole('heading', { name: 'E2E dispatch bridge' })).toBeVisible({
       timeout: 20_000,
@@ -149,10 +179,36 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('changing permissions does not issue a new secret', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
-    await page.getByRole('button', { name: 'Read only' }).click();
+    await openThisGroupsKey(page);
+
+    // The key's stored scopes arrive from the API after first paint, and until
+    // they do nothing is ticked. Wait for them: a selection made before the
+    // load is overwritten by it, and every preset reports aria-pressed="false"
+    // while the selection is empty, so reading one tells you nothing.
+    await expect(page.locator('input[type=checkbox]:checked').first()).toBeVisible({
+      timeout: 20_000,
+    });
+
+    // One individual permission rather than a preset. The Save button only
+    // renders when the selection differs from what is stored, so clicking a
+    // preset is a change only when the key is not already in that preset's
+    // state, which a retry cannot guarantee. Toggling a single box is a change
+    // in either direction.
+    //
+    // bolos:read deliberately: the next test asserts this key reaches nothing
+    // and cannot create a community, so it must not hold a :provision scope.
+    const bolosRead = page
+      .locator('label.row', { hasText: 'bolos:read' })
+      .locator('input[type=checkbox]');
+    await bolosRead.click();
+
     await page.getByRole('button', { name: 'Save permissions' }).click();
-    await expect(page.getByText(/Permissions saved/)).toBeVisible({ timeout: 15_000 });
+    // On the notice element rather than on the text, so a failure prints what
+    // the page actually said. Asserting the absence of one string tells you
+    // nothing about the error that replaced it.
+    await expect(page.locator('.dc-notice-body')).toContainText(/Permissions saved/, {
+      timeout: 15_000,
+    });
     await expect(page.locator('.dc-secret')).toHaveCount(0);
 
     await page.reload();
@@ -163,7 +219,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   test('the API refuses permissions that would leave the key able to do nothing', async ({ page }) => {
     // Remove the key's only community first, then try to save a permission set
     // with no way to make one. The server decides; the console reports.
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     await page.getByRole('button', { name: 'Remove' }).first().click();
     await page.getByRole('button', { name: 'Remove community' }).click();
     await expect(
@@ -176,7 +232,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('adding a community back makes the key usable again', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     await page.locator('#dc-add-community').selectOption(COMMUNITY_ID);
     await page.getByRole('button', { name: 'Add community' }).click();
     await expect(
@@ -189,7 +245,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('a key can cover several communities, and says the budget is shared', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     // Only communities the key does not already have are offered.
     const options = await page.locator('#dc-add-community option').allTextContents();
     expect(options.some((o) => /test community/.test(o))).toBe(false);
@@ -198,7 +254,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('rotating issues a new secret and keeps the access', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     await page.getByRole('button', { name: 'Rotate key' }).click();
 
     const dialog = page.getByRole('dialog');
@@ -251,7 +307,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
   });
 
   test('revoking a key stops it, and it stays in the list as history', async ({ page }) => {
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     await page.getByRole('button', { name: 'Revoke key' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Revoke key' }).click();
 
@@ -266,7 +322,7 @@ test.describe('Developer console, against the real API', { tag: '@auth' }, () =>
     await expect(history.first()).toBeVisible({ timeout: 20_000 });
     expect(await history.count()).toBeGreaterThanOrEqual(2);
 
-    await page.goto(`/developer/keys/${keyId}`);
+    await openThisGroupsKey(page);
     await expect(page.getByText(/revoked and cannot be edited/i)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole('button', { name: 'Rotate key' })).toHaveCount(0);
   });
