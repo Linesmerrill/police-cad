@@ -279,7 +279,7 @@ const faqData = [
           </ul>
           There is <strong>no permission at all</strong> for money or wallets, billing or subscriptions, passwords, email or anything else to do with account security, site administration, or a community&apos;s own settings and roles. Those are not scopes a developer can ask for, so no key can be given them by anyone.
           <br /><br />
-          Two more are worth naming, because they sound like things a key could do and are not. <strong>A key cannot file a report.</strong> It writes a draft, and someone in your community with the <strong>manage records</strong> permission reads it and decides, there is no endpoint on the API that files one. And <strong>a key cannot issue a warrant.</strong> A request it makes always waits for a reviewer, even in a community that has auto-approve switched on for its own officers.</>)
+          Two more are worth naming, because they sound like things a key could do and are not. <strong>A key cannot file a report.</strong> It writes a draft, and someone in your community with the <strong>manage records</strong> permission reads it and decides, there is no endpoint on the API that files one. And <strong>a key cannot decide a warrant.</strong> It can ask for one, and your community&apos;s own warrant approval mode answers exactly as it does for an officer in the CAD, so a community that requires a judge still gets a judge. What no key has is a way to approve, deny or review one itself.</>)
       },
       {
         question: 'An integration wants to write reports for my community. What actually happens?',

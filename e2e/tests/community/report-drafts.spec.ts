@@ -64,6 +64,23 @@ async function mockQueue(page: Page, rows: unknown[], totalCount = rows.length) 
   );
 }
 
+/**
+ * The single-draft endpoint, which the API's reviewLink points at.
+ *
+ * Note the double wrapping: the route answers {draft: <row>} and the row is
+ * itself {draft, writtenByKeyName}. That is the shape the page has to unwrap,
+ * so the mock reproduces it rather than flattening it.
+ */
+async function mockOneDraft(page: Page, row: unknown) {
+  await page.route(
+    `**/api/developer/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`,
+    (route: Route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      return json(route, { draft: row });
+    }
+  );
+}
+
 test.describe('Report draft review', () => {
   test('a reviewer sees the facts and the narrative apart, with the AI narrative flagged', async ({ page }) => {
     await mockQueue(page, [generatedArrestDraft()]);
@@ -398,5 +415,135 @@ test.describe('Screenshots: the community API keys screen', () => {
       await expect(page.getByRole('button', { name: 'Remove its records' })).toBeVisible();
       await shoot(page, testInfo, 'community API keys', { fullPage: true });
     });
+  });
+});
+
+/**
+ * The three things Hark found missing in production once a draft existed: the
+ * link the API hands out went nowhere, an attachment it had accepted was shown
+ * nowhere, and filing said it had worked without saying where the result was.
+ */
+test.describe('Report draft deep links, attachments and the filed record', () => {
+  test('the reviewLink the API returns opens that one draft', async ({ page }) => {
+    await mockOneDraft(page, generatedArrestDraft());
+    // The exact path shape of reportDraftReviewLink in the API:
+    // {base}/community/{communityId}/report-drafts/{draftId}
+    await page.goto(`/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`);
+
+    await expect(page.getByRole('heading', { name: 'Report drafts' })).toBeVisible();
+    await expect(page.getByText(/Vehicle failed to stop/)).toBeVisible();
+    // One draft, and a way back to the rest.
+    await expect(page.locator('.draft')).toHaveCount(1);
+    await expect(page.getByRole('link', { name: /See all report drafts/i })).toBeVisible();
+    // The filters belong to the list, not to one draft.
+    await expect(page.locator('.filters')).toBeHidden();
+  });
+
+  test('a draft id that is not there says so instead of looking empty', async ({ page }) => {
+    await page.route(
+      `**/api/developer/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`,
+      (route: Route) => json(route, { message: 'No draft with that id.' }, 404)
+    );
+    await page.goto(`/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`);
+
+    await expect(page.getByText(/That draft is not here/i)).toBeVisible();
+  });
+
+  test('a malformed draft id is not found rather than rendered', async ({ page }) => {
+    const response = await page.goto(`/community/${COMMUNITY_ID}/report-drafts/not-an-id`);
+    expect(response?.status()).toBe(400);
+  });
+
+  test('attachments are shown with their kind, label and who added them', async ({ page }) => {
+    await mockQueue(page, [
+      generatedArrestDraft({
+        attachments: [
+          {
+            id: 'att1',
+            kind: 'screenshot',
+            label: 'Scene',
+            url: 'https://clips.example.com/scene.png',
+            contentType: 'image/png',
+            sizeBytes: 20480,
+            addedByKeyId: 'bbbbbbbbbbbbbbbbbbbbbbb1',
+            addedAt: '2026-11-01T21:20:00Z',
+          },
+          {
+            id: 'att2',
+            kind: 'clip',
+            label: 'Dashcam',
+            url: 'https://clips.example.com/a.mp4',
+            contentType: 'video/mp4',
+            sizeBytes: 8421376,
+            addedByKeyId: 'bbbbbbbbbbbbbbbbbbbbbbb1',
+            addedAt: '2026-11-01T21:21:00Z',
+          },
+        ],
+      }),
+    ]);
+    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+
+    const atts = page.locator('.atts');
+    await expect(atts).toBeVisible();
+    await expect(atts.locator('.att')).toHaveCount(2);
+
+    // The label is the link text, so the reviewer reads a name rather than a
+    // URL an integration chose.
+    const scene = atts.getByRole('link', { name: 'Scene' });
+    await expect(scene).toHaveAttribute('href', 'https://clips.example.com/scene.png');
+    await expect(scene).toHaveAttribute('target', '_blank');
+    await expect(scene).toHaveAttribute('rel', /noopener/);
+    await expect(atts.getByText('screenshot')).toBeVisible();
+    await expect(atts.getByText('clip')).toBeVisible();
+
+    // Attribution, and the one thing this must never be called.
+    await expect(atts.getByText(/Added by/)).toContainText('SixPD dispatch bridge');
+    await expect(atts.getByText(/not evidence/i)).toBeVisible();
+    await expect(atts).not.toContainText(/^Evidence$/);
+  });
+
+  test('a draft with no attachments shows no attachment section at all', async ({ page }) => {
+    await mockQueue(page, [generatedArrestDraft({ attachments: [] })]);
+    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+
+    await expect(page.locator('.draft')).toHaveCount(1);
+    await expect(page.locator('.atts')).toHaveCount(0);
+  });
+
+  test('a filed form submission links to the report it became', async ({ page }) => {
+    await mockQueue(page, [
+      generatedArrestDraft({
+        status: 'submitted',
+        filed: true,
+        filedRecordId: 'eeeeeeeeeeeeeeeeeeeeee01',
+        filedRecordKind: 'formSubmission',
+        reviewedByName: 'Sgt Pike',
+        reviewedAt: '2026-11-01T22:00:00Z',
+      }),
+    ]);
+    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+
+    const link = page.getByRole('link', { name: /Open the filed report/i });
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('href', '/reports/eeeeeeeeeeeeeeeeeeeeee01?view=1');
+  });
+
+  test('a filed arrest report says where it is rather than linking nowhere', async ({ page }) => {
+    // Arrest reports have no page of their own, so the honest answer is a
+    // sentence. Linking to a route that 404s is the bug this batch fixed.
+    await mockQueue(page, [
+      generatedArrestDraft({
+        status: 'submitted',
+        filed: true,
+        filedRecordId: 'eeeeeeeeeeeeeeeeeeeeee02',
+        filedRecordKind: 'arrestReport',
+        reviewedByName: 'Sgt Pike',
+        reviewedAt: '2026-11-01T22:00:00Z',
+      }),
+    ]);
+    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+
+    await expect(page.getByText(/Filed as an arrest report/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /Open the filed report/i })).toHaveCount(0);
   });
 });

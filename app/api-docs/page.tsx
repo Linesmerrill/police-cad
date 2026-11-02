@@ -514,17 +514,20 @@ set lpc_community_id "your_community_id"`}</Code>
             </p>
             <p>
               <code>POST …/warrants/requests</code> asks for one, and{' '}
-              <strong>a request always lands pending</strong>: whatever the community&apos;s
-              approval mode says.
+              <strong>the community&apos;s own approval mode decides it</strong>, exactly as it does
+              for a warrant raised in the CAD. <code>require-judge</code> leaves it{' '}
+              <code>pending</code> for a judge. <code>random</code> decides it immediately at the
+              community&apos;s approval rate, with a random judge name.{' '}
+              <code>auto-approve</code>, which is what a community that has set nothing gets,
+              approves it immediately.
             </p>
             <p>
-              That is deliberately not what the website does. A community can set auto-approve, and
-              most have, so an officer clicking the button in the CAD gets an approved warrant at
-              once. That is a convenience for a person who is already in the CAD and can see the
-              result. A game server fires on a trigger, retries, and nobody is watching, so a key
-              gets the pending queue the community already has, a person reviews it with the tools
-              they already use, and you read the outcome back. <code>judgeNotes</code> comes back on
-              a denial, which is the only thing that explains one to your officer.
+              So read <code>status</code> on the response rather than assuming it. What a key cannot
+              do is decide: it asks on behalf of an officer it names, who passes the same checks as
+              anyone else, and the community&apos;s rule answers. There is no approve, deny or
+              review route for a key. <code>judgeNotes</code> comes back on a denial, which is the
+              only thing that explains one to your officer, and the warrant&apos;s first history
+              entry names your integration so anyone reading it later can see a script raised it.
             </p>
 
             <h2 className="doc-h2" id="npcs">
@@ -819,8 +822,9 @@ set lpc_community_id "your_community_id"`}</Code>
                 there will not be one
               </li>
               <li>
-                <strong>issue a warrant.</strong> A request lands pending for the community&apos;s
-                own reviewer, whatever its approval mode says
+                <strong>approve, deny or review a warrant.</strong> A key asks for one and the
+                community&apos;s own approval mode answers, so in a community that requires a judge
+                it waits for one. There is no route for a key to decide a warrant
               </li>
             </ul>
             <p>

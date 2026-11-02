@@ -7844,9 +7844,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // that governs records everywhere else in the product — filing a draft
   // creates a record and rejecting one discards a proposed record, so a new
   // permission for it would have had to be added to four surfaces for no gain.
-  app.get("/community/:hash/report-drafts", authCheck, async function (req, res) {
+  // The list, and one draft on its own.
+  //
+  // The second route exists because the API hands out a reviewLink of the form
+  // /community/{id}/report-drafts/{draftId} for a supervisor to open, and
+  // without it that link was a 404: the only thing a game server could put in
+  // somebody's chat went nowhere.
+  app.get(["/community/:hash/report-drafts", "/community/:hash/report-drafts/:draftId"], authCheck, async function (req, res) {
     const communityId = req.params.hash;
     if (!/^[a-f0-9]{24}$/i.test(communityId)) {
+      return res.status(400).render("page-not-found", { user: req.user });
+    }
+    const focusDraftId = req.params.draftId || "";
+    if (focusDraftId && !/^[a-f0-9]{24}$/i.test(focusDraftId)) {
       return res.status(400).render("page-not-found", { user: req.user });
     }
 
@@ -7872,6 +7882,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       communityName,
       loadError,
       canReview,
+      focusDraftId,
       buildVersion: app.locals.buildVersion,
     });
   });
