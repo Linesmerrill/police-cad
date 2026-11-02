@@ -81,26 +81,25 @@
   <%- include('partials/dd-modal') %>
 
   <div class="rp-shell">
-    <a class="back" href="/community/<%= communityId %>"><i class="fa fa-arrow-left"></i> Back to the community</a>
+    <a class="back" href="/community/<%= communityHash %>"><i class="fa fa-arrow-left"></i> Back to community</a>
 
     <h1>API keys</h1>
     <p class="lede">
-      Developer keys with access to <strong><%= communityName || 'this community' %></strong>.
-      A key can read and change this community's data within the scopes it holds, so only approve
-      ones you recognise, and withdraw any you no longer want.
-      <a href="/api-docs">What is a developer key?</a>
+      Apps and game servers connected to <strong><%= communityName || 'this community' %></strong>.
+      Only approve ones you trust.
+      <a href="/api-docs">What&rsquo;s this?</a>
     </p>
     <p class="lede" style="margin-top:-1rem;">
-      Integrations can also prepare <a href="/community/<%= communityId %>/report-drafts">report
-      drafts</a> for someone here to read and file. Nothing they write is filed on its own.
+      Connected apps can also send you <a href="/community/<%= communityHash %>/report-drafts">report
+      drafts</a> to review.
     </p>
 
     <% if (loadError) { %>
       <div class="notice notice-err"><%= loadError %></div>
     <% } else if (!canManage) { %>
       <div class="notice notice-warn">
-        You need the <strong>manage community settings</strong> permission to see or change this
-        community's API keys. Ask an admin or the owner.
+        You need the <strong>Manage community settings</strong> permission to see this page.
+        Ask an admin or the owner.
       </div>
     <% } else { %>
       <div id="feedback"></div>
@@ -135,14 +134,13 @@
       function badge(status) {
         if (status === 'pending') return '<span class="badge badge-pending">Waiting for approval</span>';
         if (status === 'active') return '<span class="badge badge-active">Active</span>';
-        return '<span class="badge badge-revoked">Access withdrawn</span>';
+        return '<span class="badge badge-revoked">Removed</span>';
       }
 
       function render(data) {
         var keys = (data && data.keys) || [];
         if (keys.length === 0) {
-          keysEl.innerHTML = '<p class="empty">No developer keys have asked for access to this ' +
-            'community. Nothing to do.</p>';
+          keysEl.innerHTML = '<p class="empty">No apps have asked to connect yet.</p>';
           return;
         }
 
@@ -150,7 +148,7 @@
         if (data.pendingCount > 0) {
           html += '<div class="notice notice-warn">' + data.pendingCount +
             (data.pendingCount === 1 ? ' key is' : ' keys are') +
-            ' waiting for your decision.</div>';
+            ' waiting for approval.</div>';
         }
 
         keys.forEach(function (row) {
@@ -167,14 +165,14 @@
           }
           if (row.canRevoke) {
             actions += '<button type="button" class="btn btn-danger" data-action="revoke" data-key="' +
-              escapeHtml(row.keyId) + '" data-name="' + escapeHtml(row.keyName) + '">Withdraw access</button>';
+              escapeHtml(row.keyId) + '" data-name="' + escapeHtml(row.keyName) + '">Remove access</button>';
           }
           // Always offered, including for a key whose access is already gone.
           // That is the case it exists for: an integration that stopped
           // answering leaves rows behind, and cleaning up after it must not
           // need its cooperation.
           actions += '<button type="button" class="btn btn-ghost" data-action="records" data-key="' +
-            escapeHtml(row.keyId) + '" data-name="' + escapeHtml(row.keyName) + '">Remove its records</button>';
+            escapeHtml(row.keyId) + '" data-name="' + escapeHtml(row.keyName) + '">Delete its data</button>';
 
           html += '<div class="key-row">' +
             '<div class="key-head">' +
@@ -182,13 +180,13 @@
                 '<strong>' + escapeHtml(row.keyName) + '</strong> ' + badge(row.status) +
                 '<div class="dim mono">' + escapeHtml(row.displayPrefix) + '</div>' +
                 (row.developerName
-                  ? '<div class="muted">Developer: ' + escapeHtml(row.developerName) + '</div>'
+                  ? '<div class="muted">Made by ' + escapeHtml(row.developerName) + '</div>'
                   : '') +
                 '<div class="muted">' + escapeHtml(row.source) + '</div>' +
                 '<div style="margin-top:0.5rem;">' + scopes + '</div>' +
                 (row.writeScopes && row.writeScopes.length
-                  ? '<div class="muted" style="margin-top:0.5rem;">This key can <strong>change</strong> ' +
-                    'data in this community.</div>'
+                  ? '<div class="muted" style="margin-top:0.5rem;">Can change data in this ' +
+                    'community.</div>'
                   : '') +
               '</div>' +
               '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' + actions + '</div>' +
@@ -226,7 +224,7 @@
         })
           .then(function (response) {
             return response.json().then(function (data) {
-              if (!response.ok) throw new Error(data && data.message ? data.message : 'That did not work');
+              if (!response.ok) throw new Error(data && data.message ? data.message : 'That didn\u2019t work. Try again.');
               return data;
             });
           })
@@ -238,12 +236,15 @@
             // Counted per collection rather than as one total: "it removed 412
             // things" is not something anyone can check, and "97 civilians,
             // 180 vehicles" is.
-            var summary = parts.length ? parts.join(', ') : 'nothing, there was nothing to remove';
-            feedback('ok', 'Removed ' + summary + ' for ' + name + '.' +
-              (data && data.more ? ' There may be more; run it again.' : ''));
+            if (!parts.length) {
+              feedback('ok', 'Nothing to delete.');
+              return;
+            }
+            feedback('ok', 'Deleted ' + parts.join(', ') + ' from ' + name + '.' +
+              (data && data.more ? ' Some is left. Click Delete its data again.' : ''));
           })
           .catch(function (error) {
-            feedback('err', error.message || 'That did not work');
+            feedback('err', error.message || 'That didn\u2019t work. Try again.');
           });
       }
 
@@ -251,21 +252,20 @@
         window.ddModal({
           type: 'danger',
           icon: 'fa-eraser',
-          title: 'Remove its records?',
-          message: 'This deletes what <strong>' + escapeHtml(name) + '</strong> created in this ' +
-            'community. It cannot be undone.',
-          detail: 'Choose <strong>test records only</strong> unless you are sure. ' +
-            '<em>Everything</em> also removes characters, vehicles and firearms this key made ' +
-            'for real players, which they would lose.',
+          title: 'Delete data from ' + name + '?',
+          message: 'This can&rsquo;t be undone.',
+          detail: '<strong>Test data</strong> only deletes the fake NPC records it made. ' +
+            '<strong>Everything</strong> also deletes characters, vehicles and guns it made for ' +
+            'real players.',
           buttons: [
             { label: 'Cancel', class: 'ddm-btn-secondary' },
             {
-              label: 'Test records only',
+              label: 'Test data only',
               class: 'ddm-btn-primary',
               onClick: function () { removeRecords(keyId, name, 'synthetic'); },
             },
             {
-              label: 'Everything it made',
+              label: 'Everything',
               class: 'ddm-btn-danger',
               onClick: function () { removeRecords(keyId, name, 'all'); },
             },
@@ -280,18 +280,18 @@
         })
           .then(function (response) {
             return response.json().then(function (data) {
-              if (!response.ok) throw new Error(data && data.message ? data.message : 'That did not work');
+              if (!response.ok) throw new Error(data && data.message ? data.message : 'That didn\u2019t work. Try again.');
               return data;
             });
           })
           .then(function () {
             feedback('ok', action === 'approve'
               ? 'Approved ' + name + '.'
-              : 'Withdrew access for ' + name + '.');
+              : 'Removed access for ' + name + '.');
             load();
           })
           .catch(function (error) {
-            feedback('err', error.message || 'That did not work');
+            feedback('err', error.message || 'That didn\u2019t work. Try again.');
           });
       }
 
@@ -315,10 +315,9 @@
           window.ddModal({
             type: 'warning',
             icon: 'fa-key',
-            title: 'Approve this key?',
-            message: '<strong>' + escapeHtml(name) + '</strong> will be able to read and change ' +
-              'this community within the scopes it holds.',
-            detail: 'You can withdraw access at any time, and it stops working immediately.',
+            title: 'Approve ' + name + '?',
+            message: 'It will be able to read and change this community&rsquo;s data.',
+            detail: 'You can remove access anytime.',
             confirmText: 'Approve',
             onConfirm: function () { act('approve', keyId, name); },
           });
@@ -328,12 +327,9 @@
         window.ddModal({
           type: 'danger',
           icon: 'fa-ban',
-          title: 'Withdraw access?',
-          message: '<strong>' + escapeHtml(name) + '</strong> stops working on this community ' +
-            'immediately.',
-          detail: 'Anything the developer built against it will start failing. Their key keeps ' +
-            'working on their other communities.',
-          confirmText: 'Withdraw access',
+          title: 'Remove access for ' + name + '?',
+          message: 'It stops working in this community right away. Your data stays.',
+          confirmText: 'Remove access',
           onConfirm: function () { act('revoke', keyId, name); },
         });
       });

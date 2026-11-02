@@ -10,9 +10,12 @@
  */
 import { test, expect, Page, Route } from '@playwright/test';
 import { TEST_COMMUNITY_ID } from '../../helpers/seed';
+import { communityHash } from '../../helpers/test-urls';
 
 const KEY_ID = 'aaaaaaaaaaaaaaaaaaaaaaa1';
 const COMMUNITY_ID = TEST_COMMUNITY_ID.toHexString();
+// Pages under /community/ take the encoded id; only the proxy routes take the raw one.
+const COMMUNITY_HASH = communityHash();
 
 const SCOPES = [
   { scope: 'community:read', description: "Read the community's profile, departments and ten-codes" },
@@ -450,15 +453,15 @@ test.describe('Developer API pages', { tag: '@auth' }, () => {
       return json(route, { status: 'active' });
     });
 
-    await page.goto(`/community/${COMMUNITY_ID}/api-keys`);
+    await page.goto(`/community/${COMMUNITY_HASH}/api-keys`);
 
-    await expect(page.getByText('1 key is waiting for your decision.')).toBeVisible();
+    await expect(page.getByText('1 key is waiting for approval.')).toBeVisible();
     await expect(page.getByText('Waiting mod')).toBeVisible();
-    await expect(page.getByText('This key can change data in this community.')).toBeVisible();
+    await expect(page.getByText('Can change data in this community.')).toBeVisible();
 
     await page.getByRole('button', { name: 'Approve' }).click();
     // ddModal, not a native confirm.
-    await expect(page.getByText('Approve this key?')).toBeVisible();
+    await expect(page.getByText(/^Approve /)).toBeVisible();
     expect(approved).toBe(false);
 
     // Confirm inside the overlay. Its button carries the same label as the row

@@ -29,5 +29,14 @@ function toUrlSafeBase64(hex: string): string {
 
 /** Returns the community details page URL for the test community */
 export function communityDetailsUrl(): string {
-  return `/community/${toUrlSafeBase64(TEST_COMMUNITY_ID.toHexString())}`;
+  return `/community/${communityHash()}`;
+}
+
+/**
+ * The encoded community id, which is how every /community/... path spells a
+ * community. A page there decodes its first segment, so a test that navigates
+ * with the raw ObjectId is not exercising the URL a real link uses.
+ */
+export function communityHash(): string {
+  return toUrlSafeBase64(TEST_COMMUNITY_ID.toHexString());
 }

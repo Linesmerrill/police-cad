@@ -283,7 +283,7 @@
                is per-key with scopes and a decision attached to each row, which
                a settings modal has no room for. -->
           <% if (canManageGeneralSettings) { %>
-            <div id="apiKeysSettingsCard" onclick="window.location.href='/community/<%= community._id %>/api-keys'" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s;">
+            <div id="apiKeysSettingsCard" onclick="window.location.href='/community/<%= hash %>/api-keys'" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s;">
               <div style="text-align:center;">
                 <i class="fa fa-key" style="font-size:2rem; color:#38bdf8; margin-bottom:0.5rem;"></i>
                 <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">API Keys</h5>
@@ -308,7 +308,7 @@
                that permission already governs, and an officer who may file
                reports should not need settings access to read a draft. -->
           <% if (typeof canReviewReportDrafts !== 'undefined' && canReviewReportDrafts) { %>
-            <div id="reportDraftsSettingsCard" onclick="window.location.href='/community/<%= community._id %>/report-drafts'" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s;">
+            <div id="reportDraftsSettingsCard" onclick="window.location.href='/community/<%= hash %>/report-drafts'" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s;">
               <div style="text-align:center;">
                 <i class="fa fa-file-signature" style="font-size:2rem; color:#38bdf8; margin-bottom:0.5rem;"></i>
                 <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Report Drafts</h5>

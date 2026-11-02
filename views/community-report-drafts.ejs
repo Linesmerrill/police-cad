@@ -160,7 +160,7 @@
   <%- include('partials/dd-modal') %>
 
   <div class="rp-shell">
-    <a class="back" href="/community/<%= communityId %>"><i class="fa fa-arrow-left"></i> Back to the community</a>
+    <a class="back" href="/community/<%= communityHash %>"><i class="fa fa-arrow-left"></i> Back to the community</a>
 
     <h1>Report drafts</h1>
     <p class="lede">
@@ -181,7 +181,7 @@
       <div id="feedback"></div>
       <% if (focusDraftId) { %>
         <div class="notice notice-info" id="focusNotice">
-          Showing one draft, from a link. <a href="/community/<%= communityId %>/report-drafts">See all report drafts</a>
+          Showing one draft, from a link. <a href="/community/<%= communityHash %>/report-drafts">See all report drafts</a>
         </div>
       <% } %>
       <% if (!focusDraftId) { %>
@@ -210,7 +210,12 @@
   <% if (canReview && !loadError) { %>
   <script>
     (function () {
+      // The raw id, for the /api/developer/... proxy routes, which take it.
       var COMMUNITY_ID = <%- JSON.stringify(communityId) %>;
+      // The encoded id, for every link to a page on this site. Pages under
+      // /community/ decode their first path segment, and /reports/<id> reads
+      // ?c=, so a site link built from COMMUNITY_ID points at nothing.
+      var COMMUNITY_HASH = <%- JSON.stringify(communityHash) %>;
       var FOCUS_DRAFT_ID = <%- JSON.stringify(focusDraftId || '') %>;
       var draftsEl = document.getElementById('drafts');
       var feedbackEl = document.getElementById('feedback');
@@ -325,7 +330,7 @@
         if (!draft.filedRecordId) return '';
         if (draft.filedRecordKind === 'formSubmission') {
           return '<a class="btn btn-ghost" href="/reports/' + encodeURIComponent(draft.filedRecordId) +
-            '?view=1">Open the filed report</a>';
+            '?view=1&c=' + encodeURIComponent(COMMUNITY_HASH) + '">Open the filed report</a>';
         }
         if (draft.filedRecordKind === 'arrestReport') {
           return '<span class="muted">Filed as an arrest report. Open it from the arrest on the ' +
@@ -512,7 +517,8 @@
               if (record.id && record.kind === 'formSubmission') {
                 // feedback() escapes, so the link is written straight in here.
                 feedbackEl.innerHTML = '<div class="notice notice-ok">' + escapeHtml(base) +
-                  ' <a href="/reports/' + encodeURIComponent(record.id) + '?view=1">Open it</a></div>';
+                  ' <a href="/reports/' + encodeURIComponent(record.id) +
+                  '?view=1&c=' + encodeURIComponent(COMMUNITY_HASH) + '">Open it</a></div>';
                 feedbackEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
               } else {
                 feedback('ok', base);
