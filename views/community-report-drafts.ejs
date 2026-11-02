@@ -232,6 +232,59 @@
           .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       }
 
+      // Every call on this page goes through readJson.
+      //
+      // response.json() throws a SyntaxError on anything that is not JSON, and
+      // its message ("Unexpected token '<', \"<!DOCTYPE \"...") is what a
+      // reviewer saw instead of being told what went wrong. Our own routes do
+      // answer JSON, but a 5xx travels through a proxy and a CDN that are
+      // entitled to replace the body with an error page, and that is exactly
+      // when the message matters. So read the text, parse it if it parses, and
+      // otherwise say something a person can act on.
+      function readJson(response) {
+        return response.text().then(function (text) {
+          var data = null;
+          if (text) {
+            try { data = JSON.parse(text); } catch (error) { data = null; }
+          }
+          if (!response.ok) {
+            throw annotate(new Error((data && data.message) || statusReason(response.status)),
+              response.status);
+          }
+          if (data === null) {
+            throw annotate(new Error(statusReason(response.status)), response.status);
+          }
+          return data;
+        });
+      }
+
+      // The status travels with the error, so a caller can tell "that draft is
+      // gone" from "the server fell over".
+      function annotate(error, statusCode) {
+        error.statusCode = statusCode;
+        return error;
+      }
+
+      // What to say when the body told us nothing. Each one names the next
+      // thing to try, because "something went wrong" leaves a reviewer stuck
+      // with a draft they cannot file.
+      function statusReason(statusCode) {
+        if (statusCode === 401 || statusCode === 403) {
+          return 'Your session has expired. Reload this page and sign in again.';
+        }
+        if (statusCode === 404) {
+          return 'That is not here any more. Reload this page.';
+        }
+        if (statusCode === 429) {
+          return 'Too many requests at once. Wait a moment and try again.';
+        }
+        if (statusCode >= 500) {
+          return 'The server could not answer (error ' + statusCode +
+            '). Nothing was changed. Try again in a moment, and tell us if it keeps happening.';
+        }
+        return 'That did not work (error ' + statusCode + ').';
+      }
+
       function feedback(kind, message) {
         feedbackEl.innerHTML = '<div class="notice notice-' + kind + '">' + escapeHtml(message) + '</div>';
         if (kind === 'ok') {
@@ -450,14 +503,7 @@
         pagerEl.hidden = true;
         fetch('/api/developer/community/' + COMMUNITY_ID + '/report-drafts/' + FOCUS_DRAFT_ID,
           { credentials: 'include' })
-          .then(function (response) {
-            return response.json().then(function (data) {
-              if (!response.ok) {
-                throw new Error(data && data.message ? data.message : 'Could not load that draft');
-              }
-              return data;
-            });
-          })
+          .then(readJson)
           .then(function (data) {
             // This endpoint answers {draft: <review row>}, and the review row
             // is itself {draft, writtenByKeyName}, so the row render wants the
@@ -465,8 +511,16 @@
             render({ data: [data.draft], totalCount: 1 });
           })
           .catch(function (error) {
-            draftsEl.innerHTML = '<p class="empty">That draft is not here. It may have been ' +
-              'withdrawn, or it belongs to another community.</p>';
+            // Only claim the draft is gone when the server said so. A 5xx means
+            // we do not know, and telling a reviewer their draft was withdrawn
+            // when the server merely fell over sends them looking for the wrong
+            // problem.
+            draftsEl.innerHTML = error.statusCode >= 500
+              ? '<p class="empty">We could not load this draft just now. ' +
+                '<a href="/community/' + encodeURIComponent(COMMUNITY_ID) +
+                '/report-drafts/' + encodeURIComponent(FOCUS_DRAFT_ID) + '">Try again</a>.</p>'
+              : '<p class="empty">That draft is not here. It may have been ' +
+                'withdrawn, or it belongs to another community.</p>';
             feedback('err', error.message || 'Could not load that draft');
           });
       }
@@ -478,14 +532,7 @@
           '&page=' + page + '&limit=' + limit;
         fetch('/api/developer/community/' + COMMUNITY_ID + '/report-drafts' + query,
           { credentials: 'include' })
-          .then(function (response) {
-            return response.json().then(function (data) {
-              if (!response.ok) {
-                throw new Error(data && data.message ? data.message : 'Could not load drafts');
-              }
-              return data;
-            });
-          })
+          .then(readJson)
           .then(render)
           .catch(function (error) {
             draftsEl.innerHTML = '';
@@ -500,14 +547,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ notes: notes || '' }),
         })
-          .then(function (response) {
-            return response.json().then(function (data) {
-              if (!response.ok) {
-                throw new Error(data && data.message ? data.message : 'That did not work');
-              }
-              return data;
-            });
-          })
+          .then(readJson)
           .then(function (data) {
             if (action === 'file') {
               var base = data && data.filed === false
