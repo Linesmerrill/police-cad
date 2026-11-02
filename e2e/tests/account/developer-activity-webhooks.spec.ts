@@ -287,7 +287,10 @@ test.describe('Webhooks', () => {
 
     // Without this a developer sees "Off" and has to guess whether they did it.
     await expect(page.getByText(/Turned off after 20 deliveries in a row failed/)).toBeVisible();
-    await expect(page.getByText('Off')).toBeVisible();
+    // The status pill, not the word. getByText('Off') is a case-insensitive
+    // substring match, so it also found "Turned off after 20 deliveries..."
+    // and the disabled reason below it.
+    await expect(page.locator('.dc-pill').filter({ hasText: /^Off$/ })).toBeVisible();
     // "Empty means everything" is not the same statement as "nothing", and is
     // the one a reader would otherwise get wrong.
     await expect(page.getByText('every event')).toBeVisible();
@@ -353,9 +356,10 @@ test.describe('Webhooks', () => {
     // The answer to "why is my webhook not receiving anything", which is the
     // question every webhook integration eventually asks.
     await expect(page.getByText('call.created')).toBeVisible();
-    await expect(page.getByText('404')).toBeVisible();
+    // The response code as its own pill. Asserting on the bare text matched
+    // the pill and the "endpoint answered 404" line below it alike.
+    await expect(page.locator('.dc-pill-bad').filter({ hasText: '404' })).toBeVisible();
     await expect(page.getByText('endpoint answered 404')).toBeVisible();
-
   });
 
   test('a revoked key is offered no webhooks at all', async ({ page }) => {
