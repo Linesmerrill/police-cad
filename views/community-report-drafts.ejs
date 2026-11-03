@@ -156,7 +156,13 @@
   </style>
 </head>
 <body>
-  <%- include('partials/standalone-utility') %>
+  <%# Reached from this community's settings, and a focused draft is reached
+     from the queue, so the shell's Back retraces that one step. %>
+  <%- include('partials/standalone-utility', {
+    backHref: focusDraftId
+      ? ('/community/' + communityHash + '/report-drafts')
+      : ('/community/' + communityHash)
+  }) %>
   <%- include('partials/dd-modal') %>
 
   <div class="rp-shell">

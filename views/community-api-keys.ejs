@@ -77,7 +77,9 @@
   </style>
 </head>
 <body>
-  <%- include('partials/standalone-utility') %>
+  <%# Reached from this community's settings, so the shell's Back goes
+     there rather than all the way out to the communities list. %>
+  <%- include('partials/standalone-utility', { backHref: '/community/' + communityHash }) %>
   <%- include('partials/dd-modal') %>
 
   <div class="rp-shell">
