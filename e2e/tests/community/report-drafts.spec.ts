@@ -13,8 +13,13 @@
 import { test, expect, Page, Route } from '@playwright/test';
 import { PHONE, shoot } from '../../helpers/shots';
 import { TEST_COMMUNITY_ID } from '../../helpers/seed';
+import { communityHash } from '../../helpers/test-urls';
 
+// The raw id, which the /api/developer/... proxy routes take, and the encoded
+// hash, which is how every /community/... page URL spells a community. The
+// specs navigate by the hash because that is what a real link carries.
 const COMMUNITY_ID = TEST_COMMUNITY_ID.toHexString();
+const COMMUNITY_HASH = communityHash();
 const DRAFT_ID = 'cccccccccccccccccccccc01';
 
 function json(route: Route, body: unknown, status = 200) {
@@ -84,10 +89,10 @@ async function mockOneDraft(page: Page, row: unknown) {
 test.describe('Report draft review', () => {
   test('a reviewer sees the facts and the narrative apart, with the AI narrative flagged', async ({ page }) => {
     await mockQueue(page, [generatedArrestDraft()]);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
 
-    // The page says nothing has been filed, before anything else.
-    await expect(page.getByText(/Nothing here has been filed/i)).toBeVisible();
+    // The page says nothing is filed, before anything else.
+    await expect(page.getByText(/Nothing is filed yet/i)).toBeVisible();
 
     // Both halves, under headings that say which is which. This separation is
     // the whole point: a reviewer has to be able to weigh what the server saw
@@ -99,7 +104,7 @@ test.describe('Report draft review', () => {
 
     // The one thing that must not be missed.
     await expect(page.getByText(/Written by AI \(sixpd-llm\)/)).toBeVisible();
-    await expect(page.getByText(/not evidence/i)).toBeVisible();
+    await expect(page.getByText(/Check it against the facts/i)).toBeVisible();
 
     // And who wrote it, which is a reviewer's first question.
     await expect(page.getByText(/SixPD dispatch bridge/)).toBeVisible();
@@ -107,7 +112,7 @@ test.describe('Report draft review', () => {
 
     // Charges priced from the community's own penal code.
     await expect(page.getByText(/Reckless Driving/)).toBeVisible();
-    await expect(page.getByText(/Priced from this community/)).toBeVisible();
+    await expect(page.getByText(/Priced from your penal code/)).toBeVisible();
   });
 
   test('a human-written narrative is not flagged as AI', async ({ page }) => {
@@ -116,7 +121,7 @@ test.describe('Report draft review', () => {
         narrative: { text: 'I stopped the vehicle myself.', generated: false },
       }),
     ]);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
 
     await expect(page.getByText('I stopped the vehicle myself.')).toBeVisible();
     await expect(page.getByText(/Written by AI/)).toHaveCount(0);
@@ -131,7 +136,7 @@ test.describe('Report draft review', () => {
       return json(route, { filed: true, record: { id: 'eeeeeeeeeeeeeeeeeeeeee01', kind: 'arrestReport' } });
     });
 
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
     await page.getByRole('button', { name: 'File this report' }).click();
 
     // ddModal, never a native confirm, and nothing has been sent yet.
@@ -141,7 +146,7 @@ test.describe('Report draft review', () => {
 
     await page.locator('#ddm-overlay').getByRole('button', { name: 'File it' }).click();
     await expect.poll(() => filed).toBe(true);
-    await expect(page.getByText(/now a real report in this community/i)).toBeVisible();
+    await expect(page.locator('#feedback')).toContainText('Filed.');
   });
 
   /**
@@ -205,6 +210,11 @@ test.describe('Report draft review', () => {
     await page.goto(`/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`);
 
     await expect(page.locator('#drafts')).toContainText(/could not load this draft just now/i);
+    // The retry link is a real URL on this site, not the raw ObjectId.
+    await expect(page.locator('#drafts').getByRole('link', { name: 'Try again' })).toHaveAttribute(
+      'href',
+      `/community/${COMMUNITY_HASH}/report-drafts/${DRAFT_ID}`
+    );
     await expect(page.locator('#drafts')).not.toContainText(/withdrawn/i);
     await expect(page.locator('#feedback .notice-err')).toContainText(/error 503/);
   });
@@ -219,13 +229,13 @@ test.describe('Report draft review', () => {
       return json(route, { draft: { ...generatedArrestDraft().draft, status: 'rejected' } });
     });
 
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
     await page.getByRole('button', { name: 'Send back' }).first().click();
 
     // Confirming with the field empty re-opens the same question with the
     // field flagged, rather than closing and leaving a toast behind.
     await page.locator('#ddm-overlay').getByRole('button', { name: 'Send back' }).click();
-    await expect(page.getByText(/A reason is required/i)).toBeVisible();
+    await expect(page.getByText(/Add a reason/i)).toBeVisible();
     expect(rejectedWith).toBeNull();
 
     await page.locator('#rejectNotes').fill('The narrative does not match the clip.');
@@ -246,7 +256,7 @@ test.describe('Report draft review', () => {
         reviewNotes: 'Checked the clip.',
       }),
     ]);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
 
     await expect(page.getByText(/Filed by/)).toBeVisible();
     await expect(page.getByText(/Chief Vance/)).toBeVisible();
@@ -260,16 +270,16 @@ test.describe('Report draft review', () => {
         subject: { displayName: 'Store Clerk', synthetic: true },
       }),
     ]);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
 
     await expect(page.getByText('Simulated character (NPC)')).toBeVisible();
   });
 
   test('an empty queue says what will appear here rather than nothing', async ({ page }) => {
     await mockQueue(page, [], 0);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
 
-    await expect(page.getByText(/Nothing is waiting for you/i)).toBeVisible();
+    await expect(page.getByText(/No drafts waiting/i)).toBeVisible();
   });
 
   test('the filter strip narrows the queue by status', async ({ page }) => {
@@ -279,7 +289,7 @@ test.describe('Report draft review', () => {
       return json(route, { data: [], totalCount: 0, page: 1, limit: 10 });
     });
 
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
     await expect.poll(() => seen[0]).toBe('draft');
 
     await page.getByRole('button', { name: 'Filed' }).click();
@@ -322,18 +332,18 @@ test.describe('Removing a key\'s records', () => {
       return json(route, { removed: { civilians: 97, vehicles: 180 }, total: 277, more: false });
     });
 
-    await page.goto(`/community/${COMMUNITY_ID}/api-keys`);
+    await page.goto(`/community/${COMMUNITY_HASH}/api-keys`);
 
     // The case this exists for: the key is revoked and the integration has
     // stopped answering, so cleanup must not need its cooperation.
-    await expect(page.getByText('Access withdrawn')).toBeVisible();
-    await page.getByRole('button', { name: 'Remove its records' }).click();
+    await expect(page.getByText('Removed', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Delete its data' }).click();
 
-    await expect(page.getByText('Remove its records?')).toBeVisible();
-    await expect(page.getByText(/cannot be undone/i)).toBeVisible();
+    await expect(page.getByText(/Delete data from/)).toBeVisible();
+    await expect(page.getByText(/can.{0,3}t be undone/i)).toBeVisible();
     expect(scope).toBeNull();
 
-    await page.locator('#ddm-overlay').getByRole('button', { name: 'Test records only' }).click();
+    await page.locator('#ddm-overlay').getByRole('button', { name: 'Test data only' }).click();
     await expect.poll(() => scope).toBe('synthetic');
 
     // Counted per collection, because a single total is not something anyone
@@ -351,28 +361,25 @@ test.describe('Removing a key\'s records', () => {
       return json(route, { removed: {}, total: 0, more: false });
     });
 
-    await page.goto(`/community/${COMMUNITY_ID}/api-keys`);
-    await page.getByRole('button', { name: 'Remove its records' }).click();
+    await page.goto(`/community/${COMMUNITY_HASH}/api-keys`);
+    await page.getByRole('button', { name: 'Delete its data' }).click();
 
     // The dialog has to make the difference obvious: one choice cannot touch a
     // real player's records and the other can.
-    await expect(page.getByText(/characters, vehicles and firearms this key made for real players/i)).toBeVisible();
+    await expect(page.getByText(/characters, vehicles and guns it made for/i)).toBeVisible();
 
-    await page.locator('#ddm-overlay').getByRole('button', { name: 'Everything it made' }).click();
+    await page.locator('#ddm-overlay').getByRole('button', { name: 'Everything', exact: true }).click();
     await expect.poll(() => scope).toBe('all');
-    // Matches the copy rather than quoting it: the punctuation between those
-    // two clauses changed once already when em dashes came out, and an
-    // assertion that breaks on punctuation is one that fails for no reason.
-    await expect(page.getByText(/nothing to remove/i)).toBeVisible();
+    await expect(page.getByText(/Nothing to delete/i)).toBeVisible();
   });
 
   test('the key page points at the review queue', async ({ page }) => {
     await mockKeyList(page);
-    await page.goto(`/community/${COMMUNITY_ID}/api-keys`);
+    await page.goto(`/community/${COMMUNITY_HASH}/api-keys`);
 
     await expect(
       page.getByRole('link', { name: 'report drafts' })
-    ).toHaveAttribute('href', `/community/${COMMUNITY_ID}/report-drafts`);
+    ).toHaveAttribute('href', `/community/${COMMUNITY_HASH}/report-drafts`);
   });
 });
 
@@ -407,7 +414,7 @@ test.describe('Developer API docs: the phase-3 surfaces', () => {
 test.describe('Screenshots: report drafts at desktop width', () => {
   test('the review queue', async ({ page }, testInfo) => {
     await mockQueue(page, [generatedArrestDraft()]);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
     await expect(page.getByRole('heading', { name: 'What the server saw' })).toBeVisible();
     // Full page here on purpose: this is the shot that answers what is below
     // the fold on this screen, including whether a footer renders.
@@ -416,8 +423,8 @@ test.describe('Screenshots: report drafts at desktop width', () => {
 
   test('the empty queue', async ({ page }, testInfo) => {
     await mockQueue(page, [], 0);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
-    await expect(page.getByText(/Nothing is waiting for you/i)).toBeVisible();
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
+    await expect(page.getByText(/No drafts waiting/i)).toBeVisible();
     await shoot(page, testInfo, 'report-draft review queue, empty');
   });
 });
@@ -427,7 +434,7 @@ test.describe('Screenshots: report drafts at phone width', () => {
 
   test('the review queue stacks', async ({ page }, testInfo) => {
     await mockQueue(page, [generatedArrestDraft()]);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
     await expect(page.getByRole('heading', { name: 'What the server saw' })).toBeVisible();
     // The shot worth looking at: two halves side by side at desktop have to
     // stack here, and the AI label has to survive the narrower column.
@@ -462,17 +469,17 @@ test.describe('Screenshots: the community API keys screen', () => {
 
   test('with the record cleanup on a withdrawn key', async ({ page }, testInfo) => {
     await mockOneRevokedKey(page);
-    await page.goto(`/community/${COMMUNITY_ID}/api-keys`);
-    await expect(page.getByRole('button', { name: 'Remove its records' })).toBeVisible();
-    await shoot(page, testInfo, 'community API keys, with record cleanup', { fullPage: true });
+    await page.goto(`/community/${COMMUNITY_HASH}/api-keys`);
+    await expect(page.getByRole('button', { name: 'Delete its data' })).toBeVisible();
+    await shoot(page, testInfo, 'community API keys, with data deletion', { fullPage: true });
   });
 
   test('the cleanup dialog, which is where the two scopes are explained', async ({ page }, testInfo) => {
     await mockOneRevokedKey(page);
-    await page.goto(`/community/${COMMUNITY_ID}/api-keys`);
-    await page.getByRole('button', { name: 'Remove its records' }).click();
-    await expect(page.getByText('Remove its records?')).toBeVisible();
-    await shoot(page, testInfo, 'community API keys, cleanup dialog');
+    await page.goto(`/community/${COMMUNITY_HASH}/api-keys`);
+    await page.getByRole('button', { name: 'Delete its data' }).click();
+    await expect(page.getByText(/Delete data from/)).toBeVisible();
+    await shoot(page, testInfo, 'community API keys, delete data dialog');
   });
 
   // Phone width is its own test rather than a resize inside the ones above:
@@ -482,8 +489,8 @@ test.describe('Screenshots: the community API keys screen', () => {
 
     test('the keys section and its cleanup button', async ({ page }, testInfo) => {
       await mockOneRevokedKey(page);
-      await page.goto(`/community/${COMMUNITY_ID}/api-keys`);
-      await expect(page.getByRole('button', { name: 'Remove its records' })).toBeVisible();
+      await page.goto(`/community/${COMMUNITY_HASH}/api-keys`);
+      await expect(page.getByRole('button', { name: 'Delete its data' })).toBeVisible();
       await shoot(page, testInfo, 'community API keys', { fullPage: true });
     });
   });
@@ -499,7 +506,7 @@ test.describe('Report draft deep links, attachments and the filed record', () =>
     await mockOneDraft(page, generatedArrestDraft());
     // The exact path shape of reportDraftReviewLink in the API:
     // {base}/community/{communityId}/report-drafts/{draftId}
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts/${DRAFT_ID}`);
 
     await expect(page.getByRole('heading', { name: 'Report drafts' })).toBeVisible();
     // One draft, and a way back to the rest.
@@ -523,13 +530,13 @@ test.describe('Report draft deep links, attachments and the filed record', () =>
       `**/api/developer/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`,
       (route: Route) => json(route, { message: 'No draft with that id.' }, 404)
     );
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts/${DRAFT_ID}`);
 
-    await expect(page.getByText(/That draft is not here/i)).toBeVisible();
+    await expect(page.getByText(/That draft is not available/i)).toBeVisible();
   });
 
   test('a malformed draft id is not found rather than rendered', async ({ page }) => {
-    const response = await page.goto(`/community/${COMMUNITY_ID}/report-drafts/not-an-id`);
+    const response = await page.goto(`/community/${COMMUNITY_HASH}/report-drafts/not-an-id`);
     expect(response?.status()).toBe(400);
   });
 
@@ -560,7 +567,7 @@ test.describe('Report draft deep links, attachments and the filed record', () =>
         ],
       }),
     ]);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
 
     const atts = page.locator('.atts');
     await expect(atts).toBeVisible();
@@ -577,13 +584,13 @@ test.describe('Report draft deep links, attachments and the filed record', () =>
 
     // Attribution, and the one thing this must never be called.
     await expect(atts.getByText(/Added by/)).toContainText('SixPD dispatch bridge');
-    await expect(atts.getByText(/not evidence/i)).toBeVisible();
+    await expect(atts.getByText(/Not checked/i)).toBeVisible();
     await expect(atts).not.toContainText(/^Evidence$/);
   });
 
   test('a draft with no attachments shows no attachment section at all', async ({ page }) => {
     await mockQueue(page, [generatedArrestDraft({ attachments: [] })]);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
 
     await expect(page.locator('.draft')).toHaveCount(1);
     await expect(page.locator('.atts')).toHaveCount(0);
@@ -600,11 +607,16 @@ test.describe('Report draft deep links, attachments and the filed record', () =>
         reviewedAt: '2026-11-01T22:00:00Z',
       }),
     ]);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
 
     const link = page.getByRole('link', { name: /Open the filed report/i });
     await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', '/reports/eeeeeeeeeeeeeeeeeeeeee01?view=1');
+    // ?c= is how /reports/<id> is told which community it is for, the same way
+    // reports-list.ejs and report-edit.ejs build their links.
+    await expect(link).toHaveAttribute(
+      'href',
+      `/reports/eeeeeeeeeeeeeeeeeeeeee01?view=1&c=${COMMUNITY_HASH}`
+    );
   });
 
   test('a filed arrest report says where it is rather than linking nowhere', async ({ page }) => {
@@ -620,9 +632,106 @@ test.describe('Report draft deep links, attachments and the filed record', () =>
         reviewedAt: '2026-11-01T22:00:00Z',
       }),
     ]);
-    await page.goto(`/community/${COMMUNITY_ID}/report-drafts`);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
 
     await expect(page.getByText(/Filed as an arrest report/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /Open the filed report/i })).toHaveCount(0);
+  });
+});
+
+/**
+ * The community in a /community/... URL.
+ *
+ * Every page under that prefix decodes its first path segment, so the two
+ * Developer API pages linking with the raw ObjectId meant "Back to community"
+ * landed on "Community not found". These specs follow the links rather than
+ * asserting hrefs, because an href that merely looks encoded proves nothing.
+ */
+test.describe('Community URLs on the Developer API pages', () => {
+  async function mockNoKeys(page: Page) {
+    await page.route(`**/api/developer/community/${COMMUNITY_ID}/keys`, (route: Route) =>
+      json(route, { keys: [], pendingCount: 0 })
+    );
+  }
+
+  test('Back from the API keys page opens the community', async ({ page }) => {
+    await mockNoKeys(page);
+    await page.goto(`/community/${COMMUNITY_HASH}/api-keys`);
+
+    await page.getByRole('link', { name: /Back to community/i }).click();
+
+    await expect(page).toHaveURL(new RegExp(`/community/${COMMUNITY_HASH}$`));
+    await expect(page.getByText(/Community not found/i)).toHaveCount(0);
+    await expect(page.locator('#apiKeysSettingsCard')).toHaveCount(1);
+  });
+
+  test('Back from the report drafts page opens the community', async ({ page }) => {
+    await mockQueue(page, []);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
+
+    await page.getByRole('link', { name: /Back to the community/i }).click();
+
+    await expect(page).toHaveURL(new RegExp(`/community/${COMMUNITY_HASH}$`));
+    await expect(page.getByText(/Community not found/i)).toHaveCount(0);
+  });
+
+  test('the settings cards on the community page open both pages', async ({ page }) => {
+    await mockNoKeys(page);
+    await mockQueue(page, []);
+    await page.goto(`/community/${COMMUNITY_HASH}`);
+    // The cards live inside the settings modal, which record-deletion-setting
+    // opens the same way.
+    await page.evaluate(() =>
+      (window as unknown as { openSettingsModal: () => void }).openSettingsModal()
+    );
+
+    await page.locator('#apiKeysSettingsCard').click();
+    await expect(page).toHaveURL(new RegExp(`/community/${COMMUNITY_HASH}/api-keys$`));
+    await expect(page.getByRole('heading', { name: 'API keys' })).toBeVisible();
+
+    await page.goto(`/community/${COMMUNITY_HASH}`);
+    await page.evaluate(() =>
+      (window as unknown as { openSettingsModal: () => void }).openSettingsModal()
+    );
+    await page.locator('#reportDraftsSettingsCard').click();
+    await expect(page).toHaveURL(new RegExp(`/community/${COMMUNITY_HASH}/report-drafts$`));
+  });
+
+  test('"See all report drafts" from a deep link opens the queue', async ({ page }) => {
+    await mockOneDraft(page, generatedArrestDraft());
+    await mockQueue(page, [generatedArrestDraft()]);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts/${DRAFT_ID}`);
+
+    await page.getByRole('link', { name: 'See all report drafts' }).click();
+
+    await expect(page).toHaveURL(new RegExp(`/community/${COMMUNITY_HASH}/report-drafts$`));
+    await expect(page.getByText(/Showing one draft/i)).toHaveCount(0);
+  });
+
+  /**
+   * The API handed out reviewLinks carrying the raw id for a day. Those are in
+   * people's chat logs, so they redirect to the canonical URL instead of
+   * answering 400.
+   */
+  test('a raw-id link redirects to the encoded URL', async ({ page }) => {
+    await mockNoKeys(page);
+    await page.goto(`/community/${COMMUNITY_ID}/api-keys`);
+    await expect(page).toHaveURL(new RegExp(`/community/${COMMUNITY_HASH}/api-keys$`));
+    await expect(page.getByRole('heading', { name: 'API keys' })).toBeVisible();
+  });
+
+  test('a raw-id reviewLink redirects and keeps the draft', async ({ page }) => {
+    await mockOneDraft(page, generatedArrestDraft());
+    await page.goto(`/community/${COMMUNITY_ID}/report-drafts/${DRAFT_ID}`);
+
+    await expect(page).toHaveURL(
+      new RegExp(`/community/${COMMUNITY_HASH}/report-drafts/${DRAFT_ID}$`)
+    );
+    await expect(page.getByText(/Showing one draft/i)).toBeVisible();
+  });
+
+  test('a segment that is neither encoded nor an id is not found', async ({ page }) => {
+    const response = await page.goto(`/community/not-a-community/api-keys`);
+    expect(response?.status()).toBe(400);
   });
 });

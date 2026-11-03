@@ -78,6 +78,30 @@ function decodeId(encoded) {
   return Buffer.from(base64, 'base64').toString('utf8');
 }
 
+// Resolve the :hash of a /community/... route to a community id.
+//
+// Every page under /community/ takes the encodeId'd form, so a route that
+// reads req.params.hash as a raw ObjectId works only for links it builds
+// itself, and any link from a page that follows the convention lands on
+// "Community not found". Both Developer API pages were written that way.
+//
+// Returns { id, legacy }. legacy means the caller handed us a raw ObjectId:
+// the Developer API gave out reviewLinks in that shape, and those are in
+// people's chat logs, so a route should redirect to the canonical URL rather
+// than treat them as a bad id.
+function communityFromHash(hash) {
+  if (typeof hash !== 'string' || hash === '') return { id: null, legacy: false };
+  if (/^[a-f0-9]{24}$/i.test(hash)) return { id: hash.toLowerCase(), legacy: true };
+  let decoded = '';
+  try {
+    decoded = decodeId(hash);
+  } catch (e) {
+    return { id: null, legacy: false };
+  }
+  if (!/^[a-f0-9]{24}$/i.test(decoded)) return { id: null, legacy: false };
+  return { id: decoded.toLowerCase(), legacy: false };
+}
+
 // If an axios error from the API is the standard 410 pending_deletion shape,
 // render the friendly route-block page and return true. Callers should
 // short-circuit their catch block when this returns true, e.g.:
@@ -519,6 +543,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         boosterUsername,
         query: req.query,
         hash,
+        // Built from the id the API answered with, not from req.params.hash.
+        // Same string, but it is the community we just loaded rather than a
+        // path segment echoed back into the page.
+        communityHash: encodeId(String(community._id)),
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),
         reportReasons: communityReport.REPORT_REASONS,
@@ -7851,14 +7879,20 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // without it that link was a 404: the only thing a game server could put in
   // somebody's chat went nowhere.
   app.get(["/community/:hash/report-drafts", "/community/:hash/report-drafts/:draftId"], authCheck, async function (req, res) {
-    const communityId = req.params.hash;
-    if (!/^[a-f0-9]{24}$/i.test(communityId)) {
-      return res.status(400).render("page-not-found", { user: req.user });
-    }
     const focusDraftId = req.params.draftId || "";
     if (focusDraftId && !/^[a-f0-9]{24}$/i.test(focusDraftId)) {
       return res.status(400).render("page-not-found", { user: req.user });
     }
+    const { id: communityId, legacy } = communityFromHash(req.params.hash);
+    if (!communityId) {
+      return res.status(400).render("page-not-found", { user: req.user });
+    }
+    if (legacy) {
+      // A reviewLink the API handed out before it learned the encoding.
+      return res.redirect(302, `/community/${encodeId(communityId)}/report-drafts` +
+        (focusDraftId ? `/${focusDraftId}` : ""));
+    }
+    const communityHash = encodeId(communityId);
 
     let communityName = "";
     let loadError = null;
@@ -7879,6 +7913,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("community-report-drafts", {
       user: req.user,
       communityId,
+      communityHash,
       communityName,
       loadError,
       canReview,
@@ -7890,10 +7925,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // The community-side key page. EJS, next to the other community settings
   // pages, and gated on the same permission the settings card checks.
   app.get("/community/:hash/api-keys", authCheck, async function (req, res) {
-    const communityId = req.params.hash;
-    if (!/^[a-f0-9]{24}$/i.test(communityId)) {
+    const { id: communityId, legacy } = communityFromHash(req.params.hash);
+    if (!communityId) {
       return res.status(400).render("page-not-found", { user: req.user });
     }
+    if (legacy) {
+      return res.redirect(302, `/community/${encodeId(communityId)}/api-keys`);
+    }
+    const communityHash = encodeId(communityId);
 
     let community = null;
     try {
@@ -7906,6 +7945,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return res.status(502).render("community-api-keys", {
         user: req.user,
         communityId,
+        communityHash,
         communityName: "",
         loadError: "We could not load this community just now. Try again shortly.",
         canManage: false,
@@ -7914,11 +7954,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
 
     const details = community?.community || {};
-    const canManage = userCanManageCommunity(req, communityId, "manage community settings");
+    // userCanManageCommunity is async. Without the await this was a Promise,
+    // which is truthy, so the page rendered its controls for everyone.
+    const canManage = await userCanManageCommunity(req, communityId, "manage community settings");
 
     res.render("community-api-keys", {
       user: req.user,
       communityId,
+      communityHash,
       communityName: details.name || "",
       loadError: null,
       canManage,
