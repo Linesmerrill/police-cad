@@ -735,3 +735,61 @@ test.describe('Community URLs on the Developer API pages', () => {
     expect(response?.status()).toBe(400);
   });
 });
+
+/**
+ * The strip's Back is the one the mouse reaches for first, and it used to go to
+ * /communities from every standalone page. On these three it now retraces the
+ * step the reviewer actually took to get here.
+ */
+test.describe('The shell Back on the Developer API pages', () => {
+  const shellBack = (page: Page) => page.locator('a.lpc-utility-back');
+
+  test('Back from the API keys page opens the community', async ({ page }) => {
+    await page.route(`**/api/developer/community/${COMMUNITY_ID}/keys`, (route: Route) =>
+      json(route, { keys: [], pendingCount: 0 })
+    );
+    await page.goto(`/community/${COMMUNITY_HASH}/api-keys`);
+
+    await expect(shellBack(page)).toHaveText('Back');
+    await shellBack(page).click();
+
+    await expect(page).toHaveURL(new RegExp(`/community/${COMMUNITY_HASH}$`));
+    await expect(page.locator('#apiKeysSettingsCard')).toHaveCount(1);
+  });
+
+  test('Back from the queue opens the community', async ({ page }) => {
+    await mockQueue(page, []);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
+
+    await expect(shellBack(page)).toHaveText('Back');
+    await shellBack(page).click();
+
+    await expect(page).toHaveURL(new RegExp(`/community/${COMMUNITY_HASH}$`));
+    await expect(page.locator('#reportDraftsSettingsCard')).toHaveCount(1);
+  });
+
+  test('Back from one draft opens the queue, not the community', async ({ page }) => {
+    await mockOneDraft(page, generatedArrestDraft());
+    await mockQueue(page, [generatedArrestDraft()]);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts/${DRAFT_ID}`);
+
+    await expect(shellBack(page)).toHaveText('Back');
+    await shellBack(page).click();
+
+    await expect(page).toHaveURL(new RegExp(`/community/${COMMUNITY_HASH}/report-drafts$`));
+    await expect(page.getByText(/Showing one draft/i)).toHaveCount(0);
+  });
+
+  test('the hrefs carry the encoded hash, never the raw id', async ({ page }) => {
+    await mockOneDraft(page, generatedArrestDraft());
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts/${DRAFT_ID}`);
+    await expect(shellBack(page)).toHaveAttribute(
+      'href',
+      `/community/${COMMUNITY_HASH}/report-drafts`
+    );
+
+    await mockQueue(page, []);
+    await page.goto(`/community/${COMMUNITY_HASH}/report-drafts`);
+    await expect(shellBack(page)).toHaveAttribute('href', `/community/${COMMUNITY_HASH}`);
+  });
+});
