@@ -2385,22 +2385,32 @@
     function loadSidebarDepartments() {
       if (!communityId) return;
       var encodedCommunityId = btoa(communityId).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+      // The owner and admin bypass has to come from the community on this
+      // page, so it is resolved alongside the department list.
+      var accessReq = window.ddResolveDepartmentAccess
+        ? window.ddResolveDepartmentAccess({
+            apiUrl: API_URL,
+            communityId: communityId,
+            userId: dbUser._id || ''
+          })
+        : $.Deferred().resolve({ isOwner: false, isAdmin: false }).promise();
       $.ajax({
         url: API_URL + '/api/v1/community/' + communityId + '/departments',
         method: 'GET',
         success: function(data) {
-          renderSidebarDepartments((data && data.departments) || [], encodedCommunityId);
+          accessReq.done(function(access) {
+            renderSidebarDepartments((data && data.departments) || [], encodedCommunityId, access);
+          });
         },
         error: function() {}
       });
     }
 
-    function renderSidebarDepartments(departments, encodedCommunityId) {
+    function renderSidebarDepartments(departments, encodedCommunityId, access) {
       var $list = $('#cd-dept-list').empty();
       var currentUserId = dbUser._id || '';
-      var isOwner = (dbUser.user?.lastAccessedCommunity?.ownerID || '') === currentUserId;
-      var userRole = dbUser.user?.lastAccessedCommunity?.role;
-      var isAdmin = userRole && userRole.admin === true;
+      var isOwner = !!(access && access.isOwner);
+      var isAdmin = !!(access && access.isAdmin);
 
       departments.forEach(function(dept) {
         var template = (dept.template && dept.template.name || '').toLowerCase();
@@ -2483,6 +2493,7 @@
       document.head.appendChild(script);
     }
   </script>
+  <script src="/static/js/dept-access.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/alert-sounds.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/dd-limits.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/dd-911.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
