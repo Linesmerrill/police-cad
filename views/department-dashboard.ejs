@@ -7080,12 +7080,24 @@ $('#dd-loading').hide();
       if (!communityId) return;
       var encodedCommunityId = btoa(communityId).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 
+      // The owner and admin bypass has to come from the community on this
+      // page, so it is resolved alongside the department list.
+      var accessReq = window.ddResolveDepartmentAccess
+        ? window.ddResolveDepartmentAccess({
+            apiUrl: API_URL,
+            communityId: communityId,
+            userId: dbUser._id || ''
+          })
+        : $.Deferred().resolve({ isOwner: false, isAdmin: false }).promise();
+
       $.ajax({
         url: API_URL + '/api/v1/community/' + communityId + '/departments',
         method: 'GET',
         success: function(data) {
           var departments = (data && data.departments) || [];
-          renderSidebarDepartments(departments, encodedCommunityId);
+          accessReq.done(function(access) {
+            renderSidebarDepartments(departments, encodedCommunityId, access);
+          });
         },
         error: function() {
           // Silently fail — sidebar just won't show departments
@@ -7093,15 +7105,14 @@ $('#dd-loading').hide();
       });
     }
 
-    function renderSidebarDepartments(departments, encodedCommunityId) {
+    function renderSidebarDepartments(departments, encodedCommunityId, access) {
       var $list = $('#dd-dept-list');
       $list.empty();
 
-      // Access checks (same logic as departments.js sidebar)
+      // Access checks (owner and admin come from the community being viewed)
       var currentUserId = dbUser._id || '';
-      var isOwner = (dbUser.user?.lastAccessedCommunity?.ownerID || '') === currentUserId;
-      var userRole = dbUser.user?.lastAccessedCommunity?.role;
-      var isAdmin = userRole && userRole.admin === true;
+      var isOwner = !!(access && access.isOwner);
+      var isAdmin = !!(access && access.isAdmin);
 
       departments.forEach(function(dept) {
         var template = (dept.template && dept.template.name || '').toLowerCase();
@@ -7460,6 +7471,7 @@ $('#dd-loading').hide();
     window.CLOUDINARY_API_KEY = '<%= process.env.CLOUDINARY_API_KEY || "" %>';
     window.CLOUDINARY_UPLOAD_PRESET = '<%= process.env.CLOUDINARY_UPLOAD_PRESET || "" %>';
   </script>
+  <script src="/static/js/dept-access.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/cloudinary-upload.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <!-- Shared utilities -->
   <script src="/static/js/dd-limits.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
