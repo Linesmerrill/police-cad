@@ -902,7 +902,14 @@
     var _API_URL = '<%= apiUrl || "" %>';
     var _departmentId = '<%= departmentId || "" %>';
     var _dbUser = <%- JSON.stringify(user) %>;
-    var _communityId = _dbUser.user?.lastAccessedCommunity?.communityID || '';
+    // The community in the URL wins. lastAccessedCommunity is only written
+    // when a community page is visited, so it can name a different community
+    // than the one on this page — and then every panel here would fetch that
+    // other community's data. The route resolves it the same way for the
+    // server-side access gate; this falls back to the same place the route
+    // does when the URL carried no community.
+    var _routeCommunityId = <%- JSON.stringify(locals.communityId || '') %>;
+    var _communityId = _routeCommunityId || _dbUser.user?.lastAccessedCommunity?.communityID || '';
     var _userId = _dbUser._id || _dbUser.user?._id || '';
     var _userName = _dbUser.user?.username || 'Officer';
 

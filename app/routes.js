@@ -1,5 +1,6 @@
 const communityReport = require("./community-report");
 const civDepartment = require("./civ-department");
+const { selectDepartmentCommunity } = require("./select-department-community");
 const contentReport = require("./content-report");
 var rateLimit = require("express-rate-limit");
 var User = require("../app/models/user");
@@ -4956,9 +4957,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
   }
 
   // app.js
+  // The community is taken from the redirect's ?c= (the community the user is
+  // actually on) when they are an approved member of it, and falls back to
+  // lastAccessedCommunity. See app/select-department-community.js.
   app.post("/select-department", authCheck, (req, res) => {
     const { departmentId, redirect } = req.body;
-    const communityId = req.user?.user?.lastAccessedCommunity?.communityID;
+    const communityId =
+      selectDepartmentCommunity(req, redirect) ||
+      req.user?.user?.lastAccessedCommunity?.communityID;
 
     if (!departmentId || departmentId === "undefined") {
       req.app.locals.specialContext = "errorNoDepartment";
