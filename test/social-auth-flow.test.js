@@ -20,13 +20,18 @@ const PROVIDERS = ["google", "apple"];
 // so a test does not need a real one.
 function buildApp(options = {}) {
   const app = express();
+  // Mirrors production: Heroku terminates TLS and the app trusts the proxy, so
+  // the session cookie is marked Secure and X-Forwarded-Proto is what says the
+  // request arrived over https. The tests set that header and carry the cookie
+  // by hand, so a Secure cookie is testable over a plain local socket.
+  app.set("trust proxy", 1);
   app.use(express.urlencoded({ extended: false }));
   app.use(
     session({
       secret: "test-secret",
       resave: false,
       saveUninitialized: false,
-      cookie: { path: "/" },
+      cookie: { path: "/", httpOnly: true, secure: true, sameSite: "lax" },
     })
   );
 
@@ -59,6 +64,7 @@ function buildApp(options = {}) {
   });
 
   socialFlow.mount(app, {
+    rateLimit: options.rateLimit,
     socialAuth: stubAuth,
     User: { findById: async (id) => (options.missingUser ? null : { id, _id: id }) },
     sanitizeRedirect: (value, fallback) =>
@@ -83,7 +89,7 @@ function urlFor(server, path) {
 // request() is deliberately explicit about cookies: whether one is sent is the
 // thing under test, so nothing may send one implicitly.
 async function request(server, path, { method = "GET", form, cookie, origin, redirect = "manual" } = {}) {
-  const headers = {};
+  const headers = { "X-Forwarded-Proto": "https" };
   if (form) headers["Content-Type"] = "application/x-www-form-urlencoded";
   if (cookie) headers.Cookie = cookie;
   if (origin) headers.Origin = origin;
@@ -431,6 +437,36 @@ describe("social sign-in flow (routes)", function () {
       method: "POST", form: cb.json.locals.fields, cookie,
     });
     assert.strictEqual(done.location, "/communities/abc");
+  });
+
+  it("rate-limits the sign-in routes", async function () {
+    // Unauthenticated, reaches the database, and decides who somebody is.
+    // A tiny budget here only proves the limiter is actually wired on; the
+    // real ones are generous, because members share addresses behind a school
+    // or household NAT.
+    const rateLimit = require("express-rate-limit");
+    server = await listen(buildApp({
+      verdicts: { default: { outcome: "signed_in", userId: "u1" } },
+      rateLimit: (opts) => rateLimit(Object.assign({}, opts, { max: 2 })),
+    }));
+    process.env.GOOGLE_OAUTH_CLIENT_ID = "test-client-id";
+    process.env.BASE_URL = "https://www.linespolice-cad.com";
+
+    const codes = [];
+    for (let i = 0; i < 4; i += 1) {
+      codes.push((await request(server, "/auth/google")).status);
+    }
+    assert.deepStrictEqual(codes.slice(0, 2), [302, 302], "real attempts should work");
+    assert.ok(codes.slice(2).every((c) => c === 429), `expected 429s, got ${codes}`);
+  });
+
+  it("marks the session cookie Secure and HttpOnly behind the proxy", async function () {
+    server = await listen(buildApp({}));
+    process.env.GOOGLE_OAUTH_CLIENT_ID = "test-client-id";
+    process.env.BASE_URL = "https://www.linespolice-cad.com";
+    const res = await request(server, "/auth/google");
+    assert.match(res.setCookie, /HttpOnly/i);
+    assert.match(res.setCookie, /Secure/i);
   });
 
   it("does not render the link-required page without a notice", async function () {

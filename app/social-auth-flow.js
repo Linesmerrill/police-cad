@@ -111,11 +111,30 @@ function mount(app, deps) {
   const User = deps.User;
   const sanitizeRedirect = deps.sanitizeRedirect;
   const log = deps.log || console;
+  const rateLimit = deps.rateLimit || require("express-rate-limit");
+
+  // These are unauthenticated endpoints that reach the database and decide who
+  // somebody is, and app.js's global 500-per-5-minutes is not much of a bound
+  // on that. Generous on purpose: a lot of members share one address behind a
+  // school or household NAT, and locking a classroom out of signing in would
+  // be a worse bug than the one this file fixes. Real use is a couple of
+  // attempts; this allows far more while still bounding a script.
+  const SIGNIN_WINDOW_MS = 15 * 60 * 1000;
+  const limiterOptions = {
+    windowMs: SIGNIN_WINDOW_MS,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many sign-in attempts. Please wait a few minutes and try again." },
+  };
+  // Starting a sign-in writes a flow to the session; finishing one takes two
+  // requests per sign-in because of the bounce, so it gets the larger budget.
+  const startLimiter = rateLimit(Object.assign({}, limiterOptions, { max: 30 }));
+  const finishLimiter = rateLimit(Object.assign({}, limiterOptions, { max: 60 }));
 
   ["google", "apple"].forEach(function (provider) {
     const label = socialAuth.providerConfig(provider).label;
 
-    app.get("/auth/" + provider, function (req, res) {
+    app.get("/auth/" + provider, startLimiter, function (req, res) {
       if (!socialAuth.isConfigured(provider)) {
         return res.status(404).render("error", {
           user: req.user,
@@ -266,11 +285,11 @@ function mount(app, deps) {
       });
     };
 
-    app.post("/auth/" + provider + "/callback", bounce);
-    app.post("/auth/" + provider + "/complete", complete);
+    app.post("/auth/" + provider + "/callback", finishLimiter, bounce);
+    app.post("/auth/" + provider + "/complete", finishLimiter, complete);
     // Somebody loading the callback directly, or a provider that fell back to a
     // GET, gets the same friendly failure rather than a 404.
-    app.get("/auth/" + provider + "/callback", complete);
+    app.get("/auth/" + provider + "/callback", finishLimiter, complete);
   });
 
   // "You already have an account." Shown after a social sign-in whose email is
