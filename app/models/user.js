@@ -19,8 +19,20 @@ var userSchema = mongoose.Schema({
       username: String,
       discriminator: String,
     },
+    // sha256 of the token that goes in the reset link, never the token
+    // itself. See app/reset-token.js.
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    // What the admin console shows staff when a member says they cannot get
+    // in. passwordChangedAt is stamped by every path that writes a password;
+    // absent on accounts that have not changed one since the field existed,
+    // which the console shows as not recorded rather than guessing from
+    // updatedAt (any profile edit moves that). lastResetEmailAt is written
+    // only after the send succeeds, and lastResetEmailBy is "Member" for a
+    // self-service reset or the staff member's name for a console send.
+    passwordChangedAt: Date,
+    lastResetEmailAt: Date,
+    lastResetEmailBy: String,
     emailVerificationToken: String,
     emailVerificationExpires: Date,
     emailVerified: Boolean,

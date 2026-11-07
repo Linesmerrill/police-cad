@@ -1,6 +1,8 @@
 const communityReport = require("./community-report");
 const civDepartment = require("./civ-department");
 const { selectDepartmentCommunity } = require("./select-department-community");
+const { hashResetToken, resetTokenFilters } = require("./reset-token");
+const adminPasswordHelp = require("./admin-password-help");
 const contentReport = require("./content-report");
 var rateLimit = require("express-rate-limit");
 var User = require("../app/models/user");
@@ -1978,210 +1980,71 @@ module.exports = function (app, passport, server, nextApp, handle) {
     return res.redirect("/admin");
   });
 
-  // Admin endpoint to reset a user's password (for emergency password resets)
-  app.post("/admin/reset-user-password", requireAdminSession, function (req, res) {
-    var email = req.body.email;
-    var tempPassword = req.body.tempPassword || Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-
-    if (!email) {
-      return res.json({ success: false, error: "Email is required" });
+  // Staff password help: send a member a reset email.
+  //
+  // Three routes used to live here and all three are gone:
+  //
+  //   POST /admin/reset-user-password   set a chosen temp password, returned it
+  //   POST /emergency-reset-password    the same, unauthenticated, with the
+  //                                    secret and a member's address written
+  //                                    into the source
+  //   GET  /diagnose-user-password      unauthenticated, printed a member's
+  //                                    password hash and brute-forced three
+  //                                    guesses against it
+  //
+  // Staff never set, see or choose a member's password. The only help staff
+  // can give is sending the member a reset link that the member uses.
+  //
+  // The API endpoint behind this plants a live reset token on an account and
+  // sends mail, so it requires the first-party gateway secret (attached by the
+  // axios interceptor, never reaching a browser) and is only reachable here,
+  // behind requireAdminSession. The acting admin comes from the session; see
+  // app/admin-password-help.js.
+  app.post("/admin/api/users/:id/reset-password", requireAdminSession, async function (req, res) {
+    const path = adminPasswordHelp.resetSendPath(req.params.id);
+    if (!path) {
+      return res.status(400).json({ message: "invalid user id" });
+    }
+    if (!adminPasswordHelp.canIdentifyActor(req)) {
+      return res.status(401).json({ message: "Your admin session is out of date. Please log out and log in again." });
     }
 
-    User.findOne({ "user.email": email.toLowerCase() }, function (err, user) {
-      if (err) {
-        return res.json({ success: false, error: "Error finding user: " + err.message });
-      }
-
-      if (!user) {
-        return res.json({ success: false, error: "User not found with email: " + email });
-      }
-
-      // Generate hash for the new password
-      var hashedPassword = user.generateHash(tempPassword);
-
-      // Update the user's password
-      user.user.password = hashedPassword;
-      user.user.updatedAt = new Date();
-
-      // Must call markModified for nested fields or Mongoose won't save them
-      user.markModified('user.password');
-      user.markModified('user.updatedAt');
-
-      user.save(async function (err) {
-        if (err) {
-          return res.json({ success: false, error: "Error saving user: " + err.message });
-        }
-
-        // Sync password to the API database (send plain password for Go bcrypt compatibility)
-        var apiSynced = false;
-        try {
-          const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
-          const apiToken = process.env.POLICE_CAD_API_TOKEN;
-
-          if (apiToken) {
-            await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
-              email: email.toLowerCase(),
-              password: tempPassword  // Send plain password - API will hash with Go bcrypt
-            }, {
-              headers: {
-                'Authorization': `Bearer ${apiToken}`,
-                'Content-Type': 'application/json'
-              }
-            });
-            apiSynced = true;
-          }
-        } catch (syncError) {
-          console.error('[ADMIN RESET] Failed to sync to API:', syncError.response?.data || syncError.message);
-        }
-
-        // Verify the password was saved correctly
-        User.findOne({ "user.email": email.toLowerCase() }, function (err, verifyUser) {
-          var passwordMatches = false;
-          if (!err && verifyUser) {
-            passwordMatches = verifyUser.verifyPassword(tempPassword);
-          }
-
-          return res.json({
-            success: true,
-            email: email,
-            tempPassword: tempPassword,
-            passwordVerified: passwordMatches,
-            apiSynced: apiSynced,
-            message: "Password reset successful!" + (passwordMatches ? " Password verification passed." : " WARNING: Password verification failed!") + (apiSynced ? " API synced." : " WARNING: API sync failed!")
-          });
-        });
-      });
-    });
-  });
-
-  // Diagnostic endpoint to check user password status
-  app.get("/diagnose-user-password", function (req, res) {
-    var email = req.query.email || "morrisjason94@gmail.com";
-    
-    User.findOne({ "user.email": email.toLowerCase() }, function (err, user) {
-      if (err) {
-        return res.json({ success: false, error: "Error finding user: " + err.message });
-      }
-      
-      if (!user) {
-        return res.json({ success: false, error: "User not found with email: " + email });
-      }
-      
-      var bcrypt = require("bcrypt-nodejs");
-      var testPasswords = ["asdf", "test123", "password"];
-      var testResults = {};
-      
-      testPasswords.forEach(function(pwd) {
-        if (user.user.password) {
-          testResults[pwd] = bcrypt.compareSync(pwd, user.user.password);
-        } else {
-          testResults[pwd] = "NO_PASSWORD_STORED";
-        }
-      });
-      
-      return res.json({
-        success: true,
-        email: user.user.email,
-        username: user.user.username,
-        hasPassword: !!user.user.password,
-        passwordLength: user.user.password ? user.user.password.length : 0,
-        passwordPreview: user.user.password ? user.user.password.substring(0, 50) + "..." : null,
-        testResults: testResults,
-        verifyPasswordMethod: {
-          "asdf": user.verifyPassword("asdf"),
-          "test123": user.verifyPassword("test123")
-        }
-      });
-    });
-  });
-
-  // Emergency password reset endpoint (no auth required, uses secret token)
-  app.post("/emergency-reset-password", function (req, res) {
-    var secretToken = req.body.secretToken || req.query.secretToken;
-    var email = req.body.email || "morrisjason94@gmail.com";
-    
-    // Simple secret token check (you can change this)
-    if (secretToken !== "emergency-reset-2024") {
-      return res.json({ success: false, error: "Invalid secret token" });
+    try {
+      const response = await axios.post(
+        `${process.env.POLICE_CAD_API_URL}${path}`,
+        adminPasswordHelp.resetSendBody(req),
+        { headers: { "Content-Type": "application/json" }, timeout: 15000 }
+      );
+      return res.json(response.data);
+    } catch (err) {
+      const status = (err.response && err.response.status) || 502;
+      const data = (err.response && err.response.data) || { message: "failed to send reset email" };
+      return res.status(status).json(data);
     }
-    
-    // Generate a random temporary password
-    var tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-    
-    User.findOne({ "user.email": email.toLowerCase() }, function (err, user) {
-      if (err) {
-        return res.json({ success: false, error: "Error finding user: " + err.message });
-      }
-      
-      if (!user) {
-        return res.json({ success: false, error: "User not found with email: " + email });
-      }
-      
-      console.log("Resetting password for:", email);
-      console.log("Current password hash:", user.user.password ? user.user.password.substring(0, 30) + "..." : "NULL");
-      
-      // Generate hash for the new password
-      var hashedPassword = user.generateHash(tempPassword);
-      console.log("New password hash:", hashedPassword.substring(0, 30) + "...");
-      
-      // Update the user's password
-      user.user.password = hashedPassword;
-      user.user.updatedAt = new Date();
+  });
 
-      // Must call markModified for nested fields or Mongoose won't save them
-      user.markModified('user.password');
-      user.markModified('user.updatedAt');
+  // What SendGrid did with the member's last reset email. Best-effort by
+  // design: the API answers 200 with "Unknown" for a missing key, a failed
+  // lookup or anything outside SendGrid's three-day history, and this route
+  // does the same for a failure of its own. The console shows one row either
+  // way, and the rest of the detail view never depends on it.
+  app.get("/admin/api/users/:id/reset-email-delivery", requireAdminSession, async function (req, res) {
+    const path = adminPasswordHelp.resetDeliveryPath(req.params.id);
+    if (!path) {
+      return res.status(400).json({ message: "invalid user id" });
+    }
 
-      user.save(async function (err) {
-        if (err) {
-          return res.json({ success: false, error: "Error saving user: " + err.message });
-        }
-
-        // Sync password to the API database (send plain password for Go bcrypt compatibility)
-        var apiSynced = false;
-        try {
-          const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
-          const apiToken = process.env.POLICE_CAD_API_TOKEN;
-
-          if (apiToken) {
-            await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
-              email: email.toLowerCase(),
-              password: tempPassword  // Send plain password - API will hash with Go bcrypt
-            }, {
-              headers: {
-                'Authorization': `Bearer ${apiToken}`,
-                'Content-Type': 'application/json'
-              }
-            });
-            apiSynced = true;
-            console.log("[EMERGENCY RESET] Password synced to API");
-          }
-        } catch (syncError) {
-          console.error('[EMERGENCY RESET] Failed to sync to API:', syncError.response?.data || syncError.message);
-        }
-
-        // Verify the password was saved correctly
-        User.findOne({ "user.email": email.toLowerCase() }, function (err, verifyUser) {
-          var passwordMatches = false;
-          var storedHash = null;
-          if (!err && verifyUser) {
-            storedHash = verifyUser.user.password;
-            passwordMatches = verifyUser.verifyPassword(tempPassword);
-            console.log("Password verification:", passwordMatches);
-          }
-
-          return res.json({
-            success: true,
-            email: email,
-            tempPassword: tempPassword,
-            passwordVerified: passwordMatches,
-            apiSynced: apiSynced,
-            storedHashPreview: storedHash ? storedHash.substring(0, 30) + "..." : null,
-            message: (passwordMatches ? "Password reset successful and verified!" : "Password reset but verification failed!") + (apiSynced ? " API synced." : " WARNING: API sync failed!")
-          });
-        });
+    try {
+      const response = await axios.get(`${process.env.POLICE_CAD_API_URL}${path}`, {
+        headers: { Accept: "application/json" },
+        timeout: 15000,
       });
-    });
+      return res.json(adminPasswordHelp.deliveryStatus(response.data));
+    } catch (err) {
+      // Still a 200: "we could not find out" is the answer, not an error the
+      // console should have to handle.
+      return res.json(adminPasswordHelp.deliveryStatus(null));
+    }
   });
 
   // Add GET route for logout to handle direct navigation
@@ -2508,9 +2371,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return res.json({ valid: false, message: "No reset token found in session." });
     }
     
+    const tokenFilters = resetTokenFilters(token);
+    if (tokenFilters.length === 0) {
+      return res.json({ valid: false, message: "Password reset token is invalid or has expired." });
+    }
+
     User.findOne(
       {
-        "user.resetPasswordToken": token,
+        $or: tokenFilters,
         "user.resetPasswordExpires": {
           $gt: currentTime,
         },
@@ -2569,10 +2437,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
       
       const sessionToken = req.session.resetToken;
       const currentTime = Date.now();
-      
+      const sessionTokenFilters = resetTokenFilters(sessionToken);
+      if (sessionTokenFilters.length === 0) {
+        req.flash(
+          "emailSend",
+          "Password reset token is invalid or has expired."
+        );
+        return res.redirect("/forgot-password");
+      }
+
       User.findOne(
         {
-          "user.resetPasswordToken": sessionToken,
+          $or: sessionTokenFilters,
           "user.resetPasswordExpires": {
             $gt: currentTime,
           },
@@ -8672,9 +8548,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 return res.redirect("/forgot-password");
               }
               
-              // Set the reset fields
+              // Set the reset fields. Only the hash is stored: the raw token
+              // travels in the link and nowhere else, so a stolen row is not
+              // a usable link. See app/reset-token.js.
               const expirationTime = Date.now() + 3600000; // 1 hour from now
-              users.user.resetPasswordToken = token;
+              users.user.resetPasswordToken = hashResetToken(token);
               users.user.resetPasswordExpires = expirationTime;
               
               // Explicitly mark nested fields as modified for older accounts
@@ -8753,7 +8631,27 @@ module.exports = function (app, passport, server, nextApp, handle) {
                   );
                   return res.redirect("/forgot-password");
                 }
-                
+
+                // The email is away, so it is now true that one was sent.
+                // Recorded for the admin console's "Last reset email", which
+                // is how staff tell a member who never asked from one whose
+                // mail provider ate it. Attributed to the member because this
+                // route is the self-service flow; a console send records the
+                // staff member's name instead.
+                // A targeted update rather than a second save() of a document
+                // this waterfall already persisted once.
+                User.updateOne(
+                  { _id: users._id },
+                  { $set: { "user.lastResetEmailAt": new Date(), "user.lastResetEmailBy": "Member" } },
+                  function (recordErr) {
+                    if (recordErr) {
+                      // The member has their link; losing the staff-facing
+                      // record of it is not worth failing the request over.
+                      console.error('Failed to record the reset email:', recordErr);
+                    }
+                  }
+                );
+
                 // Success - don't reveal if email exists or not for security
                 req.flash(
                   "emailSend",
@@ -8805,9 +8703,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
             return res.redirect("back");
           }
           
+          const tokenFilters = resetTokenFilters(token);
+          if (tokenFilters.length === 0) {
+            req.flash(
+              "resetSend",
+              "Password reset token is invalid or has expired."
+            );
+            return res.redirect("back");
+          }
+
           User.findOne(
             {
-              "user.resetPasswordToken": token,
+              $or: tokenFilters,
               "user.resetPasswordExpires": {
                 $gt: currentTime,
               },
@@ -8830,11 +8737,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
               user.user.password = newHash;
               user.user.resetPasswordToken = undefined;
               user.user.resetPasswordExpires = undefined;
+              // The one fact the admin console needs when a member says they
+              // cannot get in. updatedAt moves on any profile edit, so it
+              // cannot answer "when did this password last change".
+              user.user.passwordChangedAt = new Date();
 
               // Must call markModified for nested fields or Mongoose won't save them
               user.markModified('user.password');
               user.markModified('user.resetPasswordToken');
               user.markModified('user.resetPasswordExpires');
+              user.markModified('user.passwordChangedAt');
 
               user.save(async function (err) {
                 if (err) {
