@@ -1688,8 +1688,8 @@
                     <div class="aw-step">
                       <div class="aw-step-number">2</div>
                       <div>
-                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "Reset Password"</div>
-                        <div class="aw-text">On the user's result card, click the "Reset Password" button. A confirmation dialog will appear.</div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "Send reset email"</div>
+                        <div class="aw-text">On the user's result card, click the "Send reset email" button. A confirmation dialog will appear.</div>
                       </div>
                     </div>
                     <div class="aw-step">
@@ -1705,7 +1705,7 @@
                     <div class="aw-tip-text">You will <strong>not</strong> see the reset link yourself. The user must complete the password reset from their own email inbox. If they say they did not receive it, ask them to check their spam folder.</div>
                   </div>
                   <div class="aw-sample-box">
-                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Reset Password Card</div>
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Send reset email Card</div>
                     <div class="aw-sample-content">
                       <div style="background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm); padding:0.875rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1715,7 +1715,7 @@
                           </div>
                           <div style="display:flex; align-items:center; gap:0.5rem;">
                             <span class="aw-badge aw-badge-active">Active</span>
-                            <div class="aw-btn aw-btn-amber" style="font-size:0.75rem; padding:0.35rem 0.75rem;"><i class="fas fa-key"></i> Reset Password</div>
+                            <div class="aw-btn aw-btn-amber" style="font-size:0.75rem; padding:0.35rem 0.75rem;"><i class="fas fa-envelope"></i> Send reset email</div>
                           </div>
                         </div>
                       </div>
@@ -9170,8 +9170,8 @@
                   <button class="btn btn-secondary btn-sm" onclick="viewUserDetails('${user.id}')">
                     <i class="fas fa-eye"></i> View Details
                   </button>
-                  <button class="btn btn-secondary btn-sm" onclick="initiateUserPasswordReset('${user.id}', '${user.email}')">
-                    <i class="fas fa-key"></i> Reset Password
+                  <button class="btn btn-secondary btn-sm" data-reset-user-id="${user.id}" onclick="initiateUserPasswordReset('${user.id}', '${user.email}')">
+                    <i class="fas fa-envelope"></i> Send reset email
                   </button>
                   ${user.isDeactivated ? `<button class="btn btn-success btn-sm" onclick="reactivateUserAccount('${user.id}', '${user.email}')">
                     <i class="fas fa-user-check"></i> Reactivate Account
@@ -9200,33 +9200,28 @@
                     <span style="color: #9aa0b4;"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                   </div>
                 </div>
+                <div class="info-item">
+                  <div class="info-label">Last password change</div>
+                  <div class="info-value password-changed-${user.id}">
+                    <span style="color: #9aa0b4;"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Last reset email</div>
+                  <div class="info-value last-reset-email-${user.id}">
+                    <span style="color: #9aa0b4;"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                  </div>
+                </div>
               </div>
             </div>
           `;
         });
         
-        // After rendering, fetch reset password status for each user
-        // Fetch in parallel but stagger slightly to avoid overwhelming the API
+        // After rendering, fetch the password-help facts for each user: the
+        // search API returns neither the reset expiry nor the timestamps.
+        // Staggered so a page of results does not arrive as one burst.
         users.forEach((user, index) => {
-          setTimeout(() => {
-            $.ajax({
-              url: `${API_BASE}/api/v1/admin/users/${user.id}`,
-              method: 'GET',
-              success: function(data) {
-                if (data.user) {
-                  const resetPasswordExpires = data.user.user?.resetPasswordExpires || data.user.resetPasswordExpires;
-                  const resetStatus = formatPasswordResetStatus(resetPasswordExpires);
-                  $(`.reset-status-${user.id}`).html(resetStatus.html);
-                } else {
-                  $(`.reset-status-${user.id}`).html('<span style="color: #9aa0b4;">Never requested</span>');
-                }
-              },
-              error: function(xhr) {
-                // Silently fail and show "Never requested"
-                $(`.reset-status-${user.id}`).html('<span style="color: #9aa0b4;">Never requested</span>');
-              }
-            });
-          }, index * 50); // Stagger requests by 50ms to avoid overwhelming the API
+          setTimeout(() => loadUserPasswordHelp(user.id), index * 50);
         });
         
         // Add pagination controls
@@ -9594,6 +9589,11 @@
         // Check both nested (user.resetPasswordExpires) and flattened (resetPasswordExpires) paths
         const resetPasswordExpires = user.user?.resetPasswordExpires || user.resetPasswordExpires;
         const resetStatus = formatPasswordResetStatus(resetPasswordExpires);
+
+        // Password-help facts, read only. Same nested/flat tolerance as above.
+        const passwordChangedAt = user.user?.passwordChangedAt || user.passwordChangedAt;
+        const lastResetEmailAt = user.user?.lastResetEmailAt || user.lastResetEmailAt;
+        const lastResetEmailBy = user.user?.lastResetEmailBy || user.lastResetEmailBy;
         
         // Safely handle communities data
         const communities = user.communities || [];
@@ -9638,6 +9638,14 @@
               <div class="info-value">${resetStatus.html}</div>
             </div>
             <div class="info-item">
+              <div class="info-label">Last password change</div>
+              <div class="info-value">${escapeHtml(formatPasswordChangedAt(passwordChangedAt))}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Last reset email</div>
+              <div class="info-value">${formatLastResetEmail(lastResetEmailAt, lastResetEmailBy)}</div>
+            </div>
+            <div class="info-item">
               <div class="info-label">Communities</div>
               <div class="info-value">${communitiesCount}</div>
             </div>
@@ -9663,39 +9671,6 @@
             `).join('') : '<p style="color: #9aa0b4;">No communities</p>'}
           </div>
         `);
-      }
-      
-      function sendUserReset(userEmail) {
-        showConfirmModal(
-          'Send Password Reset',
-          `Are you sure you want to send a password reset email to <strong>${userEmail}</strong>?`,
-          function() {
-            // Find and update the button to show loading state
-            const resetButton = $(`button[onclick*="sendUserReset('${userEmail}')"]`);
-            const originalText = resetButton.html();
-            resetButton.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
-            resetButton.prop('disabled', true);
-            
-            $.ajax({
-              url: '/forgot-password',
-              method: 'POST',
-              data: { email: userEmail },
-              success: function(data) {
-                showInfoModal('Success', 'Password reset email sent successfully to the user.');
-                // Track this action
-                trackAdminAction('user_reset', `Sent password reset to user: ${userEmail}`);
-              },
-              error: function(xhr) {
-                showInfoModal('Error', `Failed to send password reset email: ${xhr.responseText || 'Unknown error'}`);
-              },
-              complete: function() {
-                // Restore button to original state
-                resetButton.html(originalText);
-                resetButton.prop('disabled', false);
-              }
-            });
-          }
-        );
       }
       
       // Function to reactivate a user account
@@ -10856,47 +10831,98 @@
       });
     }
 
+      // Staff password help. Sends the member a reset link; staff never see
+      // the link or the token, and there is no way from here to set, see or
+      // choose a member's password.
+      //
+      // Goes through our own server (requireAdminSession) rather than the API
+      // directly: the API endpoint needs the gateway secret, and the acting
+      // admin has to come from the session rather than from this page.
       function initiateUserPasswordReset(userId, userEmail) {
         showConfirmModal(
-          'Initiate User Password Reset',
-          `This will send a password reset email to <strong>${userEmail}</strong>. The user must complete the reset themselves using the link in their email.<br><br><strong>Note:</strong> You will not see the reset link or password. This is for security.`,
+          'Send reset email',
+          `Send a password reset email to <strong>${escapeHtml(userEmail)}</strong>?<br><br>They set the new password themselves from the link. You will not see the link or the password.`,
           function() {
-            // Find and update the button to show loading state
-            const resetButton = $(`button[onclick*="initiateUserPasswordReset('${userId}', '${userEmail}')"]`);
+            const resetButton = $(`button[data-reset-user-id="${userId}"]`);
             const originalText = resetButton.html();
             resetButton.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
             resetButton.prop('disabled', true);
-            
-            // Store button reference for use in callbacks
-            const buttonRef = resetButton;
-            const textRef = originalText;
-            
-            // Use the existing forgot-password route directly
+
             $.ajax({
-              url: '/forgot-password',
+              url: `/admin/api/users/${encodeURIComponent(userId)}/reset-password`,
               method: 'POST',
-              data: { email: userEmail },
-              success: function(data) {
-                showInfoModal(
-                  'Password Reset Initiated', 
-                  `Password reset email sent successfully to <strong>${userEmail}</strong>!<br><br>The user will receive an email with a secure reset link. They must complete the password reset themselves.<br><br><strong>Security Note:</strong> You cannot see the reset link or new password.`
-                );
-                // Track this action for the logged-in admin
-                trackAdminAction('user_reset_initiated', `Initiated password reset for user: ${userEmail}`);
+              success: function() {
+                showToast('success', 'Reset email sent.');
+                // Refresh the facts on the card: the send is now on record.
+                loadUserPasswordHelp(userId);
               },
-              error: function(xhr) {
-                showInfoModal('Error', `Failed to initiate password reset: ${xhr.responseText || 'Unknown error'}`);
+              error: function() {
+                showToast('error', "Couldn't send the reset email.");
               },
               complete: function() {
-                // Restore button to original state
-                buttonRef.html(textRef);
-                buttonRef.prop('disabled', false);
+                resetButton.html(originalText);
+                resetButton.prop('disabled', false);
               }
             });
           }
         );
       }
-      
+
+      // formatPasswordHelpDate renders a stored timestamp, tolerating the
+      // extended-JSON shape the API can hand back for a Mongo date.
+      function formatPasswordHelpDate(value) {
+        if (!value) return null;
+        const raw = (value && value.$date) ? value.$date : value;
+        const date = new Date(raw);
+        return isNaN(date.getTime()) ? null : date.toLocaleString();
+      }
+
+      // "Last password change". Empty on accounts that have not changed one
+      // since the field existed — shown as not recorded rather than guessed
+      // from updatedAt, which any profile edit moves.
+      function formatPasswordChangedAt(value) {
+        return formatPasswordHelpDate(value) || 'Never recorded';
+      }
+
+      // "Last reset email": when, and who asked for it. The member themselves
+      // for a self-service reset, or the staff member who pressed the button.
+      function formatLastResetEmail(sentAt, sentBy) {
+        const when = formatPasswordHelpDate(sentAt);
+        if (!when) return 'Never recorded';
+        return `${escapeHtml(when)} by ${escapeHtml(sentBy || 'Member')}`;
+      }
+
+      // loadUserPasswordHelp fills the read-only password facts wherever they
+      // are on screen — the result card and the details modal use the same
+      // per-user classes, so one fetch updates both.
+      function loadUserPasswordHelp(userId) {
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/users/${userId}`,
+          method: 'GET',
+          success: function(data) {
+            const user = (data && data.user) || {};
+            const details = user.user || user;
+            $(`.reset-status-${userId}`).html(
+              formatPasswordResetStatus(details.resetPasswordExpires || user.resetPasswordExpires).html
+            );
+            $(`.password-changed-${userId}`).text(
+              formatPasswordChangedAt(details.passwordChangedAt || user.passwordChangedAt)
+            );
+            $(`.last-reset-email-${userId}`).html(
+              formatLastResetEmail(
+                details.lastResetEmailAt || user.lastResetEmailAt,
+                details.lastResetEmailBy || user.lastResetEmailBy
+              )
+            );
+          },
+          error: function() {
+            $(`.reset-status-${userId}`).html('<span style="color: #9aa0b4;">Never requested</span>');
+            $(`.password-changed-${userId}`).text('Never recorded');
+            $(`.last-reset-email-${userId}`).text('Never recorded');
+          }
+        });
+      }
+
       // Community Actions
       function viewCommunityDetails(communityId) {
         $('#communityModalTitle').text('Loading Community Details...');
