@@ -1508,7 +1508,10 @@
 
               <div class="aw-nav-group-title">User Management</div>
               <a class="aw-nav-link" href="#lookup-user">Look Up a User</a>
-              <a class="aw-nav-link" href="#reset-password">Reset Password</a>
+              <!-- Same hidden-span trick as Unverified Emails below: the article now
+                   covers delivery status and the password-help fields, so searching
+                   for those finds it without renaming the link. -->
+              <a class="aw-nav-link" href="#reset-password">Reset Password<span style="display:none;"> reset email delivery status last password change</span></a>
               <a class="aw-nav-link" href="#reactivate-account">Reactivate Account</a>
               <!-- The hidden span keeps the old name searchable: filterAdminWiki matches
                    link.textContent, which includes display:none text, so anyone who still
@@ -1676,7 +1679,7 @@
                 <!-- Reset Password -->
                 <div class="aw-subsection" id="reset-password">
                   <h3 class="aw-subsection-title">Reset a User's Password</h3>
-                  <p class="aw-text">If a user is locked out or has forgotten their password and is unable to use the self-service reset (e.g., they no longer have access to the email on file), you can trigger a password reset from the admin console. This sends a reset link to the user's email address.</p>
+                  <p class="aw-text">If a member can't get into their account, you can send them a reset email from the console. It goes to the email on their account, and they choose the new password themselves. You can never set or see a member's password.</p>
                   <div class="aw-steps">
                     <div class="aw-step">
                       <div class="aw-step-number">1</div>
@@ -1688,22 +1691,80 @@
                     <div class="aw-step">
                       <div class="aw-step-number">2</div>
                       <div>
-                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "Send reset email"</div>
-                        <div class="aw-text">On the user's result card, click the "Send reset email" button. A confirmation dialog will appear.</div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Check the facts first</div>
+                        <div class="aw-text">Click "View Details" and look at Last password change, Last reset email and Delivery status before you send another email.</div>
                       </div>
                     </div>
                     <div class="aw-step">
                       <div class="aw-step-number">3</div>
                       <div>
-                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Confirm the reset</div>
-                        <div class="aw-text">Click "Confirm" in the dialog. A password reset email is sent to the user's registered email address. They must click the link in that email to set a new password.</div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Click "Send reset email"</div>
+                        <div class="aw-text">Click "Send reset email" on their result card, then confirm. You'll see "Reset email sent." when it goes out, or "Couldn't send the reset email." if it didn't.</div>
+                      </div>
+                    </div>
+                    <div class="aw-step">
+                      <div class="aw-step-number">4</div>
+                      <div>
+                        <div style="font-weight:600; color:#fff; margin-bottom:0.25rem;">Ask them to use the link</div>
+                        <div class="aw-text">The link works for 1 hour. If it runs out, send a new one.</div>
                       </div>
                     </div>
                   </div>
+
+                  <div style="font-weight:600; color:#fff; margin:1.25rem 0 0.5rem;">What the fields mean</div>
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-list"></i> Fields on View Details</div>
+                    <div class="aw-sample-content">
+                      <div class="aw-detail-row">
+                        <span class="aw-detail-label" style="flex:0 0 10rem;">Last password change</span>
+                        <span class="aw-detail-value" style="flex:1; font-weight:400; color:var(--ac-text-muted);">When the member last changed their password. "Never recorded" means it hasn't changed since we started tracking it.</span>
+                      </div>
+                      <div class="aw-detail-row">
+                        <span class="aw-detail-label" style="flex:0 0 10rem;">Last reset email</span>
+                        <span class="aw-detail-value" style="flex:1; font-weight:400; color:var(--ac-text-muted);">When the last reset email went out, and who asked for it: Member, or a staff name.</span>
+                      </div>
+                      <div class="aw-detail-row">
+                        <span class="aw-detail-label" style="flex:0 0 10rem;">Delivery status</span>
+                        <span class="aw-detail-value" style="flex:1; font-weight:400; color:var(--ac-text-muted);">What happened to the last reset email.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-paper-plane"></i> Delivery status values</div>
+                    <div class="aw-sample-content">
+                      <div class="aw-detail-row">
+                        <span class="aw-detail-label" style="flex:0 0 6rem;">Delivered</span>
+                        <span class="aw-detail-value" style="flex:1; font-weight:400; color:var(--ac-text-muted);">Their mail server accepted it. Ask them to check spam.</span>
+                      </div>
+                      <div class="aw-detail-row">
+                        <span class="aw-detail-label" style="flex:0 0 6rem;">Blocked</span>
+                        <span class="aw-detail-value" style="flex:1; font-weight:400; color:var(--ac-text-muted);">Their mail provider refused it. Sending again won't help.</span>
+                      </div>
+                      <div class="aw-detail-row">
+                        <span class="aw-detail-label" style="flex:0 0 6rem;">Bounced</span>
+                        <span class="aw-detail-value" style="flex:1; font-weight:400; color:var(--ac-text-muted);">The address doesn't work. Check it with the member.</span>
+                      </div>
+                      <div class="aw-detail-row">
+                        <span class="aw-detail-label" style="flex:0 0 6rem;">Delayed</span>
+                        <span class="aw-detail-value" style="flex:1; font-weight:400; color:var(--ac-text-muted);">Their mail server is retrying. Give it a few minutes.</span>
+                      </div>
+                      <div class="aw-detail-row">
+                        <span class="aw-detail-label" style="flex:0 0 6rem;">Unknown</span>
+                        <span class="aw-detail-value" style="flex:1; font-weight:400; color:var(--ac-text-muted);">No record yet, or the email is more than 3 days old.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="aw-tip">
+                    <div class="aw-tip-icon"><i class="fas fa-shield-alt"></i></div>
+                    <div class="aw-tip-text">Staff can never set or see a member's password. If a member's email can't be reached, send the case to Merrill.</div>
+                  </div>
                   <div class="aw-tip">
                     <div class="aw-tip-icon"><i class="fas fa-lightbulb"></i></div>
-                    <div class="aw-tip-text">You will <strong>not</strong> see the reset link yourself. The user must complete the password reset from their own email inbox. If they say they did not receive it, ask them to check their spam folder.</div>
+                    <div class="aw-tip-text">You won't see the reset link. If they say it didn't arrive, check Delivery status first, then ask them to check spam.</div>
                   </div>
+
                   <div class="aw-sample-box">
                     <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Reset email card</div>
                     <div class="aw-sample-content">
@@ -1717,6 +1778,40 @@
                             <span class="aw-badge aw-badge-active">Active</span>
                             <div class="aw-btn aw-btn-amber" style="font-size:0.75rem; padding:0.35rem 0.75rem;"><i class="fas fa-envelope"></i> Send reset email</div>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Password facts</div>
+                    <div class="aw-sample-content">
+                      <div style="background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius); padding:1rem;">
+                        <div class="aw-detail-row">
+                          <span class="aw-detail-label">Last password change</span>
+                          <span class="aw-detail-value">11/7/2026, 1:52:10 PM</span>
+                        </div>
+                        <div class="aw-detail-row">
+                          <span class="aw-detail-label">Last reset email</span>
+                          <span class="aw-detail-value">11/7/2026, 1:50:02 PM by Member</span>
+                        </div>
+                        <div class="aw-detail-row">
+                          <span class="aw-detail-label">Delivery status</span>
+                          <span class="aw-detail-value">Delivered</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="aw-sample-box">
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Toasts</div>
+                    <div class="aw-sample-content">
+                      <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                        <div style="min-width:300px; max-width:420px; background:#d4edda; color:#155724; border:1px solid #c3e6cb; border-radius:8px; padding:15px;">
+                          <i class="fas fa-check-circle"></i><span style="margin-left:8px; font-weight:500;">Reset email sent.</span>
+                        </div>
+                        <div style="min-width:300px; max-width:420px; background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; border-radius:8px; padding:15px;">
+                          <i class="fas fa-exclamation-circle"></i><span style="margin-left:8px; font-weight:500;">Couldn't send the reset email.</span>
                         </div>
                       </div>
                     </div>
