@@ -147,6 +147,10 @@ test.describe('Admin → staff password help', { tag: '@admin' }, () => {
     });
 
     await page.locator(`[data-reset-user-id="${MEMBER_ID}"]`).click();
+    // The confirm copy is what tells staff they will not see the password.
+    await expect(page.locator('#confirmModalBody')).toContainText(
+      `Send a reset email to ${MEMBER_EMAIL}? They choose the new password. You won't see it.`
+    );
     await page.locator('#confirmModalBtn').click();
 
     await proxied;

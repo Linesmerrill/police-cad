@@ -1705,7 +1705,7 @@
                     <div class="aw-tip-text">You will <strong>not</strong> see the reset link yourself. The user must complete the password reset from their own email inbox. If they say they did not receive it, ask them to check their spam folder.</div>
                   </div>
                   <div class="aw-sample-box">
-                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Send reset email Card</div>
+                    <div class="aw-sample-label"><i class="fas fa-eye"></i> Sample: Reset email card</div>
                     <div class="aw-sample-content">
                       <div style="background:var(--ac-glass); border:1px solid var(--ac-glass-border); border-radius:var(--ac-radius-sm); padding:0.875rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -10841,7 +10841,7 @@
       function initiateUserPasswordReset(userId, userEmail) {
         showConfirmModal(
           'Send reset email',
-          `Send a password reset email to <strong>${escapeHtml(userEmail)}</strong>?<br><br>They set the new password themselves from the link. You will not see the link or the password.`,
+          `Send a reset email to <strong>${escapeHtml(userEmail)}</strong>? They choose the new password. You won't see it.`,
           function() {
             const resetButton = $(`button[data-reset-user-id="${userId}"]`);
             const originalText = resetButton.html();
