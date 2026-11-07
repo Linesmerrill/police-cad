@@ -158,21 +158,26 @@ describe("admin-console.ejs structure", function () {
       );
       assert.ok(link, "the reset-password nav link is missing");
 
-      const textContent = link[1].replace(/<[^>]*>/g, "");
+      // Assert on the two parts separately rather than stripping tags: a
+      // strip-the-markup regex is the pattern CodeQL flags as incomplete
+      // sanitization, and nothing here needs sanitizing anyway.
+      const inner = link[1];
       assert.ok(
-        textContent.startsWith("Reset Password"),
-        `the link should still read "Reset Password", got "${textContent}"`
+        inner.startsWith("Reset Password"),
+        `the link should still read "Reset Password", got "${inner}"`
+      );
+
+      const hidden = inner.match(/<span style="display:none;">([^<]*)<\/span>/);
+      assert.ok(
+        hidden,
+        "the extra search terms should be hidden, not shown in the nav"
       );
       for (const term of ["reset email", "delivery status", "last password change"]) {
         assert.ok(
-          textContent.toLowerCase().includes(term),
+          hidden[1].toLowerCase().includes(term),
           `searching the wiki for "${term}" should find this article`
         );
       }
-      assert.ok(
-        /<span style="display:none;">/.test(link[1]),
-        "the extra search terms should be hidden, not shown in the nav"
-      );
     });
   });
 
