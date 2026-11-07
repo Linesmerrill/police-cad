@@ -36,7 +36,6 @@ function slice(source, startMark, endMark) {
 function loadPasswordHelp() {
   const source = fs.readFileSync(CONSOLE_VIEW, "utf8");
   const code =
-    slice(source, "      function formatPasswordResetStatus(", "      function displayUserResultsPage(") +
     slice(source, "      // formatPasswordHelpDate renders a stored timestamp", "      // loadDeliveryStatus asks our own server") +
     slice(source, "      // passwordHelpDetails flattens the two shapes", "      // Community Actions");
 
@@ -179,7 +178,6 @@ describe("admin console password help", function () {
     it("survives a missing user", function () {
       const { passwordHelpDetails } = loadPasswordHelp();
       assert.deepStrictEqual(passwordHelpDetails(undefined), {
-        resetPasswordExpires: undefined,
         passwordChangedAt: undefined,
         lastResetEmailAt: undefined,
         lastResetEmailBy: undefined,
@@ -295,6 +293,39 @@ describe("admin console password help", function () {
         /loadDeliveryStatus\(passwordHelpUserId\)/.test(modal),
         "the detail modal should request delivery status once"
       );
+    });
+
+    it("no longer carries the old Password Reset Status card", function () {
+      // It read user.resetPasswordExpires, which is cleared the moment a reset
+      // is used, so it reported "Never requested" for members who had just
+      // reset successfully. Checked against a real account: the reset email
+      // went out at 21:08 and the password changed at 21:11, by which point
+      // resetPasswordExpires was gone and the card would have said the member
+      // had never asked. "Last reset email" says it correctly and keeps saying
+      // it, so the card was a wrong duplicate.
+      // Comments are allowed to name the thing that was removed and why, so
+      // the guard looks at code and markup only.
+      const code = fs
+        .readFileSync(CONSOLE_VIEW, "utf8")
+        .split("\n")
+        .filter((line) => !/^\s*\/\//.test(line))
+        .join("\n");
+      assert.ok(!/function formatPasswordResetStatus/.test(code),
+        "the helper should be gone");
+      assert.ok(!/Password Reset Status</.test(code),
+        "the card's label should be gone from the markup");
+      assert.ok(!/reset-status-\$\{/.test(code),
+        "nothing should still write to the card's per-user class");
+      assert.ok(!/Never requested/.test(code),
+        "the card's empty state should be gone");
+    });
+
+    it("keeps the two rows that replaced it", function () {
+      const source = fs.readFileSync(CONSOLE_VIEW, "utf8");
+      assert.ok(source.includes("Last password change"));
+      assert.ok(source.includes("Last reset email"));
+      assert.ok(source.includes("password-changed-${user.id}"));
+      assert.ok(source.includes("last-reset-email-${user.id}"));
     });
 
     it("renders the detail-modal rows as empty placeholders", function () {

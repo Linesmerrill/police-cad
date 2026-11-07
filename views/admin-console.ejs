@@ -9170,69 +9170,6 @@
         displayUserResultsPage(users, 0, users.length, Math.ceil(users.length / resultsPerPage));
       }
       
-      // Helper function to format password reset status
-      function formatPasswordResetStatus(resetPasswordExpires) {
-        if (!resetPasswordExpires) {
-          return {
-            html: '<span style="color: #9aa0b4;">Never requested</span>',
-            text: 'Never requested'
-          };
-        }
-        
-        // Handle MongoDB date format { "$date": "2025-11-27T21:21:12.678Z" }
-        let expirationDate;
-        if (resetPasswordExpires.$date) {
-          expirationDate = new Date(resetPasswordExpires.$date);
-        } else if (typeof resetPasswordExpires === 'string') {
-          expirationDate = new Date(resetPasswordExpires);
-        } else {
-          expirationDate = new Date(resetPasswordExpires);
-        }
-        
-        // Check if date is valid
-        if (isNaN(expirationDate.getTime())) {
-          return {
-            html: '<span style="color: #9aa0b4;">Never requested</span>',
-            text: 'Never requested'
-          };
-        }
-        
-        const now = new Date();
-        // Calculate when reset was requested (approximately 1 hour before expiration)
-        const resetRequestedDate = new Date(expirationDate.getTime() - 3600000);
-        const hoursSinceRequest = (now.getTime() - resetRequestedDate.getTime()) / (1000 * 60 * 60);
-        const isExpired = expirationDate < now;
-        const isRecent = !isExpired && hoursSinceRequest < 24;
-        
-        const dateStr = resetRequestedDate.toLocaleDateString();
-        
-        if (isExpired) {
-          return {
-            html: `
-              <span style="color: #6b7280; opacity: 0.7;">
-                ${dateStr}
-              </span>
-              <span class="status-badge status-muted" style="margin-left: 0.5rem;">Expired</span>
-            `,
-            text: `${dateStr} (Expired)`
-          };
-        } else if (isRecent) {
-          return {
-            html: `
-              <span style="color: #10b981;">
-                ${dateStr}
-              </span>
-            `,
-            text: dateStr
-          };
-        } else {
-          return {
-            html: `<span style="color: #9aa0b4;">${dateStr}</span>`,
-            text: dateStr
-          };
-        }
-      }
-      
       function displayUserResultsPage(users, currentPage, totalRecords, totalPages) {
         if (!users || users.length === 0) {
           $('#userResults').html('<div class="loading">No users found</div>');
@@ -9241,9 +9178,6 @@
         
         let html = '';
         users.forEach((user, index) => {
-          // The search API doesn't return resetPasswordExpires, so we'll fetch it separately
-          // For now, show loading state - we'll fetch and update after rendering
-          const resetStatus = formatPasswordResetStatus(null); // Start with null, will update
           const deactivationBlock = user.isDeactivated ? `
             <div style="margin: 0 0 0.75rem 0; padding: 0.6rem 0.8rem; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 6px; color: #fca5a5; font-size: 0.85rem; line-height: 1.45;">
               <div style="font-weight: 600; margin-bottom: 0.25rem;">
@@ -9288,12 +9222,6 @@
                 <div class="info-item">
                   <div class="info-label">Created</div>
                   <div class="info-value">${new Date(user.createdAt).toLocaleDateString()}</div>
-                </div>
-                <div class="info-item">
-                  <div class="info-label">Password Reset Status</div>
-                  <div class="info-value reset-status-${user.id}">
-                    <span style="color: #9aa0b4;"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                  </div>
                 </div>
                 <div class="info-item">
                   <div class="info-label">Last password change</div>
@@ -9680,11 +9608,6 @@
         // Convert MongoDB ObjectId to creation date
         const createdAt = user._id ? new Date(parseInt(user._id.toString().substring(0, 8), 16) * 1000) : new Date(user.createdAt);
         
-        // Handle password reset status using helper function
-        // Check both nested (user.resetPasswordExpires) and flattened (resetPasswordExpires) paths
-        const resetPasswordExpires = user.user?.resetPasswordExpires || user.resetPasswordExpires;
-        const resetStatus = formatPasswordResetStatus(resetPasswordExpires);
-
         // Password-help facts, read only. Deliberately NOT interpolated into
         // the template below: that string is handed to .html(), and the staff
         // name in lastResetEmailBy is free text. The two rows get the same
@@ -9730,10 +9653,6 @@
             <div class="info-item">
               <div class="info-label">Created</div>
               <div class="info-value">${createdAt.toLocaleDateString()}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Password Reset Status</div>
-              <div class="info-value">${resetStatus.html}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Last password change</div>
@@ -11004,6 +10923,13 @@
         return `${when} by ${sentBy || 'Member'}`;
       }
 
+      // The old "Password Reset Status" card used to sit alongside these. It
+      // read user.resetPasswordExpires, which is cleared the moment a reset is
+      // used, so it said "Never requested" about members who had just reset
+      // their password successfully. "Last reset email" says the same thing
+      // and keeps saying it afterwards, so the card was both wrong and a
+      // duplicate.
+      //
       // setPasswordHelpFields writes the read-only password facts into
       // whichever copies of them are on screen. The result cards and the
       // details modal use the same per-user classes, so one call fills both.
@@ -11014,7 +10940,6 @@
       // is built from a Date and cannot carry anything else.
       function setPasswordHelpFields(userId, details) {
         const d = details || {};
-        $(`.reset-status-${userId}`).html(formatPasswordResetStatus(d.resetPasswordExpires).html);
         $(`.password-changed-${userId}`).text(formatPasswordChangedAt(d.passwordChangedAt));
         $(`.last-reset-email-${userId}`).text(
           formatLastResetEmail(d.lastResetEmailAt, d.lastResetEmailBy)
@@ -11061,7 +10986,6 @@
             setPasswordHelpFields(userId, passwordHelpDetails(data && data.user));
           },
           error: function() {
-            $(`.reset-status-${userId}`).html('<span style="color: #9aa0b4;">Never requested</span>');
             $(`.password-changed-${userId}`).text('Never recorded');
             $(`.last-reset-email-${userId}`).text('Never recorded');
           }
@@ -11074,7 +10998,6 @@
         const u = user || {};
         const nested = u.user || {};
         return {
-          resetPasswordExpires: nested.resetPasswordExpires || u.resetPasswordExpires,
           passwordChangedAt: nested.passwordChangedAt || u.passwordChangedAt,
           lastResetEmailAt: nested.lastResetEmailAt || u.lastResetEmailAt,
           lastResetEmailBy: nested.lastResetEmailBy || u.lastResetEmailBy,
