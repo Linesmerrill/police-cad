@@ -9170,7 +9170,7 @@
                   <button class="btn btn-secondary btn-sm" onclick="viewUserDetails('${user.id}')">
                     <i class="fas fa-eye"></i> View Details
                   </button>
-                  <button class="btn btn-secondary btn-sm" data-reset-user-id="${user.id}" onclick="initiateUserPasswordReset('${user.id}', '${user.email}')">
+                  <button class="btn btn-secondary btn-sm" data-reset-user-id="${escapeHtml(user.id || '')}" onclick="initiateUserPasswordReset('${escapeHtml(user.id || '')}', '${escapeHtml(user.email || '')}')">
                     <i class="fas fa-envelope"></i> Send reset email
                   </button>
                   ${user.isDeactivated ? `<button class="btn btn-success btn-sm" onclick="reactivateUserAccount('${user.id}', '${user.email}')">
@@ -9590,10 +9590,13 @@
         const resetPasswordExpires = user.user?.resetPasswordExpires || user.resetPasswordExpires;
         const resetStatus = formatPasswordResetStatus(resetPasswordExpires);
 
-        // Password-help facts, read only. Same nested/flat tolerance as above.
-        const passwordChangedAt = user.user?.passwordChangedAt || user.passwordChangedAt;
-        const lastResetEmailAt = user.user?.lastResetEmailAt || user.lastResetEmailAt;
-        const lastResetEmailBy = user.user?.lastResetEmailBy || user.lastResetEmailBy;
+        // Password-help facts, read only. Deliberately NOT interpolated into
+        // the template below: that string is handed to .html(), and the staff
+        // name in lastResetEmailBy is free text. The two rows get the same
+        // per-user classes as the result cards and are filled with .text()
+        // once the body is in the DOM.
+        const passwordHelpUserId = user.id || user._id || '';
+        const passwordHelpFacts = passwordHelpDetails(user);
         
         // Safely handle communities data
         const communities = user.communities || [];
@@ -9639,11 +9642,11 @@
             </div>
             <div class="info-item">
               <div class="info-label">Last password change</div>
-              <div class="info-value">${escapeHtml(formatPasswordChangedAt(passwordChangedAt))}</div>
+              <div class="info-value password-changed-${passwordHelpUserId}"></div>
             </div>
             <div class="info-item">
               <div class="info-label">Last reset email</div>
-              <div class="info-value">${formatLastResetEmail(lastResetEmailAt, lastResetEmailBy)}</div>
+              <div class="info-value last-reset-email-${passwordHelpUserId}"></div>
             </div>
             <div class="info-item">
               <div class="info-label">Communities</div>
@@ -9671,6 +9674,9 @@
             `).join('') : '<p style="color: #9aa0b4;">No communities</p>'}
           </div>
         `);
+
+        // Now that the body is in the DOM, fill the password-help rows as text.
+        setPasswordHelpFields(passwordHelpUserId, passwordHelpFacts);
       }
       
       // Function to reactivate a user account
@@ -10886,34 +10892,42 @@
 
       // "Last reset email": when, and who asked for it. The member themselves
       // for a self-service reset, or the staff member who pressed the button.
+      //
+      // Plain text, not markup. The staff name is free text an admin typed
+      // into their own account, so it has no business being parsed as HTML —
+      // setPasswordHelpFields writes it with .text() and there is no escaping
+      // left to get wrong.
       function formatLastResetEmail(sentAt, sentBy) {
         const when = formatPasswordHelpDate(sentAt);
         if (!when) return 'Never recorded';
-        return `${escapeHtml(when)} by ${escapeHtml(sentBy || 'Member')}`;
+        return `${when} by ${sentBy || 'Member'}`;
       }
 
-      // loadUserPasswordHelp fills the read-only password facts wherever they
-      // are on screen — the result card and the details modal use the same
-      // per-user classes, so one fetch updates both.
+      // setPasswordHelpFields writes the read-only password facts into
+      // whichever copies of them are on screen. The result cards and the
+      // details modal use the same per-user classes, so one call fills both.
+      //
+      // Both new values go in with .text(): never .html(), never interpolated
+      // into a template string that an .html() call then parses. The reset
+      // status is the pre-existing field and keeps its coloured markup, which
+      // is built from a Date and cannot carry anything else.
+      function setPasswordHelpFields(userId, details) {
+        const d = details || {};
+        $(`.reset-status-${userId}`).html(formatPasswordResetStatus(d.resetPasswordExpires).html);
+        $(`.password-changed-${userId}`).text(formatPasswordChangedAt(d.passwordChangedAt));
+        $(`.last-reset-email-${userId}`).text(
+          formatLastResetEmail(d.lastResetEmailAt, d.lastResetEmailBy)
+        );
+      }
+
+      // loadUserPasswordHelp fetches the facts the user-search API does not
+      // return, then hands them to setPasswordHelpFields.
       function loadUserPasswordHelp(userId) {
         $.ajax({
           url: `${API_BASE}/api/v1/admin/users/${userId}`,
           method: 'GET',
           success: function(data) {
-            const user = (data && data.user) || {};
-            const details = user.user || user;
-            $(`.reset-status-${userId}`).html(
-              formatPasswordResetStatus(details.resetPasswordExpires || user.resetPasswordExpires).html
-            );
-            $(`.password-changed-${userId}`).text(
-              formatPasswordChangedAt(details.passwordChangedAt || user.passwordChangedAt)
-            );
-            $(`.last-reset-email-${userId}`).html(
-              formatLastResetEmail(
-                details.lastResetEmailAt || user.lastResetEmailAt,
-                details.lastResetEmailBy || user.lastResetEmailBy
-              )
-            );
+            setPasswordHelpFields(userId, passwordHelpDetails(data && data.user));
           },
           error: function() {
             $(`.reset-status-${userId}`).html('<span style="color: #9aa0b4;">Never requested</span>');
@@ -10921,6 +10935,19 @@
             $(`.last-reset-email-${userId}`).text('Never recorded');
           }
         });
+      }
+
+      // passwordHelpDetails flattens the two shapes the admin API can return
+      // a user in: nested under `user`, or at the top level.
+      function passwordHelpDetails(user) {
+        const u = user || {};
+        const nested = u.user || {};
+        return {
+          resetPasswordExpires: nested.resetPasswordExpires || u.resetPasswordExpires,
+          passwordChangedAt: nested.passwordChangedAt || u.passwordChangedAt,
+          lastResetEmailAt: nested.lastResetEmailAt || u.lastResetEmailAt,
+          lastResetEmailBy: nested.lastResetEmailBy || u.lastResetEmailBy,
+        };
       }
 
       // Community Actions

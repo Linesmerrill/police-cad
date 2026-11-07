@@ -118,6 +118,44 @@ test.describe('Admin → staff password help', { tag: '@admin' }, () => {
     );
   });
 
+  test('shows a staff name containing HTML as literal text', async ({ page }) => {
+    // The real browser end of the unit tests: a staff name is free text an
+    // admin typed into their own account, and the row is written with .text(),
+    // so it must appear verbatim and create no elements.
+    const injected = '<img src=x onerror="window.__xss=1">';
+    await stubMember(page, {
+      lastResetEmailAt: '2026-11-01T14:05:00Z',
+      lastResetEmailBy: injected,
+    });
+    await findTheMember(page);
+
+    const row = page.locator(`.last-reset-email-${MEMBER_ID}`);
+    await expect(row).toContainText(injected, { timeout: 15_000 });
+    await expect(row.locator('img')).toHaveCount(0);
+    expect(await page.evaluate(() => (window as unknown as { __xss?: number }).__xss)).toBeUndefined();
+  });
+
+  test('shows an injected staff name as literal text in the detail modal', async ({ page }) => {
+    // The modal body is one big .html() template, so its two rows are empty
+    // placeholders filled with .text() after insertion.
+    const injected = '<img src=x onerror="window.__xssModal=1">';
+    await stubMember(page, {
+      passwordChangedAt: '2026-03-02T09:30:00Z',
+      lastResetEmailAt: '2026-11-01T14:05:00Z',
+      lastResetEmailBy: injected,
+    });
+    await findTheMember(page);
+
+    await page.getByRole('button', { name: /View Details/i }).first().click();
+    const modalRow = page.locator(`#userModalBody .last-reset-email-${MEMBER_ID}`);
+    await expect(modalRow).toContainText(injected, { timeout: 15_000 });
+    await expect(modalRow.locator('img')).toHaveCount(0);
+    await expect(page.locator(`#userModalBody .password-changed-${MEMBER_ID}`)).toContainText('2026');
+    expect(
+      await page.evaluate(() => (window as unknown as { __xssModal?: number }).__xssModal)
+    ).toBeUndefined();
+  });
+
   test('attributes a member-initiated reset to the member', async ({ page }) => {
     await stubMember(page, {
       lastResetEmailAt: '2026-11-01T14:05:00Z',
