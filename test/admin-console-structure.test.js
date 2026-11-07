@@ -74,6 +74,113 @@ describe("admin-console.ejs structure", function () {
     );
   });
 
+  describe('the "Reset a User\'s Password" wiki article', function () {
+    // Standing rule: an admin change updates the admin docs in the same PR.
+    // These assertions are what "up to date" means for this article, so a
+    // future change to the reset flow that forgets the Wiki fails here.
+    let article;
+
+    before(function () {
+      const source = fs.readFileSync(CONSOLE_VIEW, "utf8");
+      const start = source.indexOf('<div class="aw-subsection" id="reset-password">');
+      assert.notStrictEqual(start, -1, "the reset-password article is missing");
+      const end = source.indexOf("<!-- Reactivate Account -->", start);
+      assert.notStrictEqual(end, -1, "could not find the end of the article");
+      article = source.slice(start, end);
+    });
+
+    it("documents the three password-help fields", function () {
+      for (const field of ["Last password change", "Last reset email", "Delivery status"]) {
+        assert.ok(article.includes(field), `the article should document "${field}"`);
+      }
+    });
+
+    it("documents all five delivery labels", function () {
+      for (const label of ["Delivered", "Blocked", "Bounced", "Delayed", "Unknown"]) {
+        assert.ok(article.includes(label), `the article should document "${label}"`);
+      }
+    });
+
+    it("shows both toasts staff will actually see", function () {
+      assert.ok(article.includes("Reset email sent."), "the success toast is missing");
+      assert.ok(
+        article.includes("Couldn't send the reset email."),
+        "the error toast is missing"
+      );
+    });
+
+    it("uses the renamed button, not the old one", function () {
+      assert.ok(article.includes("Send reset email"));
+      assert.ok(
+        !/>\s*Reset Password\s*</.test(article),
+        "the article should not still name a 'Reset Password' button"
+      );
+    });
+
+    it("renders the toast samples inline, not fixed to the viewport", function () {
+      // showToast() positions the real ones; a sample must sit in the page.
+      const toasts = article.slice(article.indexOf("Sample: Toasts"));
+      assert.ok(!/position\s*:\s*fixed/.test(toasts), "a sample toast is position:fixed");
+      // Same colors and icons as showToast(), so the sample is recognizable.
+      assert.ok(toasts.includes("#d4edda") && toasts.includes("#155724"));
+      assert.ok(toasts.includes("#f8d7da") && toasts.includes("#721c24"));
+      assert.ok(toasts.includes("fa-check-circle") && toasts.includes("fa-exclamation-circle"));
+    });
+
+    it("contains no em dash", function () {
+      assert.ok(!/\u2014/.test(article), "the article contains a literal em dash");
+      assert.ok(!article.includes("&mdash;"), "the article contains an &mdash; entity");
+    });
+
+    it("reuses the existing wiki components", function () {
+      for (const cls of [
+        "aw-subsection-title",
+        "aw-text",
+        "aw-steps",
+        "aw-step-number",
+        "aw-tip-icon",
+        "aw-sample-box",
+        "aw-sample-label",
+        "aw-detail-row",
+        "aw-detail-label",
+        "aw-detail-value",
+      ]) {
+        assert.ok(article.includes(cls), `the article should use ${cls}`);
+      }
+    });
+
+    it("is reachable from the nav, and findable by what it now covers", function () {
+      // filterAdminWiki matches link.textContent, which includes display:none
+      // text, so hidden terms make the article findable without renaming it.
+      const source = fs.readFileSync(CONSOLE_VIEW, "utf8");
+      const link = source.match(
+        /<a class="aw-nav-link" href="#reset-password">([\s\S]*?)<\/a>/
+      );
+      assert.ok(link, "the reset-password nav link is missing");
+
+      // Assert on the two parts separately rather than stripping tags: a
+      // strip-the-markup regex is the pattern CodeQL flags as incomplete
+      // sanitization, and nothing here needs sanitizing anyway.
+      const inner = link[1];
+      assert.ok(
+        inner.startsWith("Reset Password"),
+        `the link should still read "Reset Password", got "${inner}"`
+      );
+
+      const hidden = inner.match(/<span style="display:none;">([^<]*)<\/span>/);
+      assert.ok(
+        hidden,
+        "the extra search terms should be hidden, not shown in the nav"
+      );
+      for (const term of ["reset email", "delivery status", "last password change"]) {
+        assert.ok(
+          hidden[1].toLowerCase().includes(term),
+          `searching the wiki for "${term}" should find this article`
+        );
+      }
+    });
+  });
+
   it("sends reset emails through our own admin-gated route", function () {
     // Not the API directly (it needs the gateway secret) and not the website's
     // /forgot-password (which 302s to a 200 whether the mail sent or not).
