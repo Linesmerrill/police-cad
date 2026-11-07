@@ -375,7 +375,7 @@ function SignupForm() {
             </div>
           )}
 
-          <SocialSignIn />
+          <SocialSignIn mode="signup" />
 
           {/* Signup Form */}
           <form onSubmit={handleSubmit}>
