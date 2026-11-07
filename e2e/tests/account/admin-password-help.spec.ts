@@ -1,9 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
 import {
-  seedConsoleStaff,
-  removeConsoleStaff,
-  TEST_CONSOLE_STAFF_EMAIL,
-  TEST_CONSOLE_STAFF_PASSWORD,
+  seedPasswordHelpStaff,
+  removePasswordHelpStaff,
+  TEST_PASSWORD_HELP_STAFF_EMAIL,
+  TEST_PASSWORD_HELP_STAFF_PASSWORD,
 } from '../../helpers/admin-users';
 
 /**
@@ -16,16 +16,20 @@ import {
  * whether the email went out.
  *
  * The API is stubbed with page.route — this exercises the panel, not Go.
+ *
+ * Uses its own admin_users row rather than the shared console-staff fixture:
+ * that row is seeded and deleted by four spec files, and under fullyParallel
+ * the first to finish deletes it while the others are still logging in.
  */
 test.use({ storageState: { cookies: [], origins: [] } });
 
 const MEMBER_ID = '507f1f77bcf86cd799439021';
 const MEMBER_EMAIL = 'locked-out@example.test';
 
-async function loginAsConsoleStaff(page: Page) {
+async function loginAsPasswordHelpStaff(page: Page) {
   await page.goto('/admin');
-  await page.locator('input[name="email"]').fill(TEST_CONSOLE_STAFF_EMAIL);
-  await page.locator('input[name="password"]').fill(TEST_CONSOLE_STAFF_PASSWORD);
+  await page.locator('input[name="email"]').fill(TEST_PASSWORD_HELP_STAFF_EMAIL);
+  await page.locator('input[name="password"]').fill(TEST_PASSWORD_HELP_STAFF_PASSWORD);
   await Promise.all([
     page.waitForURL('**/admin/console**', { timeout: 15_000 }),
     page.locator('button[type="submit"]').click(),
@@ -67,15 +71,15 @@ test.describe('Admin → staff password help', { tag: '@admin' }, () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async () => {
-    await seedConsoleStaff();
+    await seedPasswordHelpStaff();
   });
 
   test.afterAll(async () => {
-    await removeConsoleStaff();
+    await removePasswordHelpStaff();
   });
 
   test.beforeEach(async ({ page }) => {
-    await loginAsConsoleStaff(page);
+    await loginAsPasswordHelpStaff(page);
   });
 
   test('shows the last password change and the last reset email', async ({ page }) => {
