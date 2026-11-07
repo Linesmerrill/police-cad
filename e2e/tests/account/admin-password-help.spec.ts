@@ -99,12 +99,17 @@ test.describe('Admin → staff password help', { tag: '@admin' }, () => {
     await expect(page.locator(`.last-reset-email-${MEMBER_ID}`)).toContainText(
       'by Dana Reed'
     );
-    // Scoped to the results panel: these labels also appear in the admin Wiki
-    // article that documents this screen, so a page-wide getByText would be
-    // ambiguous and could resolve to the Wiki's hidden nav search terms.
+    // Scoped to the results panel, and exact. These labels also appear in the
+    // admin Wiki article that documents this screen, and the Wiki's nav link
+    // carries them again as hidden search terms, so an unscoped getByText can
+    // resolve to a display:none element and never become visible.
     const results = page.locator('#userResults');
-    await expect(results.getByText('Last password change').first()).toBeVisible();
-    await expect(results.getByText('Last reset email').first()).toBeVisible();
+    await expect(
+      results.getByText('Last password change', { exact: true }).first()
+    ).toBeVisible();
+    await expect(
+      results.getByText('Last reset email', { exact: true }).first()
+    ).toBeVisible();
   });
 
   test('says "Never recorded" for an account with no history', async ({ page }) => {
@@ -182,7 +187,7 @@ test.describe('Admin → staff password help', { tag: '@admin' }, () => {
       '550 5.7.606 Access denied, banned sending IP'
     );
     await expect(
-      page.locator('#userModalBody').getByText('Delivery status').first()
+      page.locator('#userModalBody').getByText('Delivery status', { exact: true }).first()
     ).toBeVisible();
   });
 
