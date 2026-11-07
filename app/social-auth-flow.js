@@ -32,6 +32,8 @@
 // The longest field we will carry through the bounce. An ID token is a JWT of
 // roughly one to two kilobytes; Apple's user blob is smaller. Anything past
 // this is not a provider's answer, and a page should not be built around it.
+const rateLimit = require("express-rate-limit");
+
 const MAX_FIELD_LENGTH = 8192;
 
 // The fields a provider can post back and that /complete needs. Whitelisted
@@ -111,8 +113,6 @@ function mount(app, deps) {
   const User = deps.User;
   const sanitizeRedirect = deps.sanitizeRedirect;
   const log = deps.log || console;
-  const rateLimit = deps.rateLimit || require("express-rate-limit");
-
   // These are unauthenticated endpoints that reach the database and decide who
   // somebody is, and app.js's global 500-per-5-minutes is not much of a bound
   // on that. Generous on purpose: a lot of members share one address behind a
@@ -128,8 +128,11 @@ function mount(app, deps) {
   };
   // Starting a sign-in writes a flow to the session; finishing one takes two
   // requests per sign-in because of the bounce, so it gets the larger budget.
-  const startLimiter = rateLimit(Object.assign({}, limiterOptions, { max: 30 }));
-  const finishLimiter = rateLimit(Object.assign({}, limiterOptions, { max: 60 }));
+  // Tests shrink the budget to prove the limiter is wired; they do not get to
+  // replace the limiter itself, so what runs in CI is what runs in production.
+  const limits = deps.limits || {};
+  const startLimiter = rateLimit(Object.assign({}, limiterOptions, { max: limits.start || 30 }));
+  const finishLimiter = rateLimit(Object.assign({}, limiterOptions, { max: limits.finish || 60 }));
 
   ["google", "apple"].forEach(function (provider) {
     const label = socialAuth.providerConfig(provider).label;

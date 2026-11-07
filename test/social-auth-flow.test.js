@@ -64,7 +64,7 @@ function buildApp(options = {}) {
   });
 
   socialFlow.mount(app, {
-    rateLimit: options.rateLimit,
+    limits: options.limits,
     socialAuth: stubAuth,
     User: { findById: async (id) => (options.missingUser ? null : { id, _id: id }) },
     sanitizeRedirect: (value, fallback) =>
@@ -444,10 +444,9 @@ describe("social sign-in flow (routes)", function () {
     // A tiny budget here only proves the limiter is actually wired on; the
     // real ones are generous, because members share addresses behind a school
     // or household NAT.
-    const rateLimit = require("express-rate-limit");
     server = await listen(buildApp({
       verdicts: { default: { outcome: "signed_in", userId: "u1" } },
-      rateLimit: (opts) => rateLimit(Object.assign({}, opts, { max: 2 })),
+      limits: { start: 2, finish: 2 },
     }));
     process.env.GOOGLE_OAUTH_CLIENT_ID = "test-client-id";
     process.env.BASE_URL = "https://www.linespolice-cad.com";
