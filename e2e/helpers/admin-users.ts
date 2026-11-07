@@ -199,6 +199,44 @@ export async function removeConsoleStaff(): Promise<void> {
   });
 }
 
+// Staff for the password-help spec, on its own row.
+//
+// seedConsoleStaff's row is shared by four spec files, and with fullyParallel
+// the first of them to reach afterAll deletes it out from under the others:
+// the next login lands on /admin?error=Invalid%20credentials. That is what
+// made this spec flaky on its first CI run. First and last name are set
+// because the spec reads the staff name back out of "Last reset email".
+export const TEST_PASSWORD_HELP_STAFF_ID = new ObjectId('a4a4a4a4a4a4a4a4a4a4a4a5');
+export const TEST_PASSWORD_HELP_STAFF_EMAIL = 'console-pwhelp@test.com';
+export const TEST_PASSWORD_HELP_STAFF_PASSWORD = 'console-pwhelp-pw-1';
+
+export async function seedPasswordHelpStaff(): Promise<void> {
+  const hash = bcrypt.hashSync(TEST_PASSWORD_HELP_STAFF_PASSWORD);
+  await withDb(async (db) => {
+    await db.collection('admin_users').replaceOne(
+      { _id: TEST_PASSWORD_HELP_STAFF_ID },
+      {
+        _id: TEST_PASSWORD_HELP_STAFF_ID,
+        email: TEST_PASSWORD_HELP_STAFF_EMAIL,
+        password: hash,
+        firstName: 'Password',
+        lastName: 'Helper',
+        role: 'admin',
+        roles: ['admin'],
+        active: true,
+        createdAt: new Date(),
+      },
+      { upsert: true }
+    );
+  });
+}
+
+export async function removePasswordHelpStaff(): Promise<void> {
+  await withDb(async (db) => {
+    await db.collection('admin_users').deleteOne({ _id: TEST_PASSWORD_HELP_STAFF_ID });
+  });
+}
+
 // A staff admin that has been deactivated (active: false). Its own id so the
 // deactivation test can't disturb specs using the active staff fixture.
 export const TEST_DEACTIVATED_ADMIN_ID = new ObjectId('a6a6a6a6a6a6a6a6a6a6a6a6');
