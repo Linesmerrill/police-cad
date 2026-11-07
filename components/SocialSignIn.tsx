@@ -35,7 +35,24 @@ function AppleMark() {
   );
 }
 
-export default function SocialSignIn({ redirect }: { redirect?: string }) {
+// What the buttons say. Both brands allow a sign-up wording on a registration
+// screen and a neutral one elsewhere, and "Continue with" on a Register page
+// reads as though the account already exists. One prop rather than a second
+// component: everything else about these buttons is identical, and two copies
+// would drift.
+type SocialMode = 'login' | 'signup';
+
+function buttonLabel(mode: SocialMode, provider: 'Google' | 'Apple') {
+  return mode === 'signup' ? `Sign up with ${provider}` : `Continue with ${provider}`;
+}
+
+export default function SocialSignIn({
+  redirect,
+  mode = 'login',
+}: {
+  redirect?: string;
+  mode?: SocialMode;
+}) {
   const [providers, setProviders] = useState<Providers | null>(null);
 
   useEffect(() => {
@@ -103,13 +120,13 @@ export default function SocialSignIn({ redirect }: { redirect?: string }) {
         {providers.google && (
           <a className="social-btn" href={href('google')} style={buttonStyle}>
             <GoogleMark />
-            <span>Continue with Google</span>
+            <span>{buttonLabel(mode, 'Google')}</span>
           </a>
         )}
         {providers.apple && (
           <a className="social-btn" href={href('apple')} style={buttonStyle}>
             <AppleMark />
-            <span>Continue with Apple</span>
+            <span>{buttonLabel(mode, 'Apple')}</span>
           </a>
         )}
       </div>
