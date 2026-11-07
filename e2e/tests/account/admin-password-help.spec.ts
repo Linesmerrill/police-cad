@@ -99,8 +99,12 @@ test.describe('Admin → staff password help', { tag: '@admin' }, () => {
     await expect(page.locator(`.last-reset-email-${MEMBER_ID}`)).toContainText(
       'by Dana Reed'
     );
-    await expect(page.getByText('Last password change').first()).toBeVisible();
-    await expect(page.getByText('Last reset email').first()).toBeVisible();
+    // Scoped to the results panel: these labels also appear in the admin Wiki
+    // article that documents this screen, so a page-wide getByText would be
+    // ambiguous and could resolve to the Wiki's hidden nav search terms.
+    const results = page.locator('#userResults');
+    await expect(results.getByText('Last password change').first()).toBeVisible();
+    await expect(results.getByText('Last reset email').first()).toBeVisible();
   });
 
   test('says "Never recorded" for an account with no history', async ({ page }) => {
@@ -177,7 +181,9 @@ test.describe('Admin → staff password help', { tag: '@admin' }, () => {
     await expect(page.locator(`#userModalBody .delivery-reason-${MEMBER_ID}`)).toContainText(
       '550 5.7.606 Access denied, banned sending IP'
     );
-    await expect(page.getByText('Delivery status').first()).toBeVisible();
+    await expect(
+      page.locator('#userModalBody').getByText('Delivery status').first()
+    ).toBeVisible();
   });
 
   test('shows a SendGrid reason containing HTML as literal text', async ({ page }) => {
