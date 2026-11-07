@@ -2023,6 +2023,30 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // What SendGrid did with the member's last reset email. Best-effort by
+  // design: the API answers 200 with "Unknown" for a missing key, a failed
+  // lookup or anything outside SendGrid's three-day history, and this route
+  // does the same for a failure of its own. The console shows one row either
+  // way, and the rest of the detail view never depends on it.
+  app.get("/admin/api/users/:id/reset-email-delivery", requireAdminSession, async function (req, res) {
+    const path = adminPasswordHelp.resetDeliveryPath(req.params.id);
+    if (!path) {
+      return res.status(400).json({ message: "invalid user id" });
+    }
+
+    try {
+      const response = await axios.get(`${process.env.POLICE_CAD_API_URL}${path}`, {
+        headers: { Accept: "application/json" },
+        timeout: 15000,
+      });
+      return res.json(adminPasswordHelp.deliveryStatus(response.data));
+    } catch (err) {
+      // Still a 200: "we could not find out" is the answer, not an error the
+      // console should have to handle.
+      return res.json(adminPasswordHelp.deliveryStatus(null));
+    }
+  });
+
   // Add GET route for logout to handle direct navigation
   app.get("/admin/logout", function (req, res) {
     // Calculate session duration before clearing session

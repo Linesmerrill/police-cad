@@ -9649,6 +9649,11 @@
               <div class="info-value last-reset-email-${passwordHelpUserId}"></div>
             </div>
             <div class="info-item">
+              <div class="info-label">Delivery status</div>
+              <div class="info-value delivery-status-${passwordHelpUserId}"></div>
+              <div class="delivery-reason-${passwordHelpUserId}" style="color: #9aa0b4; font-size: 0.85rem; margin-top: 0.2rem; word-break: break-word;"></div>
+            </div>
+            <div class="info-item">
               <div class="info-label">Communities</div>
               <div class="info-value">${communitiesCount}</div>
             </div>
@@ -9677,6 +9682,7 @@
 
         // Now that the body is in the DOM, fill the password-help rows as text.
         setPasswordHelpFields(passwordHelpUserId, passwordHelpFacts);
+        loadDeliveryStatus(passwordHelpUserId);
       }
       
       // Function to reactivate a user account
@@ -10918,6 +10924,36 @@
         $(`.last-reset-email-${userId}`).text(
           formatLastResetEmail(d.lastResetEmailAt, d.lastResetEmailBy)
         );
+      }
+
+      // The only delivery labels this console renders. An unexpected value
+      // from the API shows as Unknown rather than being put on the page.
+      var DELIVERY_LABELS = ['Delivered', 'Blocked', 'Bounced', 'Delayed', 'Unknown'];
+
+      // setDeliveryStatus writes the label and SendGrid's reason, both with
+      // .text(). The reason is someone else's server talking — an SMTP
+      // rejection string from the receiving end — so it is the last thing
+      // that should ever be parsed as markup.
+      function setDeliveryStatus(userId, status) {
+        const s = status || {};
+        const label = DELIVERY_LABELS.indexOf(s.label) !== -1 ? s.label : 'Unknown';
+        const reason = (label === 'Unknown' || typeof s.reason !== 'string') ? '' : s.reason.trim();
+        $(`.delivery-status-${userId}`).text(label);
+        $(`.delivery-reason-${userId}`).text(reason);
+      }
+
+      // loadDeliveryStatus asks our own server, which asks the API, which asks
+      // SendGrid. Every one of those can decline to answer; all of them end up
+      // as Unknown, and none of them may disturb the rest of the modal.
+      function loadDeliveryStatus(userId) {
+        setDeliveryStatus(userId, { label: 'Unknown' });
+        if (!userId) return;
+        $.ajax({
+          url: `/admin/api/users/${encodeURIComponent(userId)}/reset-email-delivery`,
+          method: 'GET',
+          success: function(data) { setDeliveryStatus(userId, data); },
+          error: function() { setDeliveryStatus(userId, { label: 'Unknown' }); }
+        });
       }
 
       // loadUserPasswordHelp fetches the facts the user-search API does not

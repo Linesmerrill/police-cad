@@ -49,9 +49,34 @@ function resetSendPath(userId) {
   return isObjectId(id) ? `/api/v1/admin/users/${id}/reset-password` : null;
 }
 
+// resetDeliveryPath is what SendGrid did with the member's last reset email.
+// Same validation, same reason.
+function resetDeliveryPath(userId) {
+  const id = String(userId || "");
+  return isObjectId(id) ? `/api/v1/admin/users/${id}/reset-email-delivery` : null;
+}
+
+// DELIVERY_LABELS are the only labels the console will render. The API is
+// ours and already limits itself to these, but this is the surface a person
+// reads, so an unexpected value becomes Unknown here rather than being shown.
+const DELIVERY_LABELS = Object.freeze(["Delivered", "Blocked", "Bounced", "Delayed", "Unknown"]);
+
+// deliveryStatus normalizes the API's answer for display. Anything missing,
+// malformed or unrecognized is Unknown with no reason: delivery status is
+// best-effort and must never be the thing that breaks the view.
+function deliveryStatus(body) {
+  const raw = (body && typeof body === "object") ? body : {};
+  const label = DELIVERY_LABELS.includes(raw.label) ? raw.label : "Unknown";
+  const reason = (label === "Unknown" || typeof raw.reason !== "string") ? "" : raw.reason.trim();
+  return { label: label, reason: reason };
+}
+
 module.exports = {
   isObjectId,
   resetSendBody,
   canIdentifyActor,
   resetSendPath,
+  resetDeliveryPath,
+  deliveryStatus,
+  DELIVERY_LABELS,
 };

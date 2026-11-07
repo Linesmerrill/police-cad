@@ -156,6 +156,78 @@ test.describe('Admin → staff password help', { tag: '@admin' }, () => {
     ).toBeUndefined();
   });
 
+  test('shows the delivery status and SendGrid reason in the modal', async ({ page }) => {
+    await stubMember(page, { lastResetEmailAt: '2026-11-01T14:05:00Z', lastResetEmailBy: 'Dana Reed' });
+    await page.route(`**/admin/api/users/${MEMBER_ID}/reset-email-delivery`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          label: 'Blocked',
+          reason: '550 5.7.606 Access denied, banned sending IP',
+        }),
+      });
+    });
+    await findTheMember(page);
+    await page.getByRole('button', { name: /View Details/i }).first().click();
+
+    await expect(page.locator(`#userModalBody .delivery-status-${MEMBER_ID}`)).toHaveText('Blocked', {
+      timeout: 15_000,
+    });
+    await expect(page.locator(`#userModalBody .delivery-reason-${MEMBER_ID}`)).toContainText(
+      '550 5.7.606 Access denied, banned sending IP'
+    );
+    await expect(page.getByText('Delivery status').first()).toBeVisible();
+  });
+
+  test('shows a SendGrid reason containing HTML as literal text', async ({ page }) => {
+    // The reason is an SMTP rejection string from the receiving server, so it
+    // is the last value that should ever be parsed as markup.
+    const injected = '<img src=x onerror="window.__xssReason=1">';
+    await stubMember(page, { lastResetEmailAt: '2026-11-01T14:05:00Z' });
+    await page.route(`**/admin/api/users/${MEMBER_ID}/reset-email-delivery`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ label: 'Bounced', reason: injected }),
+      });
+    });
+    await findTheMember(page);
+    await page.getByRole('button', { name: /View Details/i }).first().click();
+
+    const reason = page.locator(`#userModalBody .delivery-reason-${MEMBER_ID}`);
+    await expect(reason).toContainText(injected, { timeout: 15_000 });
+    await expect(reason.locator('img')).toHaveCount(0);
+    expect(
+      await page.evaluate(() => (window as unknown as { __xssReason?: number }).__xssReason)
+    ).toBeUndefined();
+  });
+
+  test('shows Unknown when the delivery lookup fails, without breaking the modal', async ({ page }) => {
+    // SendGrid history is three days and the key is optional, so Unknown is a
+    // normal answer. The rest of the modal is what staff came for.
+    await stubMember(page, {
+      passwordChangedAt: '2026-03-02T09:30:00Z',
+      lastResetEmailAt: '2026-11-01T14:05:00Z',
+      lastResetEmailBy: 'Dana Reed',
+    });
+    await page.route(`**/admin/api/users/${MEMBER_ID}/reset-email-delivery`, (route) =>
+      route.abort('failed')
+    );
+    await findTheMember(page);
+    await page.getByRole('button', { name: /View Details/i }).first().click();
+
+    await expect(page.locator(`#userModalBody .delivery-status-${MEMBER_ID}`)).toHaveText('Unknown', {
+      timeout: 15_000,
+    });
+    await expect(page.locator(`#userModalBody .delivery-reason-${MEMBER_ID}`)).toHaveText('');
+    // Everything else still rendered.
+    await expect(page.locator(`#userModalBody .last-reset-email-${MEMBER_ID}`)).toContainText(
+      'by Dana Reed'
+    );
+    await expect(page.locator(`#userModalBody .password-changed-${MEMBER_ID}`)).toContainText('2026');
+  });
+
   test('attributes a member-initiated reset to the member', async ({ page }) => {
     await stubMember(page, {
       lastResetEmailAt: '2026-11-01T14:05:00Z',

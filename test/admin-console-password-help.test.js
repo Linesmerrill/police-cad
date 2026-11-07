@@ -37,7 +37,7 @@ function loadPasswordHelp() {
   const source = fs.readFileSync(CONSOLE_VIEW, "utf8");
   const code =
     slice(source, "      function formatPasswordResetStatus(", "      function displayUserResultsPage(") +
-    slice(source, "      // formatPasswordHelpDate renders a stored timestamp", "      // loadUserPasswordHelp fetches the facts") +
+    slice(source, "      // formatPasswordHelpDate renders a stored timestamp", "      // loadDeliveryStatus asks our own server") +
     slice(source, "      // passwordHelpDetails flattens the two shapes", "      // Community Actions");
 
   // writes[selector] = [{ method, value }, ...]
@@ -59,6 +59,8 @@ function loadPasswordHelp() {
        formatLastResetEmail,
        setPasswordHelpFields,
        passwordHelpDetails,
+       setDeliveryStatus,
+       DELIVERY_LABELS,
      };`
   )($);
   return { ...api, writes };
@@ -185,6 +187,69 @@ describe("admin console password help", function () {
     });
   });
 
+  describe("setDeliveryStatus", function () {
+    it("writes the label and the reason with .text(), never .html()", function () {
+      const { setDeliveryStatus, writes } = loadPasswordHelp();
+      setDeliveryStatus("507f1f77bcf86cd799439021", {
+        label: "Blocked",
+        reason: '550 5.7.1 blocked <img src=x onerror="alert(1)">',
+      });
+
+      for (const field of ["delivery-status-", "delivery-reason-"]) {
+        const calls = writesFor(writes, field);
+        assert.strictEqual(calls.length, 1, `${field} should be written once`);
+        assert.strictEqual(
+          calls[0].method,
+          "text",
+          `${field} must be written with .text() — the reason is an SMTP ` +
+            "rejection string from someone else's server"
+        );
+      }
+    });
+
+    it("hands the raw reason to .text(), so the browser shows it literally", function () {
+      const { setDeliveryStatus, writes } = loadPasswordHelp();
+      const injected = '<img src=x onerror="alert(1)">';
+      setDeliveryStatus("abc", { label: "Bounced", reason: injected });
+      const call = writesFor(writes, "delivery-reason-")[0];
+      assert.strictEqual(call.method, "text");
+      assert.strictEqual(call.value, injected);
+    });
+
+    it("renders only the five known labels", function () {
+      const { setDeliveryStatus, DELIVERY_LABELS, writes } = loadPasswordHelp();
+      assert.deepStrictEqual(DELIVERY_LABELS, [
+        "Delivered",
+        "Blocked",
+        "Bounced",
+        "Delayed",
+        "Unknown",
+      ]);
+      setDeliveryStatus("abc", { label: '<b>Delivered</b>', reason: "x" });
+      assert.strictEqual(writesFor(writes, "delivery-status-")[0].value, "Unknown");
+      assert.strictEqual(writesFor(writes, "delivery-reason-")[0].value, "");
+    });
+
+    it("shows Unknown with no reason for anything missing or malformed", function () {
+      for (const status of [null, undefined, {}, { label: "Exploded" }, { label: "delivered" }]) {
+        const { setDeliveryStatus, writes } = loadPasswordHelp();
+        setDeliveryStatus("abc", status);
+        assert.strictEqual(
+          writesFor(writes, "delivery-status-")[0].value,
+          "Unknown",
+          `status ${JSON.stringify(status)}`
+        );
+        assert.strictEqual(writesFor(writes, "delivery-reason-")[0].value, "");
+      }
+    });
+
+    it("drops a non-string reason rather than stringifying it", function () {
+      const { setDeliveryStatus, writes } = loadPasswordHelp();
+      setDeliveryStatus("abc", { label: "Bounced", reason: { $ne: null } });
+      assert.strictEqual(writesFor(writes, "delivery-reason-")[0].value, "");
+    });
+  });
+
   describe("the view itself", function () {
     it("keeps the new values out of every .html() sink", function () {
       // The source-level backstop: whatever the functions do, neither value
@@ -196,12 +261,39 @@ describe("admin console password help", function () {
         .map((line, i) => ({ line, n: i + 1 }))
         .filter(
           ({ line }) =>
-            /formatLastResetEmail|formatPasswordChangedAt/.test(line) && /\.html\(/.test(line)
+            /formatLastResetEmail|formatPasswordChangedAt|delivery-status-|delivery-reason-/.test(
+              line
+            ) && /\.html\(/.test(line)
         );
       assert.deepStrictEqual(
         offenders.map((o) => `${o.n}: ${o.line.trim()}`),
         [],
         "a password-help value reached an .html() sink"
+      );
+    });
+
+    it("asks for delivery status from the modal only, not once per search result", function () {
+      // displayUserResultsPage renders a page of cards and fetches per row.
+      // A delivery lookup there would mean a SendGrid round trip per result.
+      const source = fs.readFileSync(CONSOLE_VIEW, "utf8");
+      const cards = slice(
+        source,
+        "      function displayUserResultsPage(",
+        "      // Pending User pagination functions"
+      );
+      assert.ok(
+        !/loadDeliveryStatus|delivery-status-|delivery-reason-/.test(cards),
+        "the search results must not request delivery status per row"
+      );
+
+      const modal = slice(
+        source,
+        "      function displayUserDetails(user) {",
+        "      function deactivateUserAccount"
+      );
+      assert.ok(
+        /loadDeliveryStatus\(passwordHelpUserId\)/.test(modal),
+        "the detail modal should request delivery status once"
       );
     });
 
@@ -214,6 +306,10 @@ describe("admin console password help", function () {
       assert.ok(
         source.includes('<div class="info-value last-reset-email-${passwordHelpUserId}"></div>'),
         "the modal's last-reset-email row should be an empty placeholder"
+      );
+      assert.ok(
+        source.includes('<div class="info-value delivery-status-${passwordHelpUserId}"></div>'),
+        "the modal's delivery-status row should be an empty placeholder"
       );
     });
   });

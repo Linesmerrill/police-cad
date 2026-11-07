@@ -4,6 +4,9 @@ const {
   resetSendBody,
   canIdentifyActor,
   resetSendPath,
+  resetDeliveryPath,
+  deliveryStatus,
+  DELIVERY_LABELS,
 } = require("../app/admin-password-help");
 
 function reqWith(admin, body) {
@@ -83,6 +86,71 @@ describe("admin-password-help", function () {
       assert.ok(!canIdentifyActor(reqWith(null)));
       assert.ok(!canIdentifyActor(reqWith({ id: "not-an-id" })));
       assert.ok(!canIdentifyActor(reqWith({ id: { $ne: null } })));
+    });
+  });
+
+  describe("resetDeliveryPath", function () {
+    it("builds the delivery-status path", function () {
+      assert.strictEqual(
+        resetDeliveryPath("507f1f77bcf86cd799439022"),
+        "/api/v1/admin/users/507f1f77bcf86cd799439022/reset-email-delivery"
+      );
+    });
+
+    it("refuses anything that is not a member id", function () {
+      assert.strictEqual(resetDeliveryPath("507f1f77bcf86cd799439022/../other"), null);
+      assert.strictEqual(resetDeliveryPath("not-an-id"), null);
+      assert.strictEqual(resetDeliveryPath(""), null);
+      assert.strictEqual(resetDeliveryPath(null), null);
+    });
+  });
+
+  describe("deliveryStatus", function () {
+    it("passes the five known labels through", function () {
+      for (const label of DELIVERY_LABELS) {
+        assert.strictEqual(deliveryStatus({ label }).label, label);
+      }
+    });
+
+    it("keeps SendGrid's reason", function () {
+      assert.deepStrictEqual(deliveryStatus({ label: "Blocked", reason: "  550 banned IP  " }), {
+        label: "Blocked",
+        reason: "550 banned IP",
+      });
+    });
+
+    it("turns anything unrecognized into Unknown with no reason", function () {
+      // Best-effort: a shape we did not expect must not reach the page.
+      for (const body of [
+        null,
+        undefined,
+        {},
+        "Delivered",
+        42,
+        { label: "Exploded" },
+        { label: "delivered" },
+        { label: ["Delivered"] },
+        { label: '<img src=x onerror="alert(1)">' },
+      ]) {
+        assert.deepStrictEqual(
+          deliveryStatus(body),
+          { label: "Unknown", reason: "" },
+          `body ${JSON.stringify(body)} should be Unknown`
+        );
+      }
+    });
+
+    it("drops a reason on an Unknown, and a non-string reason", function () {
+      assert.strictEqual(deliveryStatus({ label: "Unknown", reason: "anything" }).reason, "");
+      assert.strictEqual(deliveryStatus({ label: "Bounced", reason: { $ne: null } }).reason, "");
+      assert.strictEqual(deliveryStatus({ label: "Bounced" }).reason, "");
+    });
+
+    it("carries a reason containing HTML through verbatim", function () {
+      // Verbatim is correct because the only sink is .text(); the console's
+      // own test asserts that sink.
+      const injected = '<img src=x onerror="alert(1)">';
+      assert.strictEqual(deliveryStatus({ label: "Bounced", reason: injected }).reason, injected);
     });
   });
 
