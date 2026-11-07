@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You already have an account &middot; Lines Police CAD</title>
+  <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --rp-bg: #08090c;
+      --rp-glass: rgba(255, 255, 255, 0.04);
+      --rp-glass-border: rgba(255, 255, 255, 0.06);
+      --rp-text: #e2e8f0;
+      --rp-text-muted: #64748b;
+      --rp-accent: #38bdf8;
+      --rp-radius: 14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100vh;
+      background: var(--rp-bg);
+      color: var(--rp-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body { padding-top: 36px; position: relative; display: flex; flex-direction: column; }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 36px 0 0 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 55% 42% at 16% 92%, rgba(56, 189, 248, 0.07), transparent 65%),
+        radial-gradient(ellipse 38% 32% at 86% 6%, rgba(56, 189, 248, 0.045), transparent 70%);
+    }
+    .rp-link-stage {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem 4rem;
+    }
+    .rp-link-card {
+      width: 100%;
+      max-width: 460px;
+      background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+      padding: 2.25rem 2rem;
+      text-align: center;
+    }
+    .rp-link-mark {
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 1.25rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+    }
+    .rp-link-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -0.01em;
+    }
+    .rp-link-rule {
+      width: 44px;
+      height: 2px;
+      margin: 0.9rem auto 1.1rem;
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent);
+    }
+    .rp-link-message {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--rp-text-muted);
+    }
+    .rp-link-message strong { color: var(--rp-text); font-weight: 600; }
+    .rp-link-actions {
+      margin-top: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .rp-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.8rem 1.4rem;
+      border-radius: 0.625rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .rp-btn-primary {
+      background: var(--rp-accent);
+      color: #06131d;
+    }
+    .rp-btn-primary:hover { background: #7dd3fc; }
+    .rp-btn:focus-visible { outline: 2px solid var(--rp-accent); outline-offset: 2px; }
+    .rp-link-tertiary {
+      font-size: 0.875rem;
+      color: var(--rp-text-muted);
+      text-decoration: none;
+    }
+    .rp-link-tertiary:hover { color: var(--rp-accent); }
+  </style>
+</head>
+<body>
+  <%- include('partials/standalone-utility', { user: locals.user, backHref: '/login', backLabel: 'Back to Login', pageLabel: 'Sign In' }) %>
+
+  <main class="rp-link-stage">
+    <section class="rp-link-card" aria-labelledby="rp-link-title">
+      <div class="rp-link-mark" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#38bdf8"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </div>
+
+      <h1 id="rp-link-title" class="rp-link-title">You already have an account</h1>
+      <div class="rp-link-rule" aria-hidden="true"></div>
+
+      <p class="rp-link-message">
+        An LPC account already uses <strong><%= maskedEmail %></strong>. Log in with your email and password to get in.
+      </p>
+
+      <div class="rp-link-actions">
+        <a href="/login" class="rp-btn rp-btn-primary">Log in</a>
+        <a href="/forgot-password" class="rp-link-tertiary">Forgot password?</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

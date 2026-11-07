@@ -35,7 +35,24 @@ function AppleMark() {
   );
 }
 
-export default function SocialSignIn({ redirect }: { redirect?: string }) {
+// What the buttons say. Both brands allow a sign-up wording on a registration
+// screen and a neutral one elsewhere, and "Continue with" on a Register page
+// reads as though the account already exists. One prop rather than a second
+// component: everything else about these buttons is identical, and two copies
+// would drift.
+type SocialMode = 'login' | 'signup';
+
+function buttonLabel(mode: SocialMode, provider: 'Google' | 'Apple') {
+  return mode === 'signup' ? `Sign up with ${provider}` : `Continue with ${provider}`;
+}
+
+export default function SocialSignIn({
+  redirect,
+  mode = 'login',
+}: {
+  redirect?: string;
+  mode?: SocialMode;
+}) {
   const [providers, setProviders] = useState<Providers | null>(null);
 
   useEffect(() => {
@@ -63,9 +80,8 @@ export default function SocialSignIn({ redirect }: { redirect?: string }) {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.625rem',
-    flex: '1 1 0',
-    minWidth: 0,
-    padding: '0.75rem 1rem',
+    width: '100%',
+    padding: '0.75rem 0.875rem',
     borderRadius: '0.625rem',
     border: '1px solid rgba(255, 255, 255, 0.18)',
     background: 'rgba(255, 255, 255, 0.06)',
@@ -74,6 +90,10 @@ export default function SocialSignIn({ redirect }: { redirect?: string }) {
     fontSize: '0.9375rem',
     textDecoration: 'none',
     lineHeight: 1.2,
+    // One line, always. Side by side these buttons got 170px each while the
+    // label alone wants about 154px plus 60px of icon, gap and padding, so
+    // every width wrapped "Continue with Google" onto two lines.
+    whiteSpace: 'nowrap',
     transition: 'background 150ms ease, border-color 150ms ease',
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -92,24 +112,25 @@ export default function SocialSignIn({ redirect }: { redirect?: string }) {
           background: rgba(255, 255, 255, 0.12) !important;
           border-color: rgba(255, 255, 255, 0.32) !important;
         }
-        @media (max-width: 420px) {
-          .social-row {
-            flex-direction: column;
-          }
-        }
       `}</style>
 
-      <div className="social-row" style={{ display: 'flex', gap: '0.75rem' }}>
+      {/* Stacked rather than side by side: the card is about 350px wide and a
+          one-line label needs roughly 215px of button, so two across never fit
+          without wrapping. Full width also gives each button a larger target. */}
+      <div
+        className="social-row"
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
+      >
         {providers.google && (
           <a className="social-btn" href={href('google')} style={buttonStyle}>
             <GoogleMark />
-            <span>Continue with Google</span>
+            <span>{buttonLabel(mode, 'Google')}</span>
           </a>
         )}
         {providers.apple && (
           <a className="social-btn" href={href('apple')} style={buttonStyle}>
             <AppleMark />
-            <span>Continue with Apple</span>
+            <span>{buttonLabel(mode, 'Apple')}</span>
           </a>
         )}
       </div>

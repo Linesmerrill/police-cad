@@ -7,6 +7,7 @@ const contentReport = require("./content-report");
 var rateLimit = require("express-rate-limit");
 var User = require("../app/models/user");
 var socialAuth = require("../app/social-auth");
+var socialFlow = require("../app/social-auth-flow");
 var Civilian = require("../app/models/civilian");
 var Vehicle = require("../app/models/vehicle");
 var Firearm = require("../app/models/firearm");
@@ -250,141 +251,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   // ---- Sign in with Google and Apple ----
   //
-  // Two routes per provider: one starts the flow, one receives the answer.
-  //
-  // The answer arrives as a POST, because both providers are asked for
-  // response_mode=form_post. That keeps the ID token out of the URL, and so out
-  // of browser history, Referer headers and our own access logs — which matters
-  // because a token in a log is a credential in a log.
-  //
-  // Nothing here reads the token. It goes to the API, the API verifies it, and
-  // this code acts on the API's answer. See app/social-auth.js.
-  ["google", "apple"].forEach(function (provider) {
-    const label = socialAuth.providerConfig(provider).label;
-
-    app.get("/auth/" + provider, function (req, res) {
-      if (!socialAuth.isConfigured(provider)) {
-        return res.status(404).render("error", {
-          user: req.user,
-          message: label + " sign-in is not available right now.",
-          redirect: null,
-        });
-      }
-
-      const state = socialAuth.randomToken();
-      const nonce = socialAuth.randomToken();
-      socialAuth.rememberFlow(req.session, provider, {
-        state,
-        nonce,
-        redirect: sanitizeRedirect(req.query.redirect, null),
-      });
-
-      let url;
-      try {
-        url = socialAuth.buildAuthorizeURL(provider, { state, nonce });
-      } catch (err) {
-        console.error("[LPS] [level=error] " + provider + " authorize URL:", err.message);
-        return res.status(500).render("error", {
-          user: req.user,
-          message: label + " sign-in is not configured correctly.",
-          redirect: null,
-        });
-      }
-      // The session has to be written before the browser leaves, or the nonce
-      // will not be there when the answer comes back.
-      return req.session.save(function () {
-        res.redirect(url);
-      });
-    });
-
-    const callback = async function (req, res) {
-      const parsed = socialAuth.parseCallback(req.body);
-      const flow = socialAuth.takeFlow(req.session, provider, parsed.state);
-
-      const fail = function (message) {
-        return res.status(400).render("error", {
-          user: req.user,
-          message,
-          retryHref: "/auth/" + provider,
-          retryLabel: "Try " + label + " again",
-          redirect: null,
-        });
-      };
-
-      // A declined consent screen is a deliberate choice, not an error worth a
-      // page about it.
-      if (parsed.error && !parsed.idToken) {
-        return res.redirect(sanitizeRedirect(flow && flow.redirect, "/login"));
-      }
-      // No stored flow means the state did not match, expired, or was already
-      // answered. All three are the same answer.
-      if (!flow) {
-        return fail(
-          "That " + label + " sign-in could not be completed. Signing in again will start a fresh one."
-        );
-      }
-      if (!parsed.idToken) {
-        return fail("That " + label + " sign-in did not return anything we could verify.");
-      }
-
-      let verdict;
-      try {
-        verdict = await socialAuth.verifyWithAPI(provider, parsed.idToken, flow.nonce);
-      } catch (err) {
-        const reason = socialAuth.apiErrorReason(err);
-        console.warn(
-          "[LPS] [level=warn] " + provider + " sign-in refused:",
-          reason || (err && err.message)
-        );
-        return fail(
-          reason || "We could not verify that " + label + " sign-in. Signing in again will start a fresh one."
-        );
-      }
-
-      // The address already belongs to an account. Nothing is linked here: the
-      // API will not do it without proof, and neither will we.
-      if (verdict.outcome === "link_required") {
-        req.session.socialLink = {
-          provider,
-          maskedEmail: verdict.maskedEmail || "",
-          at: Date.now(),
-        };
-        return req.session.save(function () {
-          res.redirect("/login?social=link&provider=" + encodeURIComponent(provider));
-        });
-      }
-
-      if (!verdict.userId) {
-        return fail("We could not finish signing you in with " + label + ".");
-      }
-
-      // The API decided which account this is. Load it and mint the session.
-      let account;
-      try {
-        account = await User.findById(verdict.userId);
-      } catch (err) {
-        console.error("[LPS] [level=error] " + provider + " sign-in lookup:", err);
-        account = null;
-      }
-      if (!account) {
-        return fail("We could not finish signing you in with " + label + ".");
-      }
-
-      return req.logIn(account, function (loginErr) {
-        if (loginErr) {
-          console.error("[LPS] [level=error] " + provider + " session:", loginErr);
-          return fail("We could not finish signing you in with " + label + ".");
-        }
-        const landing = verdict.outcome === "signed_up" ? "/communities" : "/communities";
-        return res.redirect(sanitizeRedirect(flow.redirect, landing));
-      });
-    };
-
-    app.post("/auth/" + provider + "/callback", callback);
-    // Somebody loading the callback directly, or a provider that fell back to a
-    // GET, gets the same friendly failure rather than a 404.
-    app.get("/auth/" + provider + "/callback", callback);
-  });
+  // Mounted from app/social-auth-flow.js so the route wiring itself is the
+  // thing the tests exercise, rather than a copy of it.
+  socialFlow.mount(app, { socialAuth, User, sanitizeRedirect });
 
   app.get("/auth/discord", auth, function (req, res, next) {
     // This route both initiates the Discord OAuth flow and receives the

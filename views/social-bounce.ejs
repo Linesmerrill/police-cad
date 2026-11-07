@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Signing you in&hellip; &middot; Lines Police CAD</title>
+  <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --rp-bg: #08090c;
+      --rp-glass: rgba(255, 255, 255, 0.04);
+      --rp-glass-border: rgba(255, 255, 255, 0.06);
+      --rp-text: #e2e8f0;
+      --rp-text-muted: #64748b;
+      --rp-accent: #38bdf8;
+      --rp-radius: 14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100vh;
+      background: var(--rp-bg);
+      color: var(--rp-text);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .rp-bounce-stage {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .rp-bounce-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--rp-glass);
+      border: 1px solid var(--rp-glass-border);
+      border-radius: var(--rp-radius);
+      padding: 2rem 1.75rem;
+      text-align: center;
+    }
+    .rp-bounce-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+    .rp-bounce-text {
+      font-size: 0.9rem;
+      color: var(--rp-text-muted);
+      line-height: 1.55;
+    }
+    .rp-bounce-spinner {
+      width: 30px;
+      height: 30px;
+      margin: 0 auto 1.25rem;
+      border-radius: 50%;
+      border: 2px solid rgba(56, 189, 248, 0.18);
+      border-top-color: var(--rp-accent);
+      animation: rp-bounce-spin 0.8s linear infinite;
+    }
+    @keyframes rp-bounce-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .rp-bounce-spinner { animation: none; }
+    }
+    .rp-bounce-continue {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1.25rem;
+      padding: 0.7rem 1.4rem;
+      border-radius: 0.625rem;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.12);
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .rp-bounce-continue:focus-visible {
+      outline: 2px solid var(--rp-accent);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <main class="rp-bounce-stage">
+    <section class="rp-bounce-card">
+      <div class="rp-bounce-spinner" aria-hidden="true"></div>
+      <h1 class="rp-bounce-title">Signing you in</h1>
+      <p class="rp-bounce-text">One moment while we finish your <%= label %> sign-in.</p>
+
+      <!--
+        This form exists because the provider's POST is cross-site, so the
+        session cookie is not sent with it. Re-posting the same fields to our
+        own origin is same-site, so the cookie rides along and the sign-in can
+        be checked against the flow we stored when it started.
+
+        Submitted by /static/js/social-bounce.js rather than an inline script,
+        so a strict script-src that allows 'self' is enough. The button below
+        is the fallback when scripting is off.
+      -->
+      <form id="rp-bounce-form" method="POST" action="<%= action %>">
+        <% Object.keys(fields).forEach(function (name) { %>
+          <input type="hidden" name="<%= name %>" value="<%= fields[name] %>" />
+        <% }); %>
+        <noscript>
+          <p class="rp-bounce-text" style="margin-top:1rem;">
+            JavaScript is off, so this needs one click.
+          </p>
+        </noscript>
+        <button type="submit" class="rp-bounce-continue">Continue</button>
+      </form>
+    </section>
+  </main>
+  <script src="/static/js/social-bounce.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+</body>
+</html>
