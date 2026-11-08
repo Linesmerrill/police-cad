@@ -9415,113 +9415,7 @@
                     },
                   ],
                 },
-              },
-              {
-                name: "block~ligdkwtkuw6",
-                className: "content0-block",
-                md: 8,
-                xs: 24,
-                children: {
-                  className: "content0-block-item",
-                  children: [
-                    {
-                      name: "image",
-                      className: "content0-block-icon",
-                      children:
-                        "https://www.linespolice-cad.com/static/images/create-your-own-logo-512.png",
-                    },
-                    {
-                      name: "title",
-                      className: "content0-block-title",
-                      children:
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "span",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 370,
-                              columnNumber: 17,
-                            },
-                          },
-                          /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                            "p",
-                            {
-                              __self: undefined,
-                              __source: {
-                                fileName: _jsxFileName,
-                                lineNumber: 371,
-                                columnNumber: 19,
-                              },
-                            },
-                            "Create your own",
-                            /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                              "br",
-                              {
-                                __self: undefined,
-                                __source: {
-                                  fileName: _jsxFileName,
-                                  lineNumber: 373,
-                                  columnNumber: 21,
-                                },
-                              }
-                            )
-                          )
-                        ),
-                    },
-                    {
-                      name: "content",
-                      children:
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "span",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 381,
-                              columnNumber: 17,
-                            },
-                          },
-                          /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                            "span",
-                            {
-                              __self: undefined,
-                              __source: {
-                                fileName: _jsxFileName,
-                                lineNumber: 382,
-                                columnNumber: 19,
-                              },
-                            },
-                            /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                              "p",
-                              {
-                                __self: undefined,
-                                __source: {
-                                  fileName: _jsxFileName,
-                                  lineNumber: 383,
-                                  columnNumber: 21,
-                                },
-                              },
-                              /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                                "b",
-                                {
-                                  __self: undefined,
-                                  __source: {
-                                    fileName: _jsxFileName,
-                                    lineNumber: 384,
-                                    columnNumber: 23,
-                                  },
-                                },
-                                "Coming soon"
-                              ),
-                              " we will have the ability to create your own department, aside from the default we give you."
-                            )
-                          )
-                        ),
-                    },
-                  ],
-                },
-              },
+              }
             ],
           },
         };
@@ -18554,7 +18448,7 @@
                           columnNumber: 13,
                         },
                       },
-                      "Premium + Plan ($19.99/month or $17.49/month annually): Provides a verified checkmark, unlimited community creation, custom departments, and an ad-free experience."
+                      "Premium + Plan ($19.99/month or $17.49/month annually): Provides a verified checkmark, unlimited community creation, and an ad-free experience."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                       "h4",
