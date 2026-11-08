@@ -112,14 +112,16 @@ describe("email-tracking", function () {
       await send(transport, mailOptions);
 
       const html = sent[0].body.content.find((c) => c.type === "text/html").value;
-      assert.ok(
-        html.includes("https://www.linespolice-cad.com/reset/"),
-        "the reset link must reach the member as we wrote it"
-      );
-      assert.ok(
-        !/url\d+\.linespolice-cad\.com/.test(html),
-        "the link-branding host must not appear in the email we send"
-      );
+      const hrefs = [...html.matchAll(/href="([^"]*)"/g)].map((m) => m[1]);
+
+      // Compared whole rather than searched for: a tracked link still contains
+      // our URL, as the ?url= parameter of the redirect that replaced it, so a
+      // substring check would pass on exactly the email this change exists to
+      // stop sending.
+      assert.deepStrictEqual(hrefs, [mailOptions.html.match(/href="([^"]*)"/)[1]]);
+
+      const hosts = hrefs.map((href) => new URL(href).host);
+      assert.deepStrictEqual(hosts, ["www.linespolice-cad.com"]);
     });
 
     it("sends no tracking_settings at all when the message omits them", async function () {
