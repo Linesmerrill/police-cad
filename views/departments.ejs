@@ -552,11 +552,14 @@
         ]
       },
       {
-        name: "Custom",
-        description: "(Coming Soon!) Add a new department with custom components and permissions.",
+        name: "Judicial",
+        description: "Judicial department for reviewing and approving warrants.",
         permissions: [
-          { key: "talkInChannels", label: "Create your own components (Coming soon)", default: true },
-          { key: "inviteFriends", label: "Custom features for a new department (Coming soon)", default: true }
+          { key: "courtCases", label: "Court Cases", default: true },
+          { key: "reviewWarrants", label: "Review Warrants", default: true },
+          { key: "allWarrants", label: "All Warrants", default: true },
+          { key: "penalCodes", label: "Penal Codes", default: true },
+          { key: "notepad", label: "Notepad", default: true }
         ]
       }
     ];
@@ -684,7 +687,6 @@
                         </div>
                       `).join('')}
                       <button class="btn btn-primary btn-sm mt-3" 
-                        ${template.name === 'Custom' ? 'disabled' : ''} 
                         onclick="selectTemplate('${template.name}')">
                         Select
                       </button>
@@ -827,7 +829,6 @@
                   </div>
                 `).join('')}
                 <button class="btn btn-primary btn-sm mt-3" 
-                  ${template.name === 'Custom' ? 'disabled' : ''} 
                   onclick="selectTemplate('${template.name}')">
                   Select
                 </button>
