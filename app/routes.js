@@ -28,6 +28,7 @@ var _ObjectIdClass = require("mongodb").ObjectId;
 var ObjectId = function(id) { return new _ObjectIdClass(id); };
 var nodemailer = require("nodemailer");
 var nodemailerSendgrid = require("nodemailer-sendgrid");
+var { noTrackingSettings } = require("./email-tracking");
 var async = require("async");
 var crypto = require("crypto");
 var path = require("path");
@@ -7917,6 +7918,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                           to: existingUser.user.email,
                           from: process.env.FROM_EMAIL,
                           subject: "Verify Your Lines Police CAD Account",
+                          trackingSettings: noTrackingSettings(),
                           html: `<h2>Welcome to Lines Police CAD!</h2><p>Please click the link below to verify your email address:</p><p><a href="${verificationUrl}">${verificationUrl}</a></p><p>This link will expire in 24 hours.</p>`,
                         };
                         smtpTransport.sendMail(mailOptions, function (err) {
@@ -7941,6 +7943,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                           to: existingUser.user.email,
                           from: process.env.FROM_EMAIL,
                           subject: "Verify Your Lines Police CAD Account",
+                          trackingSettings: noTrackingSettings(),
                           html: htmlToSend,
                         };
                         smtpTransport.sendMail(mailOptions, function (err) {
@@ -8034,6 +8037,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 to: user.user.email,
                 from: process.env.FROM_EMAIL,
                 subject: "Verify Your Lines Police CAD Account",
+                trackingSettings: noTrackingSettings(),
                 html: `
                   <h2>Welcome to Lines Police CAD!</h2>
                   <p>Please click the link below to verify your email address:</p>
@@ -8058,6 +8062,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 to: user.user.email,
                 from: process.env.FROM_EMAIL,
                 subject: "Verify Your Lines Police CAD Account",
+                trackingSettings: noTrackingSettings(),
                 html: htmlToSend,
               };
 
@@ -8212,6 +8217,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 to: user.user.email,
                 from: process.env.FROM_EMAIL,
                 subject: "Verify Your Lines Police CAD Account",
+                trackingSettings: noTrackingSettings(),
                 html: `
                   <h2>Verify Your Email</h2>
                   <p>Please click the link below to verify your email address:</p>
@@ -8236,6 +8242,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 to: user.user.email,
                 from: process.env.FROM_EMAIL,
                 subject: "Verify Your Lines Police CAD Account",
+                trackingSettings: noTrackingSettings(),
                 html: htmlToSend,
               };
 
@@ -8488,6 +8495,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 to: users.user.email.toLowerCase(),
                 from: process.env.FROM_EMAIL || "noreply@linespolice-cad.com",
                 subject: "Lines Police CAD Reset Password",
+                trackingSettings: noTrackingSettings(),
                 html: htmlToSend,
               };
               
@@ -8681,6 +8689,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 to: users.user.email.toLowerCase(),
                 from: process.env.FROM_EMAIL,
                 subject: "Lines Police CAD Password Has Been Reset",
+                trackingSettings: noTrackingSettings(),
                 html: htmlToSend,
               };
 
