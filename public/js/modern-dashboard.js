@@ -909,6 +909,7 @@ function renderVehicles(vehicles) {
                     <p><strong>Model:</strong> ${vehData.model || 'N/A'}</p>
                     <p><strong>Year:</strong> ${vehData.year || 'N/A'}</p>
                     ${window.VehicleFlags.stolen(vehData) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${window.VehicleFlags.impounded(vehData) ? `<p style="color:#f59e0b; font-weight:bold;"><i class="fa fa-lock"></i> ${window.VehicleImpound.COPY.badge}</p>` : ''}
                     ${window.VehicleFlags.exempt(vehData) ? '<p style="color:#3b82f6; font-weight:bold;"><i class="fa fa-shield"></i> EXEMPT</p>' : ''}
                     ${!window.VehicleFlags.registrationValid(vehData) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
                     ${!window.VehicleFlags.insuranceValid(vehData) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}
@@ -3824,6 +3825,7 @@ function renderLinkedVehicles(vehicles, civilianId) {
                     <p>Type: ${vehicle?.vehicle?.type || 'Unknown'}</p>
                     <p>Year: ${vehicle?.vehicle?.year || 'Unknown'}</p>
                     ${window.VehicleFlags.stolen(vehicle?.vehicle) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${window.VehicleFlags.impounded(vehicle?.vehicle) ? `<p style="color:#f59e0b; font-weight:bold;"><i class="fa fa-lock"></i> ${window.VehicleImpound.COPY.badge}</p>` : ''}
                     ${window.VehicleFlags.exempt(vehicle?.vehicle) ? '<p style="color:#3b82f6; font-weight:bold;"><i class="fa fa-shield"></i> EXEMPT</p>' : ''}
                     ${!window.VehicleFlags.registrationValid(vehicle?.vehicle) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
                     ${!window.VehicleFlags.insuranceValid(vehicle?.vehicle) ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}

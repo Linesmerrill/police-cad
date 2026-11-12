@@ -399,6 +399,7 @@ $(document).ready(function () {
       subtitle = "",
       owner = "",
       isStolen = false,
+      isImpounded = false,
       id = item._id;
     let recentSearchQuery = searchQuery;
 
@@ -422,6 +423,7 @@ $(document).ready(function () {
         ? `Owner: ${ownerCache[item.vehicle.linkedCivilianID] || "Unknown"}`
         : "";
       isStolen = window.VehicleFlags.stolen(item.vehicle);
+      isImpounded = window.VehicleFlags.impounded(item.vehicle);
       // Store the full vehicle info in recent searches for display purposes
       recentSearchQuery =
         item.vehicle?.make || item.vehicle?.plate || searchQuery;
@@ -447,6 +449,7 @@ $(document).ready(function () {
       <div class="d-flex justify-content-between align-items-center">
         <span>${title}</span>
         ${isStolen ? '<span class="badge-stolen">Stolen</span>' : ""}
+        ${isImpounded ? `<span class="badge-impounded">${window.VehicleImpound.COPY.badge}</span>` : ""}
       </div>
       <p class="text-gray mb-0">${subtitle}</p>
       ${owner ? `<p class="text-gray mb-0">${owner}</p>` : ""}

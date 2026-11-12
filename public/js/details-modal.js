@@ -518,6 +518,9 @@ $(document).ready(function () {
         <div class="mb-2"><span class="text-gray">Stolen:</span> ${
           window.VehicleFlags.stolen(data) ? '<span class="badge-stolen">Yes</span>' : '<span class="badge-stolen" style="background-color: #10b981; color: white;">No</span>'
         }</div>
+        <div class="mb-2"><span class="text-gray">Impounded:</span> ${
+          window.VehicleFlags.impounded(data) ? `<span class="badge-impounded">Yes</span>` : '<span class="badge-stolen" style="background-color: #10b981; color: white;">No</span>'
+        }</div>
         <div class="mb-2"><span class="text-gray">Exempt:</span> ${
           window.VehicleFlags.exempt(data) ? '<span class="badge-stolen" style="background-color: #3b82f6; color: white;">Yes</span>' : '<span class="badge-stolen" style="background-color: #6b7280; color: white;">No</span>'
         }</div>
@@ -740,6 +743,15 @@ $(document).ready(function () {
           ${/* firearms only ever used "true"/"false", which this helper handles first */ window.VehicleFlags.stolen(data) ? "Mark as Not Stolen" : "Report Stolen"}
         </button>
       `;
+      // Vehicles only — a firearm has nowhere to be towed to. Same authority
+      // as Report Stolen above, which is why it sits beside it.
+      if (currentType === "Vehicle") {
+        actionsHtml += `
+        <button class="btn btn-warning btn-block mb-2 action-button" data-action="Impound Vehicle" data-impounded="${window.VehicleFlags.impounded(data)}">
+          ${window.VehicleImpound.actionLabel(data)}
+        </button>
+      `;
+      }
     } else if (currentType === "License") {
       actionsHtml += `
         <button class="btn ${
@@ -822,6 +834,12 @@ $(document).ready(function () {
         );
       },
     });
+  }
+
+  // Impound / release. The copy and the write both live in
+  // public/js/vehicle-impound.js so they cannot drift between surfaces.
+  function handleImpound(vehicleId, isImpounded) {
+    window.VehicleImpound.set(API_URL, vehicleId, !isImpounded, fetchDetails);
   }
 
   // Handle update license
@@ -952,18 +970,22 @@ $(document).ready(function () {
                 const fineAmount = parseFine(v.fine);
                 const fineLabel = fineAmount ? ` (${sym}${fineAmount.toLocaleString()})` : '';
                 $optgroup.append(
-                  `<option value="${v.name}" data-amount="${fineAmount}">${v.name}${fineLabel}</option>`
+                  window.PenalCodeInfo.option($, v)
+                    .attr("data-amount", fineAmount)
+                    .text(`${v.name}${fineLabel}`)
                 );
               });
               $select.prepend($optgroup);
             });
           }
-          // Initialize Select2
+          // Initialize Select2. templateResult puts an info control for the
+          // full description on each row.
           $select.select2({
             placeholder: "Select violations...",
             allowClear: true,
             width: "100%",
             dropdownParent: $("#ticketModal"),
+            templateResult: window.PenalCodeInfo.select2Result($),
           });
           // Update total amount on violation selection
           $select.on("change", function () {
@@ -1061,6 +1083,9 @@ $(document).ready(function () {
       const itemId = currentItem._id;
       const isStolen = $(this).data("stolen");
       handleReportStolen(itemId, isStolen);
+    } else if (action === "Impound Vehicle") {
+      // jQuery .data() coerces "true"/"false" to a real boolean here.
+      handleImpound(currentItem._id, $(this).data("impounded") === true);
     }
   }
 
@@ -1507,16 +1532,18 @@ $(document).ready(function () {
           categories.forEach(function(category) {
             const $optgroup = $('<optgroup label="' + (category.name || 'Unknown') + '"></optgroup>');
             (category.violations || []).forEach(function(v) {
-              $optgroup.append('<option value="' + v.name + '">' + v.name + '</option>');
+              $optgroup.append(window.PenalCodeInfo.option($, v));
             });
             $select.prepend($optgroup);
           });
         }
+        // templateResult puts an info control for the full description on each row.
         $select.select2({
           placeholder: 'Search charges...',
           allowClear: true,
           width: '100%',
-          dropdownParent: $('#warrantRequestModal')
+          dropdownParent: $('#warrantRequestModal'),
+          templateResult: window.PenalCodeInfo.select2Result($)
         });
       },
       error: function() {
@@ -1802,6 +1829,7 @@ $(document).ready(function () {
             <p class="text-gray mb-0">Year: ${vehicle.year || 'N/A'}</p>
             <p class="text-gray mb-0">VIN: ${vehicle.vin || 'N/A'}</p>
             ${window.VehicleFlags.stolen(vehicle) ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
+            ${window.VehicleFlags.impounded(vehicle) ? `<span class="badge badge-impounded">${window.VehicleImpound.COPY.badge}</span>` : ''}
             ${!window.VehicleFlags.registrationValid(vehicle) ? '<span class="badge badge-stolen" style="background-color: #ef4444; color: white;">INVALID REG</span>' : ''}
             ${!window.VehicleFlags.insuranceValid(vehicle) ? '<span class="badge badge-stolen" style="background-color: #ef4444; color: white;">INVALID INS</span>' : ''}
           </div>

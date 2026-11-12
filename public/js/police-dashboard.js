@@ -432,7 +432,7 @@ $("#arrestModal").on("show.bs.modal", function () {
       categories.forEach(function(cat) {
         var $g = $('<optgroup label="' + (cat.name || 'Unknown') + '"></optgroup>');
         (cat.violations || []).forEach(function(v) {
-          $g.append('<option value="' + v.name + '">' + v.name + '</option>');
+          $g.append(window.PenalCodeInfo.option($, v));
         });
         $select.prepend($g);
       });
@@ -440,7 +440,9 @@ $("#arrestModal").on("show.bs.modal", function () {
         placeholder: 'Search charges...',
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#arrestModal')
+        dropdownParent: $('#arrestModal'),
+        // Each row carries an info control for the full description.
+        templateResult: window.PenalCodeInfo.select2Result($)
       });
     },
     error: function() {
@@ -476,7 +478,7 @@ $("#createWarrantModal").on("show.bs.modal", function () {
       categories.forEach(function(cat) {
         var $g = $('<optgroup label="' + (cat.name || 'Unknown') + '"></optgroup>');
         (cat.violations || []).forEach(function(v) {
-          $g.append('<option value="' + v.name + '">' + v.name + '</option>');
+          $g.append(window.PenalCodeInfo.option($, v));
         });
         $select.prepend($g);
       });
@@ -484,7 +486,9 @@ $("#createWarrantModal").on("show.bs.modal", function () {
         placeholder: 'Search charges...',
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#createWarrantModal')
+        dropdownParent: $('#createWarrantModal'),
+        // Each row carries an info control for the full description.
+        templateResult: window.PenalCodeInfo.select2Result($)
       });
     },
     error: function() {

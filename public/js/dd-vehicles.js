@@ -146,6 +146,7 @@
       '.dd-veh-badge{font-size:0.625rem;font-weight:600;padding:0.15rem 0.4rem;border-radius:4px;text-transform:uppercase;letter-spacing:0.03em}' +
       '.dd-veh-badge-red{background:rgba(239,68,68,0.15);color:#fca5a5}' +
       '.dd-veh-badge-blue{background:rgba(59,130,246,0.15);color:#93c5fd}' +
+      '.dd-veh-badge-amber{background:rgba(245,158,11,0.15);color:#fbbf24}' +
       '.dd-veh-badge-green{background:rgba(34,197,94,0.15);color:#86efac}' +
 
       '.dd-veh-pagination{display:flex;align-items:center;justify-content:center;gap:0.75rem;margin-top:1rem}' +
@@ -409,6 +410,9 @@
       var badges = '';
       if (Flags.stolen(d)) {
         badges += '<span class="dd-veh-badge dd-veh-badge-red">Stolen</span>';
+      }
+      if (Flags.impounded(d)) {
+        badges += '<span class="dd-veh-badge dd-veh-badge-amber">' + window.VehicleImpound.COPY.badge + '</span>';
       }
       if (Flags.exempt(d)) {
         badges += '<span class="dd-veh-badge dd-veh-badge-blue">Exempt</span>';

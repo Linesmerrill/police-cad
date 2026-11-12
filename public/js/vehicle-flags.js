@@ -80,6 +80,21 @@
     },
 
     /**
+     * Whether the vehicle is impounded.
+     *
+     * isImpounded was added in Nov 2026, after the numeric encoding was
+     * retired, so no form ever wrote a select index into it and there is no
+     * polarity to resolve — and none should be invented. Anything this does
+     * not recognise means not impounded.
+     *
+     * @param {object} veh inner vehicle object @returns {boolean}
+     */
+    impounded: function (veh) {
+      var val = veh && veh.isImpounded;
+      return val === true || val === 'true';
+    },
+
+    /**
      * The encoding to write back. Everything written from here on is
      * "true"/"false"; the numeric encoding is read-only legacy.
      *

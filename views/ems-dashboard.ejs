@@ -33,6 +33,7 @@
   <script src="/static/js/wow.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/popper.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
       <script src="/static/js/main.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+    <script src="/static/js/penal-code-info.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script src="/static/js/notepad.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script src="/static/js/alert-sounds.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
     <script src="/static/js/notifications.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
@@ -3921,7 +3922,10 @@
         var rows = '';
         violations.forEach(function(v) {
           rows += '<tr>' +
-            '<td class="pc-v-name">' + pcHighlight(v.name || '', query) + '</td>' +
+            // The explanation column is hidden below 900px, so the control
+            // lives in the always-visible name cell. See penal-code-info.js.
+            '<td class="pc-v-name">' + pcHighlight(v.name || '', query) +
+              window.PenalCodeInfo.controlHtml({ name: v.name, description: v.explanation }) + '</td>' +
             '<td class="pc-v-jail">' + pcHighlight(v.jailTime || 'N/A', query) + '</td>' +
             '<td class="pc-v-fine">' + pcHighlight(pcFormatFine(v.fine), query) + '</td>' +
             '<td class="pc-v-explanation" title="' + pcEsc(v.explanation || '') + '">' + pcHighlight(v.explanation || '\u2014', query) + '</td>' +
@@ -4480,6 +4484,7 @@
     </div>
   </div>
   <%- include('partials/pending-deletion-gate') %>
+  <%- include('partials/dd-modal') %>
 </body>
 
 </html>

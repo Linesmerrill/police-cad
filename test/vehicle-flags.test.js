@@ -113,4 +113,39 @@ describe("vehicle-flags", function () {
       assert.equal(Flags.exempt(reported), false);
     });
   });
+
+  describe("impounded", function () {
+    it("reads the canonical encoding", function () {
+      assert.equal(Flags.impounded({ isImpounded: "true" }), true);
+      assert.equal(Flags.impounded({ isImpounded: "false" }), false);
+      assert.equal(Flags.impounded({ isImpounded: true }), true);
+    });
+
+    it("is false for a missing field or a missing vehicle", function () {
+      assert.equal(Flags.impounded({}), false);
+      assert.equal(Flags.impounded(null), false);
+      assert.equal(Flags.impounded(undefined), false);
+    });
+
+    // The whole point of the per-field helpers: a new flag must not inherit a
+    // polarity from the legacy select-index encoding, which never wrote here.
+    it('does not treat "1" or "2" as a select index', function () {
+      assert.equal(Flags.impounded({ isImpounded: "1" }), false);
+      assert.equal(Flags.impounded({ isImpounded: "2" }), false);
+    });
+
+    it("is independent of the stolen polarity, including on dept-dashboard records", function () {
+      var deptRecord = { isStolen: "1", isExempt: "2", isImpounded: "1" };
+      assert.equal(Flags.stolen(deptRecord), true, "precondition");
+      assert.equal(Flags.impounded(deptRecord), false);
+    });
+
+    it("is unaffected by the other flags being set", function () {
+      var v = { validRegistration: "1", validInsurance: "1", isStolen: "2", isImpounded: "true" };
+      assert.equal(Flags.impounded(v), true);
+      assert.equal(Flags.stolen(v), true);
+      assert.equal(Flags.registrationValid(v), true);
+    });
+  });
+
 });

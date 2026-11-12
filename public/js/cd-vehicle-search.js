@@ -176,6 +176,7 @@
     var desc = [color, model].filter(Boolean).join(' ');
     var ownerName = esc(veh._resolvedOwner || veh.registeredOwner || '');
     var isStolen = Flags.stolen(veh);
+    var isImpounded = Flags.impounded(veh);
     var invalidReg = !Flags.registrationValid(veh);
     var invalidIns = !Flags.insuranceValid(veh);
     var isExpanded = state.expandedId === veh._id;
@@ -196,6 +197,7 @@
           '</div>' +
           '<div class="cd-vs-badges">' +
             (isStolen ? '<span class="cd-vs-badge cd-vs-badge-red">STOLEN</span>' : '') +
+            (isImpounded ? '<span class="cd-vs-badge cd-vs-badge-amber">' + window.VehicleImpound.COPY.badge + '</span>' : '') +
             (invalidReg ? '<span class="cd-vs-badge cd-vs-badge-amber">INVALID REG</span>' : '') +
             (invalidIns ? '<span class="cd-vs-badge cd-vs-badge-amber">INVALID INS</span>' : '') +
           '</div>' +
@@ -213,6 +215,7 @@
 
   function buildDetailHTML(veh) {
     var isStolen = Flags.stolen(veh);
+    var isImpounded = Flags.impounded(veh);
     return (
       '<div class="cd-vs-detail-inner">' +
         '<div class="cd-vs-detail-grid">' +
@@ -226,6 +229,7 @@
           detailField('Plate State', veh.licensePlateState) +
           '<div class="cd-vs-detail-field"><div class="cd-vs-detail-label">Owner</div><div class="cd-vs-detail-value" id="cd-vs-owner-' + esc(veh._id) + '">' + (veh.registeredOwner ? '<a href="#" onclick="event.preventDefault();event.stopPropagation();cdVsSearchOwner(\'' + esc(veh.registeredOwner.replace(/'/g, "\\'")) + '\')" style="color:var(--cd-accent);text-decoration:none;">' + esc(veh.registeredOwner) + '</a>' : '') + (veh.linkedCivilianID && !veh.registeredOwner ? '<i class="fa fa-circle-notch fa-spin" style="font-size:0.625rem;color:var(--cd-text-dim);"></i>' : (!veh.registeredOwner && !veh.linkedCivilianID ? 'N/A' : '')) + '</div></div>' +
           detailField('Stolen', isStolen ? 'Yes' : 'No', isStolen ? 'var(--cd-red)' : 'var(--cd-green)') +
+          detailField('Impounded', isImpounded ? 'Yes' : 'No', isImpounded ? 'var(--cd-amber)' : 'var(--cd-green)') +
           detailField('Exempt', Flags.exempt(veh) ? 'Yes' : 'No', Flags.exempt(veh) ? 'var(--cd-accent)' : '') +
           detailField('Registration', Flags.registrationValid(veh) ? 'Valid' : 'Invalid', Flags.registrationValid(veh) ? 'var(--cd-green)' : 'var(--cd-amber)') +
           detailField('Insurance', Flags.insuranceValid(veh) ? 'Valid' : 'Invalid', Flags.insuranceValid(veh) ? 'var(--cd-green)' : 'var(--cd-amber)') +
@@ -236,6 +240,14 @@
           '" onclick="cdVsToggleStolen(\'' + esc(veh._id) + '\', ' + !isStolen + ')">' +
             '<i class="fa ' + (isStolen ? 'fa-check' : 'fa-flag') + '"></i> ' +
             (isStolen ? 'Mark as Not Stolen' : 'Report Stolen') +
+          '</button>' +
+          // Impound sits with Report Stolen because it is the same authority:
+          // whoever can flag a vehicle stolen here can impound and release it.
+          ' <button style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.4rem 0.75rem;border-radius:var(--cd-radius-sm);font-family:Outfit,sans-serif;font-size:0.6875rem;font-weight:600;border:1px solid;cursor:pointer;transition:all 0.15s;' +
+            (isImpounded ? 'background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.25);color:var(--cd-green);' : 'background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.25);color:var(--cd-amber);') +
+          '" onclick="cdVsToggleImpound(\'' + esc(veh._id) + '\', ' + !isImpounded + ')">' +
+            '<i class="fa ' + (isImpounded ? 'fa-unlock' : 'fa-lock') + '"></i> ' +
+            window.VehicleImpound.actionLabel(veh) +
           '</button>' +
           // Distinct from "Report Stolen" above, which is roleplay. This one
           // reaches LPC staff, for a plate or a photo written to offend.
@@ -268,6 +280,16 @@
         renderResults();
       },
       error: function() { window.ddToast('Failed to update', 'error'); }
+    });
+  };
+
+  window.cdVsToggleImpound = function(vehicleId, value) {
+    window.VehicleImpound.set(apiUrl(), vehicleId, value, function() {
+      // Patched in place rather than refetched: the list must change the
+      // moment the write lands.
+      var v = state.results.find(function(r) { return r._id === vehicleId; });
+      if (v) v.isImpounded = Flags.toApi(value);
+      renderResults();
     });
   };
 

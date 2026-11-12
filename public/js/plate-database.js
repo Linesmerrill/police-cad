@@ -47,6 +47,7 @@ function vehicleSearchPoliceForm() {
                     <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
                     <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${escapeHtml(res[i].vehicle.registeredOwner)}</h5>
                     ${window.VehicleFlags.stolen(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${window.VehicleFlags.impounded(res[i].vehicle) ? `<p style="color:#f59e0b; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-lock"></i> ${window.VehicleImpound.COPY.badge}</p>` : ''}
                     ${!window.VehicleFlags.registrationValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
                     ${!window.VehicleFlags.insuranceValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
                   </div>
@@ -185,6 +186,7 @@ function getVehicles() {
               <h4 class="color-white license-plate">#${escapeHtml(res[i].vehicle.plate)})</h4>
               <h5 class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
               ${window.VehicleFlags.stolen(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+              ${window.VehicleFlags.impounded(res[i].vehicle) ? `<p style="color:#f59e0b; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-lock"></i> ${window.VehicleImpound.COPY.badge}</p>` : ''}
               ${!window.VehicleFlags.registrationValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
               ${!window.VehicleFlags.insuranceValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
             </div>
@@ -231,6 +233,7 @@ function getNextVehPage() {
             <h4 class="color-white license-plate">#${escapeHtml(res[i].vehicle.plate)})</h4>
             <h5 class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
             ${window.VehicleFlags.stolen(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+            ${window.VehicleFlags.impounded(res[i].vehicle) ? `<p style="color:#f59e0b; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-lock"></i> ${window.VehicleImpound.COPY.badge}</p>` : ''}
             ${!window.VehicleFlags.registrationValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
             ${!window.VehicleFlags.insuranceValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
           </div>
@@ -281,6 +284,7 @@ function getPrevVehPage() {
             <h4 class="color-white license-plate">#${escapeHtml(res[i].vehicle.plate)})</h4>
             <h5 class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
             ${window.VehicleFlags.stolen(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+            ${window.VehicleFlags.impounded(res[i].vehicle) ? `<p style="color:#f59e0b; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-lock"></i> ${window.VehicleImpound.COPY.badge}</p>` : ''}
             ${!window.VehicleFlags.registrationValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
             ${!window.VehicleFlags.insuranceValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
           </div>
@@ -322,6 +326,7 @@ function getNextSearchVehPage() {
                       <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
                       <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${escapeHtml(res[i].vehicle.registeredOwner)}</h5>
                       ${window.VehicleFlags.stolen(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                      ${window.VehicleFlags.impounded(res[i].vehicle) ? `<p style="color:#f59e0b; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-lock"></i> ${window.VehicleImpound.COPY.badge}</p>` : ''}
                       ${!window.VehicleFlags.registrationValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
                       ${!window.VehicleFlags.insuranceValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
                     </div>
@@ -379,6 +384,7 @@ function getPrevSearchVehPage() {
                       <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${escapeHtml(res[i].vehicle.color)} ${escapeHtml(res[i].vehicle.model)}</h5>
                       <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${escapeHtml(res[i].vehicle.registeredOwner)}</h5>
                       ${window.VehicleFlags.stolen(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                      ${window.VehicleFlags.impounded(res[i].vehicle) ? `<p style="color:#f59e0b; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-lock"></i> ${window.VehicleImpound.COPY.badge}</p>` : ''}
                       ${!window.VehicleFlags.registrationValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
                       ${!window.VehicleFlags.insuranceValid(res[i].vehicle) ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
                     </div>

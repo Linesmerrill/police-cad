@@ -40,7 +40,9 @@
   <script src="/static/js/police-dashboard.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/department-backgrounds.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/name-database.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/penal-code-info.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/vehicle-flags.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
+  <script src="/static/js/vehicle-impound.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/record-deletion.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/plate-database.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
   <script src="/static/js/bootstrap.min.js?v=<%= typeof buildVersion !== 'undefined' ? buildVersion : 'dev' %>"></script>
@@ -3283,7 +3285,10 @@
         var rows = '';
         violations.forEach(function(v) {
           rows += '<tr>' +
-            '<td class="pc-v-name">' + pcHighlight(v.name || '', query) + '</td>' +
+            // The explanation column is hidden below 900px, so the control
+            // lives in the always-visible name cell. See penal-code-info.js.
+            '<td class="pc-v-name">' + pcHighlight(v.name || '', query) +
+              window.PenalCodeInfo.controlHtml({ name: v.name, description: v.explanation }) + '</td>' +
             '<td class="pc-v-jail">' + pcHighlight(v.jailTime || 'N/A', query) + '</td>' +
             '<td class="pc-v-fine">' + pcHighlight(pcFormatFine(v.fine), query) + '</td>' +
             '<td class="pc-v-explanation" title="' + pcEsc(v.explanation || '') + '">' + pcHighlight(v.explanation || '\u2014', query) + '</td>' +
@@ -3744,6 +3749,7 @@
   });
 </script>
 <%- include('partials/pending-deletion-gate') %>
+<%- include('partials/dd-modal') %>
 </body>
 
 </html>
@@ -4541,10 +4547,11 @@ function selectTenCode(tenCodeID) {
           var categories = (data && data.categories) || [];
           categories.forEach(function(cat) {
             var $g = $('<optgroup label="' + escapeHtml(cat.name || 'Unknown') + '"></optgroup>');
-            (cat.violations || []).forEach(function(v) { $g.append('<option value="' + escapeHtml(v.name) + '">' + escapeHtml(v.name) + '</option>'); });
+            (cat.violations || []).forEach(function(v) { $g.append(window.PenalCodeInfo.option($, v)); });
             $select.prepend($g);
           });
-          $select.select2({ placeholder: 'Search charges...', allowClear: true, width: '100%', dropdownParent: $('#wm-overlay') });
+          // templateResult puts an info control for the full description on each row.
+          $select.select2({ placeholder: 'Search charges...', allowClear: true, width: '100%', dropdownParent: $('#wm-overlay'), templateResult: window.PenalCodeInfo.select2Result($) });
           $select.val(d.charges || []).trigger('change');
         },
         error: function() {
