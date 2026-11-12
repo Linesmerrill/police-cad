@@ -475,6 +475,7 @@
         var vRegOk = Flags.registrationValid(v);
         var vInsOk = Flags.insuranceValid(v);
         var vStolen = Flags.stolen(v);
+        var vImpounded = Flags.impounded(v);
         html += '<div class="cd-ps-sub-item" onclick="cdPsToggleSub(\'' + vIdx + '\')">' +
           '<div class="cd-ps-sub-item-header" style="gap:0.625rem;">' +
             (v.image
@@ -486,6 +487,7 @@
             '</div>' +
             '<div style="display:flex;gap:0.25rem;flex-shrink:0;">' +
               (vStolen ? '<span class="cd-ps-badge cd-ps-badge-red" style="font-size:0.5625rem;">STOLEN</span>' : '') +
+              (vImpounded ? '<span class="cd-ps-badge cd-ps-badge-amber" style="font-size:0.5625rem;">' + window.VehicleImpound.COPY.badge + '</span>' : '') +
               (!vRegOk ? '<span class="cd-ps-badge cd-ps-badge-amber" style="font-size:0.5rem;">REG</span>' : '') +
               (!vInsOk ? '<span class="cd-ps-badge cd-ps-badge-amber" style="font-size:0.5rem;">INS</span>' : '') +
             '</div>' +
@@ -504,6 +506,7 @@
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Registration</div><div class="cd-ps-detail-value" style="color:' + (vRegOk ? 'var(--cd-green)' : 'var(--cd-amber)') + ';font-weight:600;">' + (vRegOk ? 'Valid' : 'Invalid') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Insurance</div><div class="cd-ps-detail-value" style="color:' + (vInsOk ? 'var(--cd-green)' : 'var(--cd-amber)') + ';font-weight:600;">' + (vInsOk ? 'Valid' : 'Invalid') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Stolen</div><div class="cd-ps-detail-value" style="color:' + (vStolen ? 'var(--cd-red)' : 'var(--cd-green)') + ';font-weight:600;">' + (vStolen ? 'Yes' : 'No') + '</div></div>' +
+              '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Impounded</div><div class="cd-ps-detail-value" style="color:' + (vImpounded ? 'var(--cd-amber)' : 'var(--cd-green)') + ';font-weight:600;">' + (vImpounded ? 'Yes' : 'No') + '</div></div>' +
               '<div class="cd-ps-detail-field"><div class="cd-ps-detail-label">Exempt</div><div class="cd-ps-detail-value" style="' + (Flags.exempt(v) ? 'color:var(--cd-accent);font-weight:600;' : '') + '">' + (Flags.exempt(v) ? 'Yes' : 'No') + '</div></div>' +
             '</div>' +
           '</div>' +

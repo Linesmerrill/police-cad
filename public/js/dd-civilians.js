@@ -279,6 +279,7 @@
       '.dd-veh-badge i{font-size:0.5rem;}' +
       '.dd-veh-badge.badge-stolen{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.25);}' +
       '.dd-veh-badge.badge-exempt{background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.2);}' +
+      '.dd-veh-badge.badge-impounded{background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.2);}' +
       '.dd-veh-badge.badge-reg{background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.2);}' +
       '.dd-veh-badge.badge-ins{background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.2);}' +
       '.dd-veh-card-action{flex-shrink:0;align-self:center;}' +
@@ -1293,6 +1294,10 @@
           var isStolen = window.VehicleFlags.stolen(v);
           var iconColor = isStolen ? 'var(--dd-red)' : 'var(--dd-green)';
           var stolenBadge = isStolen ? ' <span style="color:var(--dd-red);font-size:0.6rem;font-weight:700;text-transform:uppercase;margin-left:0.3rem;">STOLEN</span>' : '';
+          // The owner sees the state of their own vehicle; only police clear it.
+          if (window.VehicleFlags.impounded(v)) {
+            stolenBadge += ' <span style="color:var(--dd-amber);font-size:0.6rem;font-weight:700;text-transform:uppercase;margin-left:0.3rem;">' + window.VehicleImpound.COPY.badge + '</span>';
+          }
 
           return '' +
             '<div class="dd-civ-sub-card">' +
@@ -1339,6 +1344,7 @@
     // Status badges
     var badges = '';
     if (isStolen) badges += '<span class="dd-veh-badge badge-stolen"><i class="fa fa-exclamation-triangle"></i> Stolen</span>';
+    if (window.VehicleFlags.impounded(v)) badges += '<span class="dd-veh-badge badge-impounded"><i class="fa fa-lock"></i> ' + window.VehicleImpound.COPY.badge + '</span>';
     if (window.VehicleFlags.exempt(v)) badges += '<span class="dd-veh-badge badge-exempt"><i class="fa fa-shield"></i> Exempt</span>';
     if (!window.VehicleFlags.registrationValid(v)) badges += '<span class="dd-veh-badge badge-reg"><i class="fa fa-file-circle-xmark"></i> Invalid Reg</span>';
     if (!window.VehicleFlags.insuranceValid(v)) badges += '<span class="dd-veh-badge badge-ins"><i class="fa fa-file-shield"></i> No Insurance</span>';

@@ -656,6 +656,9 @@
           listHtml += '<div class="cd-af-cb-item" data-uid="' + uid + '" data-name="' + esc(v.name) + '" data-fine="' + (v.fine || 0) + '" data-jail="' + esc(v.jailTime || '') + '" data-cat="' + esc(cat.name) + '">';
           listHtml += '  <div class="cd-af-cb-box"><i class="fa fa-check cd-af-cb-check"></i></div>';
           listHtml += '  <span class="cd-af-cb-label">' + esc(v.name) + '</span>';
+          // Long descriptions never fitted on the row; the control opens the
+          // full text and does not select the charge. See penal-code-info.js.
+          listHtml += window.PenalCodeInfo.controlHtml({ name: v.name, description: v.explanation });
           if (fineStr) listHtml += '  <span class="cd-af-cb-fine">' + esc(fineStr) + '</span>';
           listHtml += '</div>';
         }
@@ -850,14 +853,19 @@
 
   /* ───────────────────────── Character Counter ───────────────────────── */
 
-  function bindCharCounter(textareaId, counterId, max) {
+  // `separator` defaults to ' / '. The arrest narrative passes '/' because its
+  // counter copy is specified as "<n>/1000"; every other counter keeps the
+  // spaced form it already had.
+  function bindCharCounter(textareaId, counterId, max, separator) {
     var ta = document.getElementById(textareaId);
     var ct = document.getElementById(counterId);
     if (!ta || !ct) return;
 
+    var sep = separator || ' / ';
+
     function update() {
       var len = ta.value.length;
-      ct.textContent = len + ' / ' + max;
+      ct.textContent = len + sep + max;
       ct.className = 'cd-af-char-count' +
         (len > max ? ' cd-af-char-over' : (len > max * 0.85 ? ' cd-af-char-warn' : ''));
     }
@@ -1082,8 +1090,8 @@
       '<div class="cd-af-section">Narrative</div>' +
       '<div class="cd-af-field">' +
         '<label class="cd-af-label" for="cd-af-arr-narrative">Narrative <span style="color:var(--cd-red,#ef4444)">*</span></label>' +
-        '<textarea id="cd-af-arr-narrative" class="cd-af-textarea" maxlength="500" placeholder="Describe the events leading to the arrest..." style="min-height:100px"></textarea>' +
-        '<div id="cd-af-arr-narrative-count" class="cd-af-char-count">0 / 500</div>' +
+        '<textarea id="cd-af-arr-narrative" class="cd-af-textarea" maxlength="1000" placeholder="Describe the events leading to the arrest..." style="min-height:100px"></textarea>' +
+        '<div id="cd-af-arr-narrative-count" class="cd-af-char-count">0/1000</div>' +
       '</div>' +
 
       '<div class="cd-af-field">' +
@@ -1131,7 +1139,7 @@
     }
 
     /* Character counters */
-    bindCharCounter('cd-af-arr-narrative', 'cd-af-arr-narrative-count', 500);
+    bindCharCounter('cd-af-arr-narrative', 'cd-af-arr-narrative-count', 1000, '/');
     bindCharCounter('cd-af-arr-witnesses', 'cd-af-arr-witnesses-count', 500);
 
     /* Force toggle */
@@ -1165,7 +1173,7 @@
       if (!arrestLoc) errors.push('Arrest location');
       if (!sel.length) errors.push('At least one charge');
       if (!narrative) errors.push('Narrative');
-      if (narrative && narrative.length > 500) errors.push('Narrative exceeds 500 characters');
+      if (narrative && narrative.length > 1000) errors.push('Narrative exceeds 1000 characters');
 
       var witnesses = (document.getElementById('cd-af-arr-witnesses').value || '').trim();
       if (witnesses.length > 500) errors.push('Witnesses exceeds 500 characters');

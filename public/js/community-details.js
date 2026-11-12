@@ -2524,6 +2524,7 @@ function updateDepartmentJoinButton(departmentId, status) {
       // Most vehicles still use the legacy encoding, where each flag has its
       // own polarity. See /static/js/vehicle-flags.js.
       const isStolen = window.VehicleFlags.stolen(v);
+      const isImpounded = window.VehicleFlags.impounded(v);
       const validReg = window.VehicleFlags.registrationValid(v);
       const validIns = window.VehicleFlags.insuranceValid(v);
 
@@ -2540,6 +2541,7 @@ function updateDepartmentJoinButton(departmentId, status) {
                   <div style="color:#a0aec0; font-size:0.8rem;">${username}</div>
                 </div>
                 ${isStolen ? '<span style="background:#e53e3e; color:#fff; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:600;">STOLEN</span>' : ''}
+                ${isImpounded ? `<span style="background:#f59e0b; color:#1f2937; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:600;">${window.VehicleImpound.COPY.badge}</span>` : ''}
               </div>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:0.5rem; margin-bottom:0.75rem;">
                 <div style="color:#a0aec0; font-size:0.8rem;"><strong>Plate:</strong> ${plate}</div>
