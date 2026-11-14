@@ -4441,6 +4441,13 @@ function selectTenCode(tenCodeID) {
             actionsHtml = '<div class="wm-detail-full"><div class="wm-actions">' +
               '<button class="wm-btn wm-btn-primary" onclick="wmExecuteWarrant(\'' + w._id + '\')"><i class="fa fa-check-double"></i> Mark as Served</button>' +
             '</div></div>';
+          } else if (d.status === 'executed' && d.requestingOfficerID === wmCurrentUserId) {
+            // A served warrant had no actions at all, so the officer who filed
+            // it could not clear it. Same predicate as Withdraw above: the
+            // requesting officer only. Nobody new gains a delete.
+            actionsHtml = '<div class="wm-detail-full"><div class="wm-actions">' +
+              '<button class="wm-btn wm-btn-danger" onclick="wmDeleteWarrant(\'' + w._id + '\')"><i class="fa fa-trash"></i> Delete</button>' +
+            '</div></div>';
           }
 
           // Build history timeline
@@ -4611,6 +4618,39 @@ function selectTenCode(tenCodeID) {
       });
     }
     window.wmWithdraw = wmWithdraw;
+
+    // ── Delete a served warrant ──
+    // Same DELETE endpoint and the same predicate as Withdraw above: the
+    // officer who requested the warrant. dd-components.js has ddDeleteWarrant,
+    // but that script is not loaded here and carries its own confirm and toast
+    // copy, so this is the local equivalent with this surface's wording.
+    function wmDeleteWarrant(warrantId) {
+      ddModal({
+        type: 'danger',
+        icon: 'fa-trash',
+        title: 'Delete',
+        message: "Delete this warrant? This can't be undone.",
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        onConfirm: function() {
+          $.ajax({
+            url: `${API_URL}/api/v1/warrant/${warrantId}`,
+            method: 'DELETE',
+            success: function() {
+              showToast('Warrant deleted.', 'success');
+              // Back to the results the warrant was opened from.
+              wmViewStack = [];
+              wmOpenSearch();
+              wmSearch(wmPage);
+            },
+            error: function(xhr) {
+              showToast((xhr.responseJSON && xhr.responseJSON.message) || 'Unknown error', 'danger');
+            }
+          });
+        }
+      });
+    }
+    window.wmDeleteWarrant = wmDeleteWarrant;
 
     // ── Execute (Serve) Warrant ──
     function wmExecuteWarrant(warrantId) {

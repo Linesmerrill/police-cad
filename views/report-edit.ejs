@@ -126,6 +126,8 @@
     .rp-label { font-size: 0.78rem; color: var(--rp-text-muted); font-weight: 500; display: flex; align-items: center; gap: 0.3rem; }
     .rp-label .req { color: var(--rp-red); }
     .rp-help { font-size: 0.72rem; color: var(--rp-text-dim); margin-top: 0.15rem; }
+    .rp-char-count { font-size: 0.72rem; color: var(--rp-text-dim); margin-top: 0.15rem; text-align: right; }
+    .rp-char-count.is-over { color: #ef4444; }
     .rp-input, .rp-textarea, .rp-select {
       background: var(--rp-glass); color: var(--rp-text);
       border: 1px solid var(--rp-glass-border); border-radius: var(--rp-radius-sm);
@@ -1280,6 +1282,22 @@
       }
 
       // --- state ---
+      // The narrative is capped at 1000 characters, the same as the arrest
+      // form's (views/arrest-modal.ejs, public/js/cd-action-forms.js). Only
+      // the narrative: every other textarea on a report keeps its own limit.
+      var NARRATIVE_FIELD_ID = 'narrative';
+      var NARRATIVE_MAX_LENGTH = 1000;
+
+      function isNarrativeField(f) {
+        return !!f && f.id === NARRATIVE_FIELD_ID;
+      }
+
+      function updateCharCount(el, counter) {
+        var len = (el.value || '').length;
+        counter.textContent = len + '/' + NARRATIVE_MAX_LENGTH;
+        counter.classList.toggle('is-over', len > NARRATIVE_MAX_LENGTH);
+      }
+
       var state = {
         template: null,
         data: {},
@@ -2532,7 +2550,13 @@
         var fullWidth = ['textarea', 'multiSelect'].indexOf(f.type) !== -1;
         switch (f.type) {
           case 'textarea':
-            inputHTML = '<textarea class="rp-textarea" data-field-key="' + fieldKey + '"' + disabled + ' placeholder="' + escapeHTML(f.placeholder || '') + '">' + escapeHTML(value || '') + '</textarea>';
+            var capped = isNarrativeField(f);
+            inputHTML = '<textarea class="rp-textarea" data-field-key="' + fieldKey + '"' + (capped ? ' maxlength="' + NARRATIVE_MAX_LENGTH + '"' : '') + disabled + ' placeholder="' + escapeHTML(f.placeholder || '') + '">' + escapeHTML(value || '') + '</textarea>';
+            if (capped) {
+              // Counter copy is "<n>/1000" - no spaces around the slash, the
+              // same as the arrest form's.
+              inputHTML += '<div class="rp-char-count">' + String(value || '').length + '/' + NARRATIVE_MAX_LENGTH + '</div>';
+            }
             break;
           case 'select':
           case 'radio':
@@ -3024,6 +3048,13 @@
         Array.from(document.querySelectorAll('[data-field-key]')).forEach(function (el) {
           el.addEventListener('input', onFieldChange);
           el.addEventListener('change', onFieldChange);
+          // The counter is rendered as a sibling inside the same .rp-field.
+          var counter = el.parentNode ? el.parentNode.querySelector('.rp-char-count') : null;
+          if (counter) {
+            el.addEventListener('input', function () { updateCharCount(el, counter); });
+            // A report loaded from before the cap can already be over it.
+            updateCharCount(el, counter);
+          }
         });
         Array.from(document.querySelectorAll('[data-clear-import]')).forEach(function (btn) {
           btn.addEventListener('click', function (e) {
