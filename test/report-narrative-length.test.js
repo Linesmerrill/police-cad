@@ -64,6 +64,79 @@ describe("report narrative length", function () {
     });
   });
 
+  describe("the Reports editor", function () {
+    var src = read("views/report-edit.ejs");
+
+    it("caps the narrative at 1000", function () {
+      assert.ok(
+        src.indexOf("var NARRATIVE_MAX_LENGTH = 1000;") !== -1,
+        "the cap is gone"
+      );
+      // The textarea branch is generic, so the maxlength has to be conditional
+      // on the field being the narrative - otherwise it caps every textarea.
+      assert.ok(
+        /capped \? ' maxlength="' \+ NARRATIVE_MAX_LENGTH \+ '"' : ''/.test(src),
+        "the narrative textarea has no maxlength"
+      );
+      assert.ok(
+        src.indexOf("var capped = isNarrativeField(f);") !== -1,
+        "the cap is not gated on the field being the narrative"
+      );
+    });
+
+    it("caps the narrative and nothing else", function () {
+      assert.ok(
+        /function isNarrativeField\(f\) \{\s*return !!f && f\.id === NARRATIVE_FIELD_ID;/.test(src),
+        "the narrative is no longer identified by field id"
+      );
+      assert.ok(
+        src.indexOf("var NARRATIVE_FIELD_ID = 'narrative';") !== -1,
+        "the narrative field id changed"
+      );
+      // Every other field type must stay uncapped: one maxlength in the whole
+      // renderField switch, and it is the conditional one above.
+      var render = src.slice(
+        src.indexOf("function renderField(f, sectionId, rowIdx)"),
+        src.indexOf("function readValue(data, sectionId, fieldId, rowIdx)")
+      );
+      assert.ok(render.length > 0, "renderField is gone");
+      assert.strictEqual(
+        (render.match(/maxlength/g) || []).length,
+        1,
+        "a second field in the reports editor picked up a maxlength"
+      );
+    });
+
+    it("counts in the house format, <n>/1000", function () {
+      // No spaces around the slash, same as the arrest form's counter.
+      assert.ok(
+        src.indexOf("counter.textContent = len + '/' + NARRATIVE_MAX_LENGTH;") !== -1,
+        "the counter copy drifted from <n>/1000"
+      );
+      assert.ok(
+        /'<div class="rp-char-count">' \+ String\(value \|\| ''\)\.length \+ '\/' \+ NARRATIVE_MAX_LENGTH/.test(src),
+        "the counter does not render the current length on load"
+      );
+    });
+
+    it("keeps the counter live, and honest about an over-length report", function () {
+      // A report saved before the cap can already be over it; maxlength will
+      // not trim it, so the counter has to say so on load as well as on input.
+      assert.ok(
+        src.indexOf("el.addEventListener('input', function () { updateCharCount(el, counter); });") !== -1,
+        "the counter does not update as the narrative is typed"
+      );
+      assert.ok(
+        src.indexOf("counter.classList.toggle('is-over', len > NARRATIVE_MAX_LENGTH);") !== -1,
+        "nothing marks an over-length narrative"
+      );
+      assert.ok(
+        src.indexOf(".rp-char-count.is-over") !== -1,
+        "the over-length state has no styling"
+      );
+    });
+  });
+
   // The blast radius check: every other 500-char textarea on the site is
   // untouched. 500 is still the right cap for a one-line note.
   it("does not widen any other textarea", function () {
